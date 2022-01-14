@@ -1,6 +1,7 @@
 """
 SegClassif dock widget module
 """
+import os
 import random
 from typing import Any
 
@@ -75,7 +76,8 @@ def widget_wrapper():
             viewer.layers.pop()
             counter += 1
             from skimage.io import imread
-            viewer.add_image(imread("image_finish.png"))
+            viewer.add_image(imread("https://bitbucket.org/koopa31/napari_segclassif/raw/"
+                                    "74190645dada02eaeb0ecc39c7940fae9e8ee60d/src/napari_segclassif/image_finish.png"))
             print("annotation over", labels_list)
         else:
             pass
