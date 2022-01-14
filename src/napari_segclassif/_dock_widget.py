@@ -49,6 +49,8 @@ labels_list = []
 def widget_wrapper():
     from napari.qt.threading import thread_worker
 
+    # TODO:implémenter pour autant de labels que voulus
+
     @Viewer.bind_key('1')
     def print_names(viewer):
         global counter
