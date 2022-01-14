@@ -7,6 +7,7 @@ from typing import Any
 
 import cv2
 from napari_plugin_engine import napari_hook_implementation
+from napari.utils.notifications import show_info, notification_manager
 
 import time
 import numpy as np
@@ -17,6 +18,11 @@ from magicgui import magicgui
 
 from skimage.measure import regionprops
 
+from superqt import ensure_main_thread
+
+@ensure_main_thread
+def show_info(message: str):
+    notification_manager.receive_info(message)
 
 # @thread_worker
 def read_logging(log_file, logwindow):
@@ -46,12 +52,14 @@ def widget_wrapper():
     @Viewer.bind_key('1')
     def print_names(viewer):
         global counter
+
         if counter < len(patch[2]) - 1:
             labels_list.append(1)
             viewer.layers.pop()
             counter += 1
             viewer.add_image(patch[2][counter])
             print("label 1", labels_list)
+            viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
         elif counter == len(patch[2]) - 1:
             labels_list.append(1)
             viewer.layers.pop()
@@ -59,6 +67,8 @@ def widget_wrapper():
             from skimage.io import imread
             viewer.add_image(imread("image_finish.png"))
             print("annotation over", labels_list)
+            viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+            show_info("Annotation over")
         else:
             pass
 
@@ -71,6 +81,7 @@ def widget_wrapper():
             counter += 1
             viewer.add_image(patch[2][counter])
             print("label 2", labels_list)
+            viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
         elif counter == len(patch[2]) - 1:
             labels_list.append(2)
             viewer.layers.pop()
@@ -79,6 +90,8 @@ def widget_wrapper():
             viewer.add_image(imread("https://bitbucket.org/koopa31/napari_segclassif/raw/"
                                     "74190645dada02eaeb0ecc39c7940fae9e8ee60d/src/napari_segclassif/image_finish.png"))
             print("annotation over", labels_list)
+            viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+            show_info("Annotation over")
         else:
             pass
 
@@ -90,6 +103,7 @@ def widget_wrapper():
         counter -= 1
         viewer.add_image(patch[2][counter])
         print("retour en arriere", labels_list)
+        viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
 
     @thread_worker
     def generate_patches(viewer, imagettes_nb, patch_size):
