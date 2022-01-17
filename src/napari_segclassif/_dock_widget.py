@@ -1,6 +1,7 @@
 """
 SegClassif dock widget module
 """
+import functools
 import os
 import random
 from typing import Any
@@ -20,9 +21,11 @@ from skimage.measure import regionprops
 
 from superqt import ensure_main_thread
 
+
 @ensure_main_thread
 def show_info(message: str):
     notification_manager.receive_info(message)
+
 
 # @thread_worker
 def read_logging(log_file, logwindow):
@@ -52,7 +55,7 @@ def widget_wrapper():
     # TODO:implémenter pour autant de labels que voulus
 
     @Viewer.bind_key('1')
-    def print_names(viewer):
+    def set_label_1(viewer):
         global counter
 
         if counter < len(patch[2]) - 1:
@@ -76,7 +79,7 @@ def widget_wrapper():
             pass
 
     @Viewer.bind_key('2')
-    def print_names(viewer):
+    def set_label_2(viewer):
         global counter
         if counter < len(patch[2]) - 1:
             labels_list.append(2)
@@ -98,8 +101,104 @@ def widget_wrapper():
         else:
             pass
 
+    @Viewer.bind_key('3')
+    def set_label_3(viewer):
+        global counter
+        if (int(annotation_widget.labels_nb.value) < 3) is False:
+            if counter < len(patch[2]) - 1:
+                labels_list.append(3)
+                viewer.layers.pop()
+                counter += 1
+                viewer.add_image(patch[2][counter])
+                print("label 2", labels_list)
+                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+            elif counter == len(patch[2]) - 1:
+                labels_list.append(3)
+                viewer.layers.pop()
+                counter += 1
+                from skimage.io import imread
+                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw"
+                                        "/c60ee2e3d7c4dbb04ae9cc51f45e917db349859d/image_finish.png"))
+                print("annotation over", labels_list)
+                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+                show_info("Annotation over")
+            else:
+                pass
+
+    @Viewer.bind_key('4')
+    def set_label_4(viewer):
+        global counter
+        if (int(annotation_widget.labels_nb.value) < 4) is False:
+            if counter < len(patch[2]) - 1:
+                labels_list.append(4)
+                viewer.layers.pop()
+                counter += 1
+                viewer.add_image(patch[2][counter])
+                print("label 2", labels_list)
+                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+            elif counter == len(patch[2]) - 1:
+                labels_list.append(4)
+                viewer.layers.pop()
+                counter += 1
+                from skimage.io import imread
+                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw"
+                                        "/c60ee2e3d7c4dbb04ae9cc51f45e917db349859d/image_finish.png"))
+                print("annotation over", labels_list)
+                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+                show_info("Annotation over")
+            else:
+                pass
+
+    @Viewer.bind_key('5')
+    def set_label_5(viewer):
+        global counter
+        if (int(annotation_widget.labels_nb.value) < 5) is False:
+            if counter < len(patch[2]) - 1:
+                labels_list.append(5)
+                viewer.layers.pop()
+                counter += 1
+                viewer.add_image(patch[2][counter])
+                print("label 2", labels_list)
+                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+            elif counter == len(patch[2]) - 1:
+                labels_list.append(5)
+                viewer.layers.pop()
+                counter += 1
+                from skimage.io import imread
+                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw"
+                                        "/c60ee2e3d7c4dbb04ae9cc51f45e917db349859d/image_finish.png"))
+                print("annotation over", labels_list)
+                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+                show_info("Annotation over")
+            else:
+                pass
+
+    @Viewer.bind_key('6')
+    def set_label_6(viewer):
+        global counter
+        if (int(annotation_widget.labels_nb.value) < 6) is False:
+            if counter < len(patch[2]) - 1:
+                labels_list.append(6)
+                viewer.layers.pop()
+                counter += 1
+                viewer.add_image(patch[2][counter])
+                print("label 2", labels_list)
+                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+            elif counter == len(patch[2]) - 1:
+                labels_list.append(6)
+                viewer.layers.pop()
+                counter += 1
+                from skimage.io import imread
+                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw"
+                                        "/c60ee2e3d7c4dbb04ae9cc51f45e917db349859d/image_finish.png"))
+                print("annotation over", labels_list)
+                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+                show_info("Annotation over")
+            else:
+                pass
+
     @Viewer.bind_key('r')
-    def print_names(viewer):
+    def remove_label(viewer):
         global counter
         labels_list.pop()
         viewer.layers.pop()
@@ -163,7 +262,7 @@ def widget_wrapper():
         layout='vertical',
         patch_size=dict(widget_type='LineEdit', label='patch size', value=200, tooltip='extracted patch size'),
         patch_nb=dict(widget_type='LineEdit', label='patches number', value=10, tooltip='number of extracted patches'),
-        labels_number=dict(widget_type='ComboBox', label='labels number', choices=labels_number, value=2,
+        labels_nb=dict(widget_type='ComboBox', label='labels number', choices=labels_number, value=2,
                            tooltip='Number of possible labels'),
         extract_pacthes_button=dict(widget_type='PushButton', text='extract patches from image',
                                     tooltip='extraction of patches to be annotated from the segmentation mask'),
@@ -174,7 +273,7 @@ def widget_wrapper():
             patch_size,
             patch_nb,
             extract_pacthes_button,
-            labels_number,
+            labels_nb,
 
     ) -> None:
         # Import when users activate plugin
@@ -186,8 +285,9 @@ def widget_wrapper():
         annotation_widget.viewer.value.add_image(patch[2][0])
 
     @annotation_widget.extract_pacthes_button.changed.connect
-    def _compute_diameter_shape(e: Any):
-        patch_worker = generate_patches(annotation_widget.image_layer, int(annotation_widget.patch_nb.value), int(annotation_widget.patch_size.value))
+    def _extract_patches(e: Any):
+        patch_worker = generate_patches(annotation_widget.image_layer, int(annotation_widget.patch_nb.value),
+                                        int(annotation_widget.patch_size.value))
         patch_worker.returned.connect(display_first_patch)
         patch_worker.start()
         print('patch extraction done')
