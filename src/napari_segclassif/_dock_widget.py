@@ -67,7 +67,8 @@ def widget_wrapper():
             viewer.layers.pop()
             counter += 1
             from skimage.io import imread
-            viewer.add_image(imread("image_finish.png"))
+            viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
+                                    "c60ee2e3d7c4dbb04ae9cc51f45e917db349859d/image_finish.png"))
             print("annotation over", labels_list)
             viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
             show_info("Annotation over")
@@ -89,8 +90,8 @@ def widget_wrapper():
             viewer.layers.pop()
             counter += 1
             from skimage.io import imread
-            viewer.add_image(imread("https://bitbucket.org/koopa31/napari_segclassif/raw/"
-                                    "74190645dada02eaeb0ecc39c7940fae9e8ee60d/src/napari_segclassif/image_finish.png"))
+            viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw"
+                                    "/c60ee2e3d7c4dbb04ae9cc51f45e917db349859d/image_finish.png"))
             print("annotation over", labels_list)
             viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
             show_info("Annotation over")
