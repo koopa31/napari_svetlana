@@ -18,6 +18,7 @@ from napari.layers import Image, Shapes
 from magicgui import magicgui
 
 from skimage.measure import regionprops
+from skimage.morphology import ball, erosion
 
 from superqt import ensure_main_thread
 
@@ -60,14 +61,26 @@ def widget_wrapper():
 
         if counter < len(patch[2]) - 1:
             labels_list.append(1)
-            viewer.layers.pop()
             counter += 1
-            viewer.add_image(patch[2][counter])
+            if patch[2][counter].shape[2] > 3:
+                # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
+                viewer.layers.pop()
+                viewer.layers.pop()
+                viewer.add_labels(patch[1][counter].astype("int"))
+                viewer.add_image(patch[2][counter])
+            else:
+                # 2D case
+                viewer.layers.pop()
+                viewer.add_image(patch[2][counter])
             print("label 1", labels_list)
             viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
         elif counter == len(patch[2]) - 1:
             labels_list.append(1)
-            viewer.layers.pop()
+            if patch[2][counter].shape[2] > 3:
+                viewer.layers.pop()
+                viewer.layers.pop()
+            else:
+                viewer.layers.pop()
             counter += 1
             from skimage.io import imread
             viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
@@ -83,14 +96,26 @@ def widget_wrapper():
         global counter
         if counter < len(patch[2]) - 1:
             labels_list.append(2)
-            viewer.layers.pop()
             counter += 1
-            viewer.add_image(patch[2][counter])
+            if patch[2][counter].shape[2] > 3:
+                # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
+                viewer.layers.pop()
+                viewer.layers.pop()
+                viewer.add_labels(patch[1][counter].astype("int"))
+                viewer.add_image(patch[2][counter])
+            else:
+                # 2D case
+                viewer.layers.pop()
+                viewer.add_image(patch[2][counter])
             print("label 2", labels_list)
             viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
         elif counter == len(patch[2]) - 1:
             labels_list.append(2)
-            viewer.layers.pop()
+            if patch[2][counter].shape[2] > 3:
+                viewer.layers.pop()
+                viewer.layers.pop()
+            else:
+                viewer.layers.pop()
             counter += 1
             from skimage.io import imread
             viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw"
@@ -107,14 +132,26 @@ def widget_wrapper():
         if (int(annotation_widget.labels_nb.value) < 3) is False:
             if counter < len(patch[2]) - 1:
                 labels_list.append(3)
-                viewer.layers.pop()
                 counter += 1
-                viewer.add_image(patch[2][counter])
+                if patch[2][counter].shape[2] > 3:
+                    # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
+                    viewer.layers.pop()
+                    viewer.layers.pop()
+                    viewer.add_labels(patch[1][counter].astype("int"))
+                    viewer.add_image(patch[2][counter])
+                else:
+                    # 2D case
+                    viewer.layers.pop()
+                    viewer.add_image(patch[2][counter])
                 print("label 2", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
             elif counter == len(patch[2]) - 1:
                 labels_list.append(3)
-                viewer.layers.pop()
+                if patch[2][counter].shape[2] > 3:
+                    viewer.layers.pop()
+                    viewer.layers.pop()
+                else:
+                    viewer.layers.pop()
                 counter += 1
                 from skimage.io import imread
                 viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw"
@@ -131,14 +168,26 @@ def widget_wrapper():
         if (int(annotation_widget.labels_nb.value) < 4) is False:
             if counter < len(patch[2]) - 1:
                 labels_list.append(4)
-                viewer.layers.pop()
                 counter += 1
-                viewer.add_image(patch[2][counter])
+                if patch[2][counter].shape[2] > 3:
+                    # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
+                    viewer.layers.pop()
+                    viewer.layers.pop()
+                    viewer.add_labels(patch[1][counter].astype("int"))
+                    viewer.add_image(patch[2][counter])
+                else:
+                    # 2D case
+                    viewer.layers.pop()
+                    viewer.add_image(patch[2][counter])
                 print("label 2", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
             elif counter == len(patch[2]) - 1:
                 labels_list.append(4)
-                viewer.layers.pop()
+                if patch[2][counter].shape[2] > 3:
+                    viewer.layers.pop()
+                    viewer.layers.pop()
+                else:
+                    viewer.layers.pop()
                 counter += 1
                 from skimage.io import imread
                 viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw"
@@ -155,14 +204,26 @@ def widget_wrapper():
         if (int(annotation_widget.labels_nb.value) < 5) is False:
             if counter < len(patch[2]) - 1:
                 labels_list.append(5)
-                viewer.layers.pop()
                 counter += 1
-                viewer.add_image(patch[2][counter])
+                if patch[2][counter].shape[2] > 3:
+                    # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
+                    viewer.layers.pop()
+                    viewer.layers.pop()
+                    viewer.add_labels(patch[1][counter].astype("int"))
+                    viewer.add_image(patch[2][counter])
+                else:
+                    # 2D case
+                    viewer.layers.pop()
+                    viewer.add_image(patch[2][counter])
                 print("label 2", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
             elif counter == len(patch[2]) - 1:
                 labels_list.append(5)
-                viewer.layers.pop()
+                if patch[2][counter].shape[2] > 3:
+                    viewer.layers.pop()
+                    viewer.layers.pop()
+                else:
+                    viewer.layers.pop()
                 counter += 1
                 from skimage.io import imread
                 viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw"
@@ -179,14 +240,26 @@ def widget_wrapper():
         if (int(annotation_widget.labels_nb.value) < 6) is False:
             if counter < len(patch[2]) - 1:
                 labels_list.append(6)
-                viewer.layers.pop()
                 counter += 1
-                viewer.add_image(patch[2][counter])
+                if patch[2][counter].shape[2] > 3:
+                    # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
+                    viewer.layers.pop()
+                    viewer.layers.pop()
+                    viewer.add_labels(patch[1][counter].astype("int"))
+                    viewer.add_image(patch[2][counter])
+                else:
+                    # 2D case
+                    viewer.layers.pop()
+                    viewer.add_image(patch[2][counter])
                 print("label 2", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
             elif counter == len(patch[2]) - 1:
                 labels_list.append(6)
-                viewer.layers.pop()
+                if patch[2][counter].shape[2] > 3:
+                    viewer.layers.pop()
+                    viewer.layers.pop()
+                else:
+                    viewer.layers.pop()
                 counter += 1
                 from skimage.io import imread
                 viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw"
@@ -209,14 +282,14 @@ def widget_wrapper():
 
     @thread_worker
     def generate_patches(viewer, imagettes_nb, patch_size):
-        for im in viewer.choices:
+        for im in viewer:
             if "mask" in im.name:
                 labels = im.data
             else:
                 image = im.data
 
         half_patch_size = patch_size // 2
-        contours_color = [0, 0, 255]
+        contours_color = [0, 255, 0]
 
         props = regionprops(labels)
         random.shuffle(props)
@@ -228,29 +301,46 @@ def widget_wrapper():
 
         for i, prop in enumerate(mini_props):
             if prop.area != 0:
-                imagette = image[int(prop.centroid[0]) - half_patch_size:int(prop.centroid[0]) + half_patch_size,
-                           int(prop.centroid[1]) - half_patch_size:
-                           int(prop.centroid[1]) + half_patch_size]
+                if image.shape[2] <= 3:
+                    imagette = image[int(prop.centroid[0]) - half_patch_size:int(prop.centroid[0]) + half_patch_size,
+                               int(prop.centroid[1]) - half_patch_size: int(prop.centroid[1]) + half_patch_size]
 
-                maskette = np.zeros((imagette.shape[0], imagette.shape[1]))
-                xb = int(prop.centroid[0]) - half_patch_size
-                yb = int(prop.centroid[1]) - half_patch_size
-                if xb >= 0 and yb >= 0 and xb + 2 * half_patch_size + 1 < image.shape[
-                    0] and yb + 2 * half_patch_size + 1 < \
-                        image.shape[1]:
-                    for x, y in prop.coords:
-                        maskette[x - xb, y - yb] = 1
+                    maskette = np.zeros((imagette.shape[0], imagette.shape[1]))
+                    xb = int(prop.centroid[0]) - half_patch_size
+                    yb = int(prop.centroid[1]) - half_patch_size
+                    if xb >= 0 and yb >= 0 and xb + 2 * half_patch_size + 1 < image.shape[
+                        0] and yb + 2 * half_patch_size + 1 < \
+                            image.shape[1]:
+                        for x, y in prop.coords:
+                            maskette[x - xb, y - yb] = 1
 
-                    eroded_mask = cv2.erode(maskette, np.ones((3, 3), np.uint8))
-                    contours = maskette - eroded_mask
-                    imagette_contours = imagette.copy()
-                    imagette_contours[:, :, 0][contours != 0] = contours_color[0]
-                    imagette_contours[:, :, 1][contours != 0] = contours_color[1]
-                    imagette_contours[:, :, 1][contours != 0] = contours_color[2]
+                        eroded_mask = cv2.erode(maskette, np.ones((3, 3), np.uint8))
+                        contours = maskette - eroded_mask
+                        imagette_contours = imagette.copy()
+                        imagette_contours[:, :, 0][contours != 0] = contours_color[0]
+                        imagette_contours[:, :, 1][contours != 0] = contours_color[1]
+                        imagette_contours[:, :, 2][contours != 0] = contours_color[2]
 
-                imagettes_list.append(imagette)
-                maskettes_list.append(maskette)
-                imagettes_contours_list.append(imagette_contours)
+                    imagettes_list.append(imagette)
+                    maskettes_list.append(maskette)
+                    imagettes_contours_list.append(imagette_contours)
+                else:
+                    imagette = image[int(prop.centroid[0]) - half_patch_size:int(prop.centroid[0]) + half_patch_size,
+                                     int(prop.centroid[1]) - half_patch_size:int(prop.centroid[1]) + half_patch_size,
+                                     int(prop.centroid[2]) - half_patch_size:int(prop.centroid[2]) + half_patch_size]
+
+                    maskette = np.zeros((imagette.shape[0], imagette.shape[1], imagette.shape[2]))
+                    xb = int(prop.centroid[0]) - half_patch_size
+                    yb = int(prop.centroid[1]) - half_patch_size
+                    zb = int(prop.centroid[2]) - half_patch_size
+
+                    if xb >= 0 and yb >= 0 and zb >= 0 and xb + 2 * half_patch_size + 1 < image.shape[0] and \
+                       yb + 2 * half_patch_size + 1 < image.shape[1] and zb + 2 * half_patch_size + 1 < image.shape[2]:
+                        for x, y, z in prop.coords:
+                            maskette[x - xb, y - yb, z - zb] = 1
+                        imagettes_list.append(imagette)
+                        maskettes_list.append(maskette)
+                        imagettes_contours_list.append(imagette)
         print(len(imagettes_list))
 
         global patch
@@ -282,11 +372,19 @@ def widget_wrapper():
     def display_first_patch(patch):
         for i in range(0, len(annotation_widget.viewer.value.layers)):
             annotation_widget.viewer.value.layers.pop()
-        annotation_widget.viewer.value.add_image(patch[2][0])
+        if patch[2][0].shape[2] > 3:
+            # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
+            annotation_widget.viewer.value.dims.ndisplay = 3
+            annotation_widget.viewer.value.add_labels(patch[1][0].astype("int"))
+            annotation_widget.viewer.value.add_image(patch[2][0])
+        else:
+            # 2D case
+            annotation_widget.viewer.value.add_image(patch[2][0])
+
 
     @annotation_widget.extract_pacthes_button.changed.connect
     def _extract_patches(e: Any):
-        patch_worker = generate_patches(annotation_widget.image_layer, int(annotation_widget.patch_nb.value),
+        patch_worker = generate_patches(annotation_widget.viewer.value.layers, int(annotation_widget.patch_nb.value),
                                         int(annotation_widget.patch_size.value))
         patch_worker.returned.connect(display_first_patch)
         patch_worker.start()
