@@ -412,15 +412,19 @@ def Training():
         auto_call=True,
         layout='vertical',
         load_data_button=dict(widget_type='PushButton', text='Load data', tooltip='Load the image and the labels'),
-        lr=dict(widget_type='LineEdit', label='Learning rata', value=0.01, tooltip='Learning rate'),
+        lr=dict(widget_type='LineEdit', label='Learning rate', value=0.01, tooltip='Learning rate'),
         nn=dict(widget_type='ComboBox', label='Network architecture', choices=networks_list, value="ResNet18",
                        tooltip='All the available network architectures'),
+        epochs=dict(widget_type='LineEdit', label='Epochs number', value=1000, tooltip='Epochs number'),
+        launch_training_button=dict(widget_type='PushButton', text='Launch training', tooltip='Launch training'),
     )
     def training_widget(  # label_logo,
             viewer: Viewer,
             load_data_button,
             nn,
             lr,
+            epochs,
+            launch_training_button,
 
     ) -> None:
         # Import when users activate plugin
