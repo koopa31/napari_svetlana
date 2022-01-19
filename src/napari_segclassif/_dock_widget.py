@@ -46,6 +46,7 @@ def read_logging(log_file, logwindow):
 
 
 labels_number = [('2', 2), ('3', 3), ('4', 4), ('5', 5), ('6', 6)]
+networks_list = ["ResNet18", "GoogleNet", "DenseNet"]
 
 counter = 0
 labels_list = []
@@ -411,10 +412,15 @@ def Training():
         auto_call=True,
         layout='vertical',
         load_data_button=dict(widget_type='PushButton', text='Load data', tooltip='Load the image and the labels'),
+        lr=dict(widget_type='LineEdit', label='Learning rata', value=0.01, tooltip='Learning rate'),
+        nn=dict(widget_type='ComboBox', label='Network architecture', choices=networks_list, value="ResNet18",
+                       tooltip='All the available network architectures'),
     )
     def training_widget(  # label_logo,
             viewer: Viewer,
             load_data_button,
+            nn,
+            lr,
 
     ) -> None:
         # Import when users activate plugin
