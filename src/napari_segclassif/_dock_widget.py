@@ -20,6 +20,7 @@ from magicgui import magicgui
 
 from skimage.measure import regionprops
 from skimage.morphology import ball, erosion
+from skimage.io import imread
 
 from superqt import ensure_main_thread
 from qtpy.QtWidgets import QFileDialog
@@ -392,7 +393,6 @@ def Annotation():
             # 2D case
             annotation_widget.viewer.value.add_image(patch[2][0])
 
-
     @annotation_widget.extract_pacthes_button.changed.connect
     def _extract_patches(e: Any):
         patch_worker = generate_patches(annotation_widget.viewer.value.layers, int(annotation_widget.patch_nb.value),
@@ -434,6 +434,10 @@ def Training():
         labels_path = b["labels_path"]
         position_list = b["position_list"]
         labels_list = b["labels_list"]
+
+        training_widget.viewer.value.add_image(imread(image_path))
+        training_widget.viewer.value.add_labels(imread(labels_path))
+
         return
 
     return training_widget
