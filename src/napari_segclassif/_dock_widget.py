@@ -51,10 +51,8 @@ labels_list = []
 # logo = os.path.join(__file__, 'logo/logo_small.png')
 
 
-def widget_wrapper():
+def Annotation():
     from napari.qt.threading import thread_worker
-
-    # TODO:implémenter pour autant de labels que voulus
 
     @Viewer.bind_key('1')
     def set_label_1(viewer):
@@ -373,7 +371,6 @@ def widget_wrapper():
     )
     def annotation_widget(  # label_logo,
             viewer: Viewer,
-            image_layer: Image,
             patch_size,
             patch_nb,
             extract_pacthes_button,
@@ -407,6 +404,41 @@ def widget_wrapper():
     return annotation_widget
 
 
+def Training():
+    from napari.qt.threading import thread_worker
+
+    @magicgui(
+        auto_call=True,
+        layout='vertical',
+        load_data_button=dict(widget_type='PushButton', text='Load data', tooltip='Load the image and the labels'),
+    )
+    def training_widget(  # label_logo,
+            viewer: Viewer,
+            load_data_button,
+
+    ) -> None:
+        # Import when users activate plugin
+        return
+
+    @training_widget.load_data_button.changed.connect
+    def _load_data(e: Any):
+        path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
+        with open(path, 'rb') as handle:
+            b = pickle.load(handle)
+
+        global image_path
+        global labels_path
+        global position_list
+        global labels_list
+        image_path = b["image_path"]
+        labels_path = b["labels_path"]
+        position_list = b["position_list"]
+        labels_list = b["labels_list"]
+        return
+
+    return training_widget
+
+
 @napari_hook_implementation
 def napari_experimental_provide_dock_widget():
-    return widget_wrapper, {'name': 'Annotation'}
+    return [Annotation, Training]
