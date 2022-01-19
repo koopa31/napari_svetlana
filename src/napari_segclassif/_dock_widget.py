@@ -3,6 +3,7 @@ SegClassif dock widget module
 """
 import functools
 import os
+import pickle
 import random
 from typing import Any
 
@@ -21,7 +22,7 @@ from skimage.measure import regionprops
 from skimage.morphology import ball, erosion
 
 from superqt import ensure_main_thread
-
+from qtpy.QtWidgets import QFileDialog
 
 @ensure_main_thread
 def show_info(message: str):
@@ -84,12 +85,17 @@ def widget_wrapper():
             counter += 1
             from skimage.io import imread
             viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
-                                    "c60ee2e3d7c4dbb04ae9cc51f45e917db349859d/image_finish.png"))
+                                    "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
             print("annotation over", labels_list)
             viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
-            show_info("Annotation over")
+            show_info("Annotation over, press 1 to save the result")
         else:
-            pass
+            # Saving of the annotation result in a binary file
+            path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
+            res_dict = {"image_path": image_path, "labels_path": labels_path, "position_list": position_list,
+                        "labels_list": labels_list}
+            with open(path, "wb") as handle:
+                pickle.dump(res_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     @Viewer.bind_key('2')
     def set_label_2(viewer):
@@ -118,11 +124,11 @@ def widget_wrapper():
                 viewer.layers.pop()
             counter += 1
             from skimage.io import imread
-            viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw"
-                                    "/c60ee2e3d7c4dbb04ae9cc51f45e917db349859d/image_finish.png"))
+            viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
+                                    "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
             print("annotation over", labels_list)
             viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
-            show_info("Annotation over")
+            show_info("Annotation over, press 1 to save the result")
         else:
             pass
 
@@ -154,11 +160,11 @@ def widget_wrapper():
                     viewer.layers.pop()
                 counter += 1
                 from skimage.io import imread
-                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw"
-                                        "/c60ee2e3d7c4dbb04ae9cc51f45e917db349859d/image_finish.png"))
+                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
+                                        "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
                 print("annotation over", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
-                show_info("Annotation over")
+                show_info("Annotation over, press 1 to save the result")
             else:
                 pass
 
@@ -190,11 +196,11 @@ def widget_wrapper():
                     viewer.layers.pop()
                 counter += 1
                 from skimage.io import imread
-                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw"
-                                        "/c60ee2e3d7c4dbb04ae9cc51f45e917db349859d/image_finish.png"))
+                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
+                                        "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
                 print("annotation over", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
-                show_info("Annotation over")
+                show_info("Annotation over, press 1 to save the result")
             else:
                 pass
 
@@ -226,11 +232,11 @@ def widget_wrapper():
                     viewer.layers.pop()
                 counter += 1
                 from skimage.io import imread
-                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw"
-                                        "/c60ee2e3d7c4dbb04ae9cc51f45e917db349859d/image_finish.png"))
+                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
+                                        "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
                 print("annotation over", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
-                show_info("Annotation over")
+                show_info("Annotation over, press 1 to save the result")
             else:
                 pass
 
@@ -262,11 +268,11 @@ def widget_wrapper():
                     viewer.layers.pop()
                 counter += 1
                 from skimage.io import imread
-                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw"
-                                        "/c60ee2e3d7c4dbb04ae9cc51f45e917db349859d/image_finish.png"))
+                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
+                                        "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
                 print("annotation over", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
-                show_info("Annotation over")
+                show_info("Annotation over, press 1 to save the result")
             else:
                 pass
 
@@ -285,8 +291,12 @@ def widget_wrapper():
         for im in viewer:
             if "mask" in im.name:
                 labels = im.data
+                global labels_path
+                labels_path = im.source.path
             else:
                 image = im.data
+                global image_path
+                image_path = im.source.path
 
         half_patch_size = patch_size // 2
         contours_color = [0, 255, 0]
@@ -299,6 +309,8 @@ def widget_wrapper():
         imagettes_contours_list = []
         maskettes_list = []
 
+        global position_list
+        position_list = []
         for i, prop in enumerate(mini_props):
             if prop.area != 0:
                 if image.shape[2] <= 3:
@@ -324,6 +336,7 @@ def widget_wrapper():
                     imagettes_list.append(imagette)
                     maskettes_list.append(maskette)
                     imagettes_contours_list.append(imagette_contours)
+                    position_list.append(prop.label)
                 else:
                     imagette = image[int(prop.centroid[0]) - half_patch_size:int(prop.centroid[0]) + half_patch_size,
                                      int(prop.centroid[1]) - half_patch_size:int(prop.centroid[1]) + half_patch_size,
@@ -341,6 +354,7 @@ def widget_wrapper():
                         imagettes_list.append(imagette)
                         maskettes_list.append(maskette)
                         imagettes_contours_list.append(imagette)
+                        position_list.append(prop.label)
         print(len(imagettes_list))
 
         global patch
