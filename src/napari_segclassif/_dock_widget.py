@@ -33,6 +33,8 @@ from albumentations.pytorch.transforms import ToTensorV2
 from PIL import Image
 from torchvision import transforms
 
+from joblib import Parallel, delayed
+
 from superqt import ensure_main_thread
 from qtpy.QtWidgets import QFileDialog
 
@@ -379,6 +381,7 @@ def Annotation():
         return patch
 
     @magicgui(
+        auto_call=True,
         layout='vertical',
         patch_size=dict(widget_type='LineEdit', label='patch size', value=200, tooltip='extracted patch size'),
         patch_nb=dict(widget_type='LineEdit', label='patches number', value=10, tooltip='number of extracted patches'),
@@ -429,7 +432,7 @@ def Training():
             for param in model.parameters():
                 param.requires_grad = False
 
-    def get_image_patch(image, mask, region_props, labels_list, torch_type):
+    def get_image_patch(image, region_props, labels_list, torch_type):
         """
         This function aims at contructing the tensors of the images and their labels
         """
@@ -464,7 +467,7 @@ def Training():
         return train_data
 
     @thread_worker
-    def train(image, mask, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
+    def train(image, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
               v_flip, prob, batch_size):
 
         global transform
@@ -535,7 +538,7 @@ def Training():
         labels_list = np.array(labels_list)
 
         # Generators
-        train_data = get_image_patch(image, mask, region_props, labels_list, torch_type)
+        train_data = get_image_patch(image, region_props, labels_list, torch_type)
         training_loader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True)
 
         # Optimizer
@@ -573,9 +576,11 @@ def Training():
                         LOSS_LIST.append(total_loss.item())
                         print(total_loss.item())
                         # scheduler.step()
+                        folder = "/home/cazorla/Images/TEST"
                         if (epoch + 1) % 500 == 0:
                             d = {"model": model, "optimizer_state_dict": optimizer,
-                                 "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST}
+                                 "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
+                                 "image_path": image_path, "labels_path": labels_path, "patch_size": patch_size}
                             model_path = os.path.join(folder, "training_ABS_full" + str(epoch + 1))
                             if model_path.endswith(".pt") or model_path.endswith(".pth"):
                                 torch.save(d, model_path)
@@ -635,23 +640,25 @@ def Training():
         global labels_path
         global region_props
         global labels_list
+        global patch_size
         global image
         global mask
         image_path = b["image_path"]
         labels_path = b["labels_path"]
         region_props = b["regionprops"]
         labels_list = b["labels_list"]
+        patch_size = int(b["patch_size"])
 
         image = np.array(Image.open(image_path))
         mask = np.array(Image.open(labels_path))
-        training_widget.viewer.value.add_image(imread(image_path))
-        training_widget.viewer.value.add_labels(imread(labels_path))
+        training_widget.viewer.value.add_image(image)
+        training_widget.viewer.value.add_labels(mask)
 
         return
 
     @training_widget.launch_training_button.changed.connect
-    def _extract_patches(e: Any):
-        training_worker = train(image, mask, region_props, labels_list, training_widget.nn.value,
+    def _launch_training(e: Any):
+        training_worker = train(image, region_props, labels_list, training_widget.nn.value,
                                 training_widget.loss.value, float(training_widget.lr.value),
                                 int(training_widget.epochs.value), training_widget.rotations.value,
                                 training_widget.h_flip.value, training_widget.v_flip.value,
@@ -662,6 +669,127 @@ def Training():
     return training_widget
 
 
+def Prediction():
+    from napari.qt.threading import thread_worker
+
+    def draw_predicted_contour(compteur, prop, imagette_contours, labels):
+
+        mask = labels.copy()
+        mask[mask != prop.label] = 0
+        mask[mask == prop.label] = 1
+        eroded_mask = cv2.erode(np.uint8(mask), np.ones((7, 7), np.uint8))
+        contours = mask - eroded_mask
+
+        if hasattr(prop, "prediction") and prop.prediction == 1:
+            imagette_contours[:, :, 0][contours != 0] = 0
+            imagette_contours[:, :, 1][contours != 0] = 0
+            imagette_contours[:, :, 1][contours != 0] = 255
+            compteur += 1
+        elif hasattr(prop, "prediction") and prop.prediction == 2:
+            imagette_contours[:, :, 0][contours != 0] = 255
+            imagette_contours[:, :, 1][contours != 0] = 0
+            imagette_contours[:, :, 1][contours != 0] = 0
+        return compteur
+
+    @thread_worker
+    def predict(image, labels, patch_size):
+
+        # On fait une analyse en composantes connectées
+        props = regionprops(labels)[:1000]
+
+        imagette_contours = image.copy()
+
+        compteur = 0
+        # On itère sur les cellules détectées par Cellpose pour générer des imagettes autour de celles-ci
+        for i, prop in enumerate(props):
+            if np.isnan(prop.centroid[0]) == False and np.isnan(prop.centroid[1]) == False:
+                print(i)
+                imagette = image[int(prop.centroid[0]) - (patch_size // 2):int(prop.centroid[0]) + (patch_size // 2),
+                           int(prop.centroid[1]) - (patch_size // 2):
+                           int(prop.centroid[1]) + (patch_size // 2)].copy()
+                maskette = labels[int(prop.centroid[0]) - (patch_size // 2):int(prop.centroid[0]) + (patch_size // 2),
+                           int(prop.centroid[1]) - (patch_size // 2):
+                           int(prop.centroid[1]) + (patch_size // 2)].copy()
+                maskette[maskette != prop.label] = 0
+                maskette[maskette == prop.label] = 255
+
+                # L'imagette et son mask étant générés, on passe a la concaténation pour faire la prédiction du label par le CNN
+
+                concat_image = np.zeros((imagette.shape[0], imagette.shape[1], 4))
+                concat_image[:, :, :3] = imagette
+                concat_image[:, :, 3] = maskette
+                if concat_image.shape[0] == 0 or concat_image.shape[1] == 0:
+                    pass
+                else:
+                    # Normalisation de l'image
+                    concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
+                    img_t = A.Compose([ToTensorV2()])(image=concat_image)["image"]
+                    batch_t = torch.unsqueeze(img_t, 0).type(torch.float32).to("cuda")
+                    out = model(batch_t)
+                    _, index = torch.max(out, 1)
+
+                    # On stocke le résultat de classif pour chaque cellule dans un attribut nommé prédiction
+                    prop.prediction = index.cpu().detach().numpy()[0]
+                    print("prediction=", prop.prediction)
+
+        show_info("Prediction of patches done, please wait while the result image is being generated...")
+        compteur = Parallel(n_jobs=-1, require="sharedmem")(delayed(draw_predicted_contour)(compteur, prop, imagette_contours, labels)
+                                                            for i, prop in enumerate(props))
+
+        prediction_widget.viewer.value.layers.pop()
+        prediction_widget.viewer.value.layers.pop()
+        prediction_widget.viewer.value.add_image(imagette_contours)
+
+    @magicgui(
+        auto_call=True,
+        layout='vertical',
+        load_data_button=dict(widget_type='PushButton', text='Load data', tooltip='Load the image and the labels'),
+        launch_prediction_button=dict(widget_type='PushButton', text='Launch prediction', tooltip='Launch prediction'),
+    )
+    def prediction_widget(  # label_logo,
+            viewer: Viewer,
+            load_data_button,
+            launch_prediction_button,
+
+    ) -> None:
+        # Import when users activate plugin
+        return
+
+    @prediction_widget.load_data_button.changed.connect
+    def _load_data(e: Any):
+        path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
+        """
+        with open(path, 'rb') as handle:
+            b = pickle.load(handle)
+        """
+        b = torch.load(path)
+
+        global image
+        global mask
+        global model
+        global patch_size
+
+        image_path = b["image_path"]
+        labels_path = b["labels_path"]
+        model = b["model"].to("cuda")
+        patch_size = b["patch_size"]
+
+        image = np.array(Image.open(image_path))
+        mask = np.array(Image.open(labels_path))
+        prediction_widget.viewer.value.add_image(image)
+        prediction_widget.viewer.value.add_labels(mask)
+
+        return
+
+    @prediction_widget.launch_prediction_button.changed.connect
+    def _launch_prediction(e: Any):
+        training_worker = predict(image, mask, patch_size)
+        training_worker.start()
+        show_info('Training started')
+
+    return prediction_widget
+
+
 @napari_hook_implementation
 def napari_experimental_provide_dock_widget():
-    return [Annotation, Training]
+    return [Annotation, Training, Prediction]
