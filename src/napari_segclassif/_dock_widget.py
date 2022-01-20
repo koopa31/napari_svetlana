@@ -8,6 +8,7 @@ import random
 from typing import Any
 
 import cv2
+import matplotlib.pyplot as plt
 from napari_plugin_engine import napari_hook_implementation
 from napari.utils.notifications import show_info, notification_manager
 
@@ -57,6 +58,7 @@ def read_logging(log_file, logwindow):
 
 labels_number = [('2', 2), ('3', 3), ('4', 4), ('5', 5), ('6', 6)]
 networks_list = ["ResNet18", "GoogleNet", "DenseNet"]
+losses_list = ["CrossEntropy", "L1Smooth", "BCE", "Distance", "L1", "MSE"]
 
 counter = 0
 labels_list = []
@@ -102,10 +104,13 @@ def Annotation():
         else:
             # Saving of the annotation result in a binary file
             path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
-            res_dict = {"image_path": image_path, "labels_path": labels_path, "position_list": position_list,
+            res_dict = {"image_path": image_path, "labels_path": labels_path, "regionprops": mini_props_list,
                         "labels_list": labels_list, "patch_size": annotation_widget.patch_size.value}
+            """
             with open(path, "wb") as handle:
                 pickle.dump(res_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            """
+            torch.save(res_dict, path)
 
     @Viewer.bind_key('2')
     def set_label_2(viewer):
@@ -313,17 +318,19 @@ def Annotation():
 
         props = regionprops(labels)
         random.shuffle(props)
+
         mini_props = props[:imagettes_nb]
 
         imagettes_list = []
         imagettes_contours_list = []
         maskettes_list = []
 
-        global position_list
-        position_list = []
+        global mini_props_list
+        mini_props_list = []
         for i, prop in enumerate(mini_props):
             if prop.area != 0:
                 if image.shape[2] <= 3:
+                    mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords})
                     imagette = image[int(prop.centroid[0]) - half_patch_size:int(prop.centroid[0]) + half_patch_size,
                                int(prop.centroid[1]) - half_patch_size: int(prop.centroid[1]) + half_patch_size]
 
@@ -346,7 +353,7 @@ def Annotation():
                     imagettes_list.append(imagette)
                     maskettes_list.append(maskette)
                     imagettes_contours_list.append(imagette_contours)
-                    position_list.append(prop.label)
+
                 else:
                     imagette = image[int(prop.centroid[0]) - half_patch_size:int(prop.centroid[0]) + half_patch_size,
                                      int(prop.centroid[1]) - half_patch_size:int(prop.centroid[1]) + half_patch_size,
@@ -364,7 +371,7 @@ def Annotation():
                         imagettes_list.append(imagette)
                         maskettes_list.append(maskette)
                         imagettes_contours_list.append(imagette)
-                        position_list.append(prop.label)
+
         print(len(imagettes_list))
 
         global patch
@@ -423,19 +430,34 @@ def Training():
             for param in model.parameters():
                 param.requires_grad = False
 
-    def get_image_patch(imagettes_list, imagettes_masks_list, labels_list):
+    def get_image_patch(image, mask, region_props, labels_list, torch_type):
         """
         This function aims at contructing the tensors of the images and their labels
         """
-        # Get image patch
-        img_patch_list = []
+
         labels_tensor = torch.from_numpy(labels_list).type(torch_type)
         labels_tensor = nn.functional.one_hot(labels_tensor.type(torch.cuda.LongTensor))
 
-        for image_nb in range(0, len(imagettes_list)):
-            # We create a 4 channels image concatenating the RGB image with its labels
-            imagette = cv2.imread(join(train_folder, imagettes_list[image_nb]))
-            imagette_mask = cv2.imread(join(train_folder, imagettes_masks_list[image_nb]))[:, :, 0]
+        img_patch_list = []
+
+        for i, position in enumerate(region_props):
+
+            imagette = image[int(region_props[i]["centroid"][0]) - (patch_size//2):int(region_props[i]["centroid"][0])
+                             + (patch_size//2), int(region_props[i]["centroid"][1]) - (patch_size//2):
+                             int(region_props[i]["centroid"][1]) + (patch_size//2)]
+
+            imagette_mask = np.zeros((imagette.shape[0], imagette.shape[1]))
+            xb = int(region_props[i]["centroid"][0]) - (patch_size//2)
+            yb = int(region_props[i]["centroid"][1]) - (patch_size//2)
+
+            for x, y in region_props[i]["coords"]:
+                imagette_mask[x - xb, y - yb] = 1
+
+            plt.figure(1)
+            plt.imshow(imagette)
+            plt.figure(2)
+            plt.imshow(imagette_mask)
+
             concat_image = np.zeros((imagette.shape[0], imagette.shape[1], 4))
             concat_image[:, :, :3] = imagette
             concat_image[:, :, 3] = imagette_mask
@@ -444,11 +466,11 @@ def Training():
 
             img_patch_list.append(concat_image)
 
-        train_data = CustomDataset(data_list=img_patch_list, labels_tensor=labels_tensor, transform=transform2)
+        train_data = CustomDataset(data_list=img_patch_list, labels_tensor=labels_tensor, transform=transform)
         return train_data
 
     @thread_worker
-    def train(image_path, labels_path, position_list, labels_list, nn_type, lr, epochs_nb, patch_size):
+    def train(image, mask, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, patch_size):
 
         """
         transform2 = A.Compose([
@@ -469,15 +491,13 @@ def Training():
         model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         input_size = patch_size
 
-        transform = transforms.Compose([transforms.ToTensor()])
-
-        train_folder = os.path.join(folder, "Imagettes")
-        labels_path = os.path.join(folder, "labels_training.xlsx")
+        global transform
+        transform = A.Compose([ToTensorV2()])
 
         torch_type = torch.cuda.FloatTensor
 
         losses_dict = {
-            "CrossEntropy": "torch.nn.CrossEntropyLoss",
+            "CrossEntropy": "CrossEntropyLoss",
             "L1Smooth": "L1SmoothLoss",
             "BCE": "BceLoss",
             "Distance": "DistanceLoss",
@@ -486,7 +506,7 @@ def Training():
         }
 
         # Setting the optimizer
-        LR = 0.01
+        LR = lr
         torch.autograd.set_detect_anomaly(True)
         optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
@@ -496,19 +516,11 @@ def Training():
         torch.backends.cudnn.benchmark = True
 
         # Parameters
-
-        imagettes_list = natsorted([f for f in listdir(train_folder) if isfile(join(train_folder, f)) and
-                                    join(train_folder, f).endswith(".png") and os.path.splitext(f)[0].endswith("imagette")])
-        imagettes_masks_list = natsorted([f for f in listdir(train_folder) if isfile(join(train_folder, f)) and
-                                          join(train_folder, f).endswith(".png") and os.path.splitext(f)[0].endswith(
-            "mask")])
-
-        df = pd.read_excel(labels_path)
-        labels_list = df["label"].to_numpy()
+        labels_list = np.array(labels_list)
 
         # Generators
-        train_data = get_image_patch(imagettes_list, imagettes_masks_list, labels_list)
-        training_loader = DataLoader(dataset=train_data, batch_size=128, shuffle=True)
+        train_data = get_image_patch(image, mask, region_props, labels_list, torch_type)
+        training_loader = DataLoader(dataset=train_data, batch_size=4, shuffle=True)
 
         # Optimizer
         model.to("cuda")
@@ -524,10 +536,10 @@ def Training():
         weights = np.ones([2 + 1])
         weights[0] = 0
         weights = torch.from_numpy(weights)
-        loss = nn.CrossEntropyLoss(weight=weights).type(torch_type)
+        loss = eval("nn." + losses_dict[loss_func] + "(weight=weights).type(torch_type)")
         # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
         # Loop over epochs
-        iterations_number = 5000
+        iterations_number = epochs_nb
         for epoch in range(iterations_number):
             print("Epoch ", epoch + 1)
             for phase in ["train", "val"]:
@@ -564,15 +576,26 @@ def Training():
         lr=dict(widget_type='LineEdit', label='Learning rate', value=0.01, tooltip='Learning rate'),
         nn=dict(widget_type='ComboBox', label='Network architecture', choices=networks_list, value="ResNet18",
                        tooltip='All the available network architectures'),
+        loss=dict(widget_type='ComboBox', label='Loss function', choices=losses_list, value="CrossEntropy",
+                  tooltip='All the available loss functions'),
         epochs=dict(widget_type='LineEdit', label='Epochs number', value=1000, tooltip='Epochs number'),
         launch_training_button=dict(widget_type='PushButton', text='Launch training', tooltip='Launch training'),
+        DATA_AUGMENTATION_TYPE=dict(widget_type='Label'),
+        rotations=dict(widget_type='CheckBox', text='Rotations', tooltip='Rotations'),
+        v_flip=dict(widget_type='CheckBox', text='Vertical flip', tooltip='Vertical flip'),
+        h_flip=dict(widget_type='CheckBox', text='Horizontal flip', tooltip='Horizontal flip'),
     )
     def training_widget(  # label_logo,
             viewer: Viewer,
             load_data_button,
             nn,
+            loss,
             lr,
             epochs,
+            DATA_AUGMENTATION_TYPE,
+            rotations,
+            h_flip,
+            v_flip,
             launch_training_button,
 
     ) -> None:
@@ -582,20 +605,27 @@ def Training():
     @training_widget.load_data_button.changed.connect
     def _load_data(e: Any):
         path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
+        """
         with open(path, 'rb') as handle:
             b = pickle.load(handle)
+        """
+        b = torch.load(path)
 
         global image_path
         global labels_path
-        global position_list
+        global region_props
         global labels_list
         global patch_size
+        global image
+        global mask
         image_path = b["image_path"]
         labels_path = b["labels_path"]
-        position_list = b["position_list"]
+        region_props = b["regionprops"]
         labels_list = b["labels_list"]
         patch_size = int(b["patch_size"])
 
+        image = np.array(Image.open(image_path))
+        mask = np.array(Image.open(labels_path))
         training_widget.viewer.value.add_image(imread(image_path))
         training_widget.viewer.value.add_labels(imread(labels_path))
 
@@ -603,8 +633,9 @@ def Training():
 
     @training_widget.launch_training_button.changed.connect
     def _extract_patches(e: Any):
-        training_worker = train(image_path, labels_path, position_list, labels_list, training_widget.nn.value,
-                                float(training_widget.lr.value), int(training_widget.epochs.value), patch_size)
+        training_worker = train(image, mask, region_props, labels_list, training_widget.nn.value,
+                                training_widget.loss.value, float(training_widget.lr.value),
+                                int(training_widget.epochs.value), patch_size)
         #training_worker.returned.connect(display_first_patch)
         training_worker.start()
         show_info('Training started')
