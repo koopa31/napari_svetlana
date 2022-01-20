@@ -379,12 +379,11 @@ def Annotation():
         return patch
 
     @magicgui(
-        #call_button='run segmentation',
         layout='vertical',
         patch_size=dict(widget_type='LineEdit', label='patch size', value=200, tooltip='extracted patch size'),
         patch_nb=dict(widget_type='LineEdit', label='patches number', value=10, tooltip='number of extracted patches'),
         labels_nb=dict(widget_type='ComboBox', label='labels number', choices=labels_number, value=2,
-                           tooltip='Number of possible labels'),
+                       tooltip='Number of possible labels'),
         extract_pacthes_button=dict(widget_type='PushButton', text='extract patches from image',
                                     tooltip='extraction of patches to be annotated from the segmentation mask'),
     )
@@ -453,11 +452,6 @@ def Training():
             for x, y in region_props[i]["coords"]:
                 imagette_mask[x - xb, y - yb] = 1
 
-            plt.figure(1)
-            plt.imshow(imagette)
-            plt.figure(2)
-            plt.imshow(imagette_mask)
-
             concat_image = np.zeros((imagette.shape[0], imagette.shape[1], 4))
             concat_image[:, :, :3] = imagette
             concat_image[:, :, 3] = imagette_mask
@@ -470,15 +464,41 @@ def Training():
         return train_data
 
     @thread_worker
-    def train(image, mask, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, patch_size):
+    def train(image, mask, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, patch_size, rot, h_flip,
+              v_flip, prob, batch_size):
 
-        """
-        transform2 = A.Compose([
-            A.Rotate(-90, 90, p=0.8),
-            A.HorizontalFlip(p=0.8),
-            A.VerticalFlip(p=0.8),
-            ToTensorV2()])
-        """
+        global transform
+        if rot is True and h_flip is False and v_flip is False:
+            transform = A.Compose([
+                A.Rotate(-90, 90, p=prob),
+                ToTensorV2()])
+        elif rot is False and h_flip is True and v_flip is False:
+            transform = A.Compose([
+                A.HorizontalFlip(p=prob),
+                ToTensorV2()])
+        elif rot is False and h_flip is False and v_flip is True:
+            transform = A.Compose([
+                A.VerticalFlip(p=prob),
+                ToTensorV2()])
+        elif rot is True and h_flip is False and v_flip is True:
+            transform = A.Compose([
+                A.Rotate(-90, 90, p=prob),
+                A.VerticalFlip(p=prob),
+                ToTensorV2()])
+        elif rot is True and h_flip is True and v_flip is False:
+            transform = A.Compose([
+                A.Rotate(-90, 90, p=prob),
+                A.HorizontalFlip(p=prob),
+                ToTensorV2()])
+        elif rot is True and h_flip is True and v_flip is True:
+            transform = A.Compose([
+                A.Rotate(-90, 90, p=prob),
+                A.HorizontalFlip(p=prob),
+                A.VerticalFlip(p=prob),
+                ToTensorV2()])
+        else:
+            transform = A.Compose([ToTensorV2()])
+
         nn_dict = {"ResNet18": "resnet18", "GoogleNet": "googlenet", "DenseNet": "densenet"}
         # Setting of network
         model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
@@ -491,8 +511,6 @@ def Training():
         model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         input_size = patch_size
 
-        global transform
-        transform = A.Compose([ToTensorV2()])
 
         torch_type = torch.cuda.FloatTensor
 
@@ -520,7 +538,7 @@ def Training():
 
         # Generators
         train_data = get_image_patch(image, mask, region_props, labels_list, torch_type)
-        training_loader = DataLoader(dataset=train_data, batch_size=4, shuffle=True)
+        training_loader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True)
 
         # Optimizer
         model.to("cuda")
@@ -533,7 +551,7 @@ def Training():
 
         # Loss function
         LOSS_LIST = []
-        weights = np.ones([2 + 1])
+        weights = np.ones([max(labels_list) + 1])
         weights[0] = 0
         weights = torch.from_numpy(weights)
         loss = eval("nn." + losses_dict[loss_func] + "(weight=weights).type(torch_type)")
@@ -584,6 +602,8 @@ def Training():
         rotations=dict(widget_type='CheckBox', text='Rotations', tooltip='Rotations'),
         v_flip=dict(widget_type='CheckBox', text='Vertical flip', tooltip='Vertical flip'),
         h_flip=dict(widget_type='CheckBox', text='Horizontal flip', tooltip='Horizontal flip'),
+        prob=dict(widget_type='LineEdit', label='Probability', value=0.8, tooltip='Probability'),
+        b_size=dict(widget_type='LineEdit', label='Batch Size', value=128, tooltip='Batch Size'),
     )
     def training_widget(  # label_logo,
             viewer: Viewer,
@@ -592,10 +612,12 @@ def Training():
             loss,
             lr,
             epochs,
+            b_size,
             DATA_AUGMENTATION_TYPE,
             rotations,
             h_flip,
             v_flip,
+            prob,
             launch_training_button,
 
     ) -> None:
@@ -635,11 +657,11 @@ def Training():
     def _extract_patches(e: Any):
         training_worker = train(image, mask, region_props, labels_list, training_widget.nn.value,
                                 training_widget.loss.value, float(training_widget.lr.value),
-                                int(training_widget.epochs.value), patch_size)
-        #training_worker.returned.connect(display_first_patch)
+                                int(training_widget.epochs.value), patch_size, training_widget.rotations.value,
+                                training_widget.h_flip.value, training_widget.v_flip.value,
+                                float(training_widget.prob.value), int(training_widget.b_size.value))
         training_worker.start()
         show_info('Training started')
-
 
     return training_widget
 
