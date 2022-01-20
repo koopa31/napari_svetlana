@@ -22,6 +22,16 @@ from skimage.measure import regionprops
 from skimage.morphology import ball, erosion
 from skimage.io import imread
 
+from CustomDataset import CustomDataset
+import torch
+from torch.utils.data import DataLoader
+from torch import nn
+from torchvision import models
+import albumentations as A
+from albumentations.pytorch.transforms import ToTensorV2
+from PIL import Image
+from torchvision import transforms
+
 from superqt import ensure_main_thread
 from qtpy.QtWidgets import QFileDialog
 
@@ -93,7 +103,7 @@ def Annotation():
             # Saving of the annotation result in a binary file
             path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
             res_dict = {"image_path": image_path, "labels_path": labels_path, "position_list": position_list,
-                        "labels_list": labels_list}
+                        "labels_list": labels_list, "patch_size": annotation_widget.patch_size.value}
             with open(path, "wb") as handle:
                 pickle.dump(res_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -408,6 +418,145 @@ def Annotation():
 def Training():
     from napari.qt.threading import thread_worker
 
+    def set_parameter_requires_grad(model, feature_extracting):
+        if feature_extracting:
+            for param in model.parameters():
+                param.requires_grad = False
+
+    def get_image_patch(imagettes_list, imagettes_masks_list, labels_list):
+        """
+        This function aims at contructing the tensors of the images and their labels
+        """
+        # Get image patch
+        img_patch_list = []
+        labels_tensor = torch.from_numpy(labels_list).type(torch_type)
+        labels_tensor = nn.functional.one_hot(labels_tensor.type(torch.cuda.LongTensor))
+
+        for image_nb in range(0, len(imagettes_list)):
+            # We create a 4 channels image concatenating the RGB image with its labels
+            imagette = cv2.imread(join(train_folder, imagettes_list[image_nb]))
+            imagette_mask = cv2.imread(join(train_folder, imagettes_masks_list[image_nb]))[:, :, 0]
+            concat_image = np.zeros((imagette.shape[0], imagette.shape[1], 4))
+            concat_image[:, :, :3] = imagette
+            concat_image[:, :, 3] = imagette_mask
+            # Normalization of the image
+            concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
+
+            img_patch_list.append(concat_image)
+
+        train_data = CustomDataset(data_list=img_patch_list, labels_tensor=labels_tensor, transform=transform2)
+        return train_data
+
+    @thread_worker
+    def train(image_path, labels_path, position_list, labels_list, nn_type, lr, epochs_nb, patch_size):
+
+        """
+        transform2 = A.Compose([
+            A.Rotate(-90, 90, p=0.8),
+            A.HorizontalFlip(p=0.8),
+            A.VerticalFlip(p=0.8),
+            ToTensorV2()])
+        """
+        nn_dict = {"ResNet18": "resnet18", "GoogleNet": "googlenet", "DenseNet": "densenet"}
+        # Setting of network
+        model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
+
+        set_parameter_requires_grad(model, True)
+        # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1" as we have
+        # "labels_number" labels
+        num_ftrs = model.fc.in_features
+        model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+        model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+        input_size = patch_size
+
+        transform = transforms.Compose([transforms.ToTensor()])
+
+        train_folder = os.path.join(folder, "Imagettes")
+        labels_path = os.path.join(folder, "labels_training.xlsx")
+
+        torch_type = torch.cuda.FloatTensor
+
+        losses_dict = {
+            "CrossEntropy": "torch.nn.CrossEntropyLoss",
+            "L1Smooth": "L1SmoothLoss",
+            "BCE": "BceLoss",
+            "Distance": "DistanceLoss",
+            "L1": "L1_Loss",
+            "MSE": "MseLoss"
+        }
+
+        # Setting the optimizer
+        LR = 0.01
+        torch.autograd.set_detect_anomaly(True)
+        optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+
+        # CUDA for PyTorch
+        use_cuda = torch.cuda.is_available()
+        device = torch.device("cuda:0" if use_cuda else "cpu")
+        torch.backends.cudnn.benchmark = True
+
+        # Parameters
+
+        imagettes_list = natsorted([f for f in listdir(train_folder) if isfile(join(train_folder, f)) and
+                                    join(train_folder, f).endswith(".png") and os.path.splitext(f)[0].endswith("imagette")])
+        imagettes_masks_list = natsorted([f for f in listdir(train_folder) if isfile(join(train_folder, f)) and
+                                          join(train_folder, f).endswith(".png") and os.path.splitext(f)[0].endswith(
+            "mask")])
+
+        df = pd.read_excel(labels_path)
+        labels_list = df["label"].to_numpy()
+
+        # Generators
+        train_data = get_image_patch(imagettes_list, imagettes_masks_list, labels_list)
+        training_loader = DataLoader(dataset=train_data, batch_size=128, shuffle=True)
+
+        # Optimizer
+        model.to("cuda")
+        params_to_update = []
+        for name, param in model.named_parameters():
+            if param.requires_grad is True:
+                params_to_update.append(param)
+                print("\t", name)
+        optimizer = torch.optim.Adam(params_to_update, lr=LR)
+
+        # Loss function
+        LOSS_LIST = []
+        weights = np.ones([2 + 1])
+        weights[0] = 0
+        weights = torch.from_numpy(weights)
+        loss = nn.CrossEntropyLoss(weight=weights).type(torch_type)
+        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
+        # Loop over epochs
+        iterations_number = 5000
+        for epoch in range(iterations_number):
+            print("Epoch ", epoch + 1)
+            for phase in ["train", "val"]:
+                if phase == "train":
+                    # Training
+                    for local_batch, local_labels in training_loader:
+                        # Transfer to GPU
+                        local_batch, local_labels = local_batch.to(device), local_labels.to(device)
+
+                        out = model(local_batch)
+                        total_loss = loss(out, local_labels.type(torch.cuda.FloatTensor))
+                        optimizer.zero_grad()
+                        total_loss.backward()
+                        optimizer.step()
+                        LOSS_LIST.append(total_loss.item())
+                        print(total_loss.item())
+                        # scheduler.step()
+                        if (epoch + 1) % 500 == 0:
+                            d = {"model": model, "optimizer_state_dict": optimizer,
+                                 "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST}
+                            model_path = os.path.join(folder, "training_ABS_full" + str(epoch + 1))
+                            if model_path.endswith(".pt") or model_path.endswith(".pth"):
+                                torch.save(d, model_path)
+                            else:
+                                torch.save(d, model_path + ".pth")
+
+                elif phase == "val":
+                    pass
+
     @magicgui(
         auto_call=True,
         layout='vertical',
@@ -440,15 +589,26 @@ def Training():
         global labels_path
         global position_list
         global labels_list
+        global patch_size
         image_path = b["image_path"]
         labels_path = b["labels_path"]
         position_list = b["position_list"]
         labels_list = b["labels_list"]
+        patch_size = int(b["patch_size"])
 
         training_widget.viewer.value.add_image(imread(image_path))
         training_widget.viewer.value.add_labels(imread(labels_path))
 
         return
+
+    @training_widget.launch_training_button.changed.connect
+    def _extract_patches(e: Any):
+        training_worker = train(image_path, labels_path, position_list, labels_list, training_widget.nn.value,
+                                float(training_widget.lr.value), int(training_widget.epochs.value), patch_size)
+        #training_worker.returned.connect(display_first_patch)
+        training_worker.start()
+        show_info('Training started')
+
 
     return training_widget
 
