@@ -464,7 +464,7 @@ def Training():
         return train_data
 
     @thread_worker
-    def train(image, mask, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, patch_size, rot, h_flip,
+    def train(image, mask, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
               v_flip, prob, batch_size):
 
         global transform
@@ -509,8 +509,6 @@ def Training():
         num_ftrs = model.fc.in_features
         model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
         model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        input_size = patch_size
-
 
         torch_type = torch.cuda.FloatTensor
 
@@ -637,14 +635,12 @@ def Training():
         global labels_path
         global region_props
         global labels_list
-        global patch_size
         global image
         global mask
         image_path = b["image_path"]
         labels_path = b["labels_path"]
         region_props = b["regionprops"]
         labels_list = b["labels_list"]
-        patch_size = int(b["patch_size"])
 
         image = np.array(Image.open(image_path))
         mask = np.array(Image.open(labels_path))
@@ -657,7 +653,7 @@ def Training():
     def _extract_patches(e: Any):
         training_worker = train(image, mask, region_props, labels_list, training_widget.nn.value,
                                 training_widget.loss.value, float(training_widget.lr.value),
-                                int(training_widget.epochs.value), patch_size, training_widget.rotations.value,
+                                int(training_widget.epochs.value), training_widget.rotations.value,
                                 training_widget.h_flip.value, training_widget.v_flip.value,
                                 float(training_widget.prob.value), int(training_widget.b_size.value))
         training_worker.start()
