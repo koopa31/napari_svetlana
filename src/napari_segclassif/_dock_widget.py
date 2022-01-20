@@ -589,6 +589,7 @@ def Training():
 
                 elif phase == "val":
                     pass
+        plt.plot(LOSS_LIST)
 
     @magicgui(
         auto_call=True,
@@ -695,7 +696,7 @@ def Prediction():
     def predict(image, labels, patch_size):
 
         # On fait une analyse en composantes connectées
-        props = regionprops(labels)[:1000]
+        props = regionprops(labels)
 
         imagette_contours = image.copy()
 
@@ -783,8 +784,8 @@ def Prediction():
 
     @prediction_widget.launch_prediction_button.changed.connect
     def _launch_prediction(e: Any):
-        training_worker = predict(image, mask, patch_size)
-        training_worker.start()
+        prediction_worker = predict(image, mask, patch_size)
+        prediction_worker.start()
         show_info('Training started')
 
     return prediction_widget
