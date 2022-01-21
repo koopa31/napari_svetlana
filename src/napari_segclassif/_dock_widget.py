@@ -448,12 +448,12 @@ def Training():
                              + (patch_size//2), int(region_props[i]["centroid"][1]) - (patch_size//2):
                              int(region_props[i]["centroid"][1]) + (patch_size//2)]
 
-            imagette_mask = np.zeros((imagette.shape[0], imagette.shape[1]))
+            imagette_mask = np.zeros((imagette.shape[0], imagette.shape[1])).astype(np.uint8)
             xb = int(region_props[i]["centroid"][0]) - (patch_size//2)
             yb = int(region_props[i]["centroid"][1]) - (patch_size//2)
 
             for x, y in region_props[i]["coords"]:
-                imagette_mask[x - xb, y - yb] = 1
+                imagette_mask[x - xb, y - yb] = 255
 
             concat_image = np.zeros((imagette.shape[0], imagette.shape[1], 4))
             concat_image[:, :, :3] = imagette
@@ -576,8 +576,8 @@ def Training():
                         LOSS_LIST.append(total_loss.item())
                         print(total_loss.item())
                         # scheduler.step()
-                        folder = "/home/cazorla/Images/TEST"
-                        if (epoch + 1) % 500 == 0:
+                        folder = "/home/clement/Images/TEST_NAPARI"
+                        if (epoch + 1) % 100 == 0:
                             d = {"model": model, "optimizer_state_dict": optimizer,
                                  "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
                                  "image_path": image_path, "labels_path": labels_path, "patch_size": patch_size}
@@ -589,7 +589,39 @@ def Training():
 
                 elif phase == "val":
                     pass
+        """
+        folder = "/home/clement/Images/TEST_NAPARI"
+        model = torch.load(os.path.join(folder, "training_ABS_full1000.pth"))["model"]
+        from natsort import natsorted
+        validation_folder = "/home/clement/Images/TEST_NAPARI/Imagettes_validation"
+        validation_imagettes_list = natsorted(
+            [f for f in os.listdir(validation_folder) if os.path.isfile(os.path.join(validation_folder, f)) and
+             os.path.join(validation_folder, f).endswith(".png") and os.path.splitext(f)[0].endswith("imagette")])
+        validation_imagettes_masks_list = natsorted(
+            [f for f in os.listdir(validation_folder) if os.path.isfile(os.path.join(validation_folder, f)) and
+             os.path.join(validation_folder, f).endswith(".png") and os.path.splitext(f)[0].endswith("mask")])
+        model.eval()
+        values_list = []
+        LIST = []
+        for image_nb in range(0, len(validation_imagettes_list)):
+            imagette = np.array(Image.open(os.path.join(validation_folder, validation_imagettes_list[image_nb])))
+            imagette_mask = np.array(Image.open(os.path.join(validation_folder,
+                                     validation_imagettes_masks_list[image_nb])))
+
+            concat_image = np.zeros((imagette.shape[0], imagette.shape[1], 4))
+            concat_image[:, :, :3] = imagette
+            concat_image[:, :, 3] = imagette_mask
+            # Normalization of the image
+            concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
+
+            img_t = transforms.Compose([transforms.ToTensor()])(concat_image)
+            batch_t = torch.unsqueeze(img_t, 0).type(torch.float32).to("cuda")
+            out = model(batch_t)
+            _, index = torch.max(out, 1)
+            print(index)
+        """
         plt.plot(LOSS_LIST)
+        plt.show()
 
     @magicgui(
         auto_call=True,
