@@ -38,6 +38,9 @@ from joblib import Parallel, delayed
 from superqt import ensure_main_thread
 from qtpy.QtWidgets import QFileDialog
 
+from line_profiler_pycharm import profile
+from numba import jit, njit
+
 @ensure_main_thread
 def show_info(message: str):
     notification_manager.receive_info(message)
@@ -576,7 +579,7 @@ def Training():
                         LOSS_LIST.append(total_loss.item())
                         print(total_loss.item())
                         # scheduler.step()
-                        folder = "/home/clement/Images/TEST_NAPARI"
+                        folder = "/home/cazorla/Images/TEST"
                         if (epoch + 1) % 100 == 0:
                             d = {"model": model, "optimizer_state_dict": optimizer,
                                  "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
@@ -590,10 +593,10 @@ def Training():
                 elif phase == "val":
                     pass
         """
-        folder = "/home/clement/Images/TEST_NAPARI"
+        folder = "/home/cazorla/Images/TEST"
         model = torch.load(os.path.join(folder, "training_ABS_full1000.pth"))["model"]
         from natsort import natsorted
-        validation_folder = "/home/clement/Images/TEST_NAPARI/Imagettes_validation"
+        validation_folder = "/home/cazorla/Images/TEST/Imagettes_validation"
         validation_imagettes_list = natsorted(
             [f for f in os.listdir(validation_folder) if os.path.isfile(os.path.join(validation_folder, f)) and
              os.path.join(validation_folder, f).endswith(".png") and os.path.splitext(f)[0].endswith("imagette")])
@@ -705,34 +708,42 @@ def Training():
 def Prediction():
     from napari.qt.threading import thread_worker
 
+    import numexpr as ne
+
+    @profile
     def draw_predicted_contour(compteur, prop, imagette_contours, labels):
 
-        mask = labels.copy()
-        mask[mask != prop.label] = 0
-        mask[mask == prop.label] = 1
-        eroded_mask = cv2.erode(np.uint8(mask), np.ones((7, 7), np.uint8))
-        contours = mask - eroded_mask
-
-        if hasattr(prop, "prediction") and prop.prediction == 1:
-            imagette_contours[:, :, 0][contours != 0] = 0
-            imagette_contours[:, :, 1][contours != 0] = 0
-            imagette_contours[:, :, 1][contours != 0] = 255
+        if prop.prediction == 1:
+            imagette_contours[prop.coords[:, 0], prop.coords[:, 1]] = 1
             compteur += 1
-        elif hasattr(prop, "prediction") and prop.prediction == 2:
-            imagette_contours[:, :, 0][contours != 0] = 255
-            imagette_contours[:, :, 1][contours != 0] = 0
-            imagette_contours[:, :, 1][contours != 0] = 0
+        elif prop.prediction == 2:
+            imagette_contours[prop.coords[:, 0], prop.coords[:, 1]] = 2
+
+
+        # II = np.nonzero(labels == prop.label)
+        # mask = np.zeros_like(labels)
+        # mask[labels == prop.label] = 1
+        # eroded_mask = cv2.erode(np.uint8(mask), np.ones((7, 7), np.uint8))
+        # contours = mask - eroded_mask
+
+        #if hasattr(prop, "prop.predictioniction") and prop.prediction == 1:
+        # if prop.prediction == 1:
+        #     imagette_contours[contours != 0] = (0, 255, 0)
+        #     compteur += 1
+        # elif prop.prediction == 2:
+        #     imagette_contours[contours != 0] = (255, 0, 0)
         return compteur
 
     @thread_worker
     def predict(image, labels, patch_size):
 
         # On fait une analyse en composantes connectées
-        props = regionprops(labels)
+        props = regionprops(labels)[:100]
 
-        imagette_contours = image.copy()
+        imagette_contours = np.zeros((image.shape[0], image.shape[1]))
 
         compteur = 0
+        nbr_pos = 0
         # On itère sur les cellules détectées par Cellpose pour générer des imagettes autour de celles-ci
         for i, prop in enumerate(props):
             if np.isnan(prop.centroid[0]) == False and np.isnan(prop.centroid[1]) == False:
@@ -769,9 +780,9 @@ def Prediction():
         compteur = Parallel(n_jobs=-1, require="sharedmem")(delayed(draw_predicted_contour)(compteur, prop, imagette_contours, labels)
                                                             for i, prop in enumerate(props))
 
+        #prediction_widget.viewer.value.layers.pop()
         prediction_widget.viewer.value.layers.pop()
-        prediction_widget.viewer.value.layers.pop()
-        prediction_widget.viewer.value.add_image(imagette_contours)
+        prediction_widget.viewer.value.add_labels(imagette_contours.astype(np.uint8))
 
     @magicgui(
         auto_call=True,
@@ -806,6 +817,7 @@ def Prediction():
         labels_path = b["labels_path"]
         model = b["model"].to("cuda")
         patch_size = b["patch_size"]
+        model.eval()
 
         image = np.array(Image.open(image_path))
         mask = np.array(Image.open(labels_path))
