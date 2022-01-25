@@ -721,7 +721,7 @@ def Prediction():
         return compteur
 
     @thread_worker
-    def predict(image, labels, patch_size):
+    def predict(image, labels, patch_size, batch_size):
 
         import time
         start = time.time()
@@ -733,7 +733,7 @@ def Prediction():
         compteur = 0
 
         data = PredictionDataset(image, labels, props, patch_size // 2)
-        prediction_loader = DataLoader(dataset=data, batch_size=300, shuffle=False)
+        prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
 
         list_pred = []
         for local_batch in prediction_loader:
@@ -764,12 +764,14 @@ def Prediction():
     @magicgui(
         auto_call=True,
         layout='vertical',
+        batch_size=dict(widget_type='LineEdit', label='Batch size', value=100, tooltip='Batch size'),
         load_data_button=dict(widget_type='PushButton', text='Load data', tooltip='Load the image and the labels'),
         launch_prediction_button=dict(widget_type='PushButton', text='Launch prediction', tooltip='Launch prediction'),
     )
     def prediction_widget(  # label_logo,
             viewer: Viewer,
             load_data_button,
+            batch_size,
             launch_prediction_button,
 
     ) -> None:
@@ -806,11 +808,12 @@ def Prediction():
     def display_result(image):
         prediction_widget.viewer.value.add_labels(image)
         # Chose of the colours
+        prediction_widget.viewer.value.layers[1].name = "Classified labels"
         prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
 
     @prediction_widget.launch_prediction_button.changed.connect
     def _launch_prediction(e: Any):
-        prediction_worker = predict(image, mask, patch_size)
+        prediction_worker = predict(image, mask, patch_size, int(prediction_widget.batch_size.value))
         # Addition of the new labels
         prediction_worker.returned.connect(display_result)
         prediction_worker.start()
