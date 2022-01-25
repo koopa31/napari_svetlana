@@ -713,11 +713,9 @@ def Prediction():
 
     def draw_predicted_contour(compteur, prop, imagette_contours, i, list_pred):
 
+        imagette_contours[prop.coords[:, 0], prop.coords[:, 1]] = list_pred[i].item()
         if list_pred[i] == 1:
-            imagette_contours[prop.coords[:, 0], prop.coords[:, 1]] = 1
             compteur += 1
-        elif list_pred[i] == 2:
-            imagette_contours[prop.coords[:, 0], prop.coords[:, 1]] = 2
         return compteur
 
     @thread_worker
@@ -758,6 +756,7 @@ def Prediction():
         stop = time.time()
         print("temps de traitement", stop - start)
         show_info(str(np.sum(compteur)) + " objects remaining over " + str(len(props)))
+        print(str(np.sum(compteur)) + " objects remaining over " + str(len(props)))
 
         return imagette_contours.astype(np.uint8)
 
@@ -809,7 +808,8 @@ def Prediction():
         prediction_widget.viewer.value.add_labels(image)
         # Chose of the colours
         prediction_widget.viewer.value.layers[1].name = "Classified labels"
-        prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
+        if len(np.unique(prediction_widget.viewer.value.layers[1].data)) == 3:
+            prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
 
     @prediction_widget.launch_prediction_button.changed.connect
     def _launch_prediction(e: Any):
@@ -817,7 +817,7 @@ def Prediction():
         # Addition of the new labels
         prediction_worker.returned.connect(display_result)
         prediction_worker.start()
-        show_info('Training started')
+        show_info('Prediction started')
 
     return prediction_widget
 
