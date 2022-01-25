@@ -708,9 +708,6 @@ def Training():
 def Prediction():
     from napari.qt.threading import thread_worker
 
-    import numexpr as ne
-
-    @profile
     def draw_predicted_contour(compteur, prop, imagette_contours, labels):
 
         if prop.prediction == 1:
@@ -718,27 +715,15 @@ def Prediction():
             compteur += 1
         elif prop.prediction == 2:
             imagette_contours[prop.coords[:, 0], prop.coords[:, 1]] = 2
-
-
-        # II = np.nonzero(labels == prop.label)
-        # mask = np.zeros_like(labels)
-        # mask[labels == prop.label] = 1
-        # eroded_mask = cv2.erode(np.uint8(mask), np.ones((7, 7), np.uint8))
-        # contours = mask - eroded_mask
-
-        #if hasattr(prop, "prop.predictioniction") and prop.prediction == 1:
-        # if prop.prediction == 1:
-        #     imagette_contours[contours != 0] = (0, 255, 0)
-        #     compteur += 1
-        # elif prop.prediction == 2:
-        #     imagette_contours[contours != 0] = (255, 0, 0)
         return compteur
 
     @thread_worker
     def predict(image, labels, patch_size):
 
+        import time
+        start = time.time()
         # On fait une analyse en composantes connectées
-        props = regionprops(labels)[:100]
+        props = regionprops(labels)
 
         imagette_contours = np.zeros((image.shape[0], image.shape[1]))
 
@@ -780,9 +765,22 @@ def Prediction():
         compteur = Parallel(n_jobs=-1, require="sharedmem")(delayed(draw_predicted_contour)(compteur, prop, imagette_contours, labels)
                                                             for i, prop in enumerate(props))
 
-        #prediction_widget.viewer.value.layers.pop()
+        # computation of the cells segmentation edges
+        eroded_contours = cv2.erode(np.uint16(labels), np.ones((7, 7), np.uint8))
+        eroded_labels = labels - eroded_contours
+
+        # Removing the inside of the cells in the binary result using the edges mask computed just before
+        imagette_contours[eroded_labels == 0] = 0
+
+        # Deletion of the old mask
         prediction_widget.viewer.value.layers.pop()
+
+        # Addition of the new one
         prediction_widget.viewer.value.add_labels(imagette_contours.astype(np.uint8))
+        # Chose of the colours
+        prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
+        stop = time.time()
+        print("temps de traitement", stop - start)
 
     @magicgui(
         auto_call=True,
