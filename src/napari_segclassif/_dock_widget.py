@@ -41,6 +41,9 @@ from qtpy.QtWidgets import QFileDialog
 from line_profiler_pycharm import profile
 from numba import jit, njit
 
+from napari_segclassif.PredictionDataset import PredictionDataset
+
+
 @ensure_main_thread
 def show_info(message: str):
     notification_manager.receive_info(message)
@@ -708,12 +711,12 @@ def Training():
 def Prediction():
     from napari.qt.threading import thread_worker
 
-    def draw_predicted_contour(compteur, prop, imagette_contours, labels):
+    def draw_predicted_contour(compteur, prop, imagette_contours, i, list_pred):
 
-        if prop.prediction == 1:
+        if list_pred[i] == 1:
             imagette_contours[prop.coords[:, 0], prop.coords[:, 1]] = 1
             compteur += 1
-        elif prop.prediction == 2:
+        elif list_pred[i] == 2:
             imagette_contours[prop.coords[:, 0], prop.coords[:, 1]] = 2
         return compteur
 
@@ -728,41 +731,18 @@ def Prediction():
         imagette_contours = np.zeros((image.shape[0], image.shape[1]))
 
         compteur = 0
-        nbr_pos = 0
-        # On itère sur les cellules détectées par Cellpose pour générer des imagettes autour de celles-ci
-        for i, prop in enumerate(props):
-            if np.isnan(prop.centroid[0]) == False and np.isnan(prop.centroid[1]) == False:
-                print(i)
-                imagette = image[int(prop.centroid[0]) - (patch_size // 2):int(prop.centroid[0]) + (patch_size // 2),
-                           int(prop.centroid[1]) - (patch_size // 2):
-                           int(prop.centroid[1]) + (patch_size // 2)].copy()
-                maskette = labels[int(prop.centroid[0]) - (patch_size // 2):int(prop.centroid[0]) + (patch_size // 2),
-                           int(prop.centroid[1]) - (patch_size // 2):
-                           int(prop.centroid[1]) + (patch_size // 2)].copy()
-                maskette[maskette != prop.label] = 0
-                maskette[maskette == prop.label] = 255
 
-                # L'imagette et son mask étant générés, on passe a la concaténation pour faire la prédiction du label par le CNN
+        data = PredictionDataset(image, labels, props, patch_size // 2)
+        prediction_loader = DataLoader(dataset=data, batch_size=300, shuffle=False)
 
-                concat_image = np.zeros((imagette.shape[0], imagette.shape[1], 4))
-                concat_image[:, :, :3] = imagette
-                concat_image[:, :, 3] = maskette
-                if concat_image.shape[0] == 0 or concat_image.shape[1] == 0:
-                    pass
-                else:
-                    # Normalisation de l'image
-                    concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
-                    img_t = A.Compose([ToTensorV2()])(image=concat_image)["image"]
-                    batch_t = torch.unsqueeze(img_t, 0).type(torch.float32).to("cuda")
-                    out = model(batch_t)
-                    _, index = torch.max(out, 1)
-
-                    # On stocke le résultat de classif pour chaque cellule dans un attribut nommé prédiction
-                    prop.prediction = index.cpu().detach().numpy()[0]
-                    print("prediction=", prop.prediction)
+        list_pred = []
+        for local_batch in prediction_loader:
+            out = model(local_batch)
+            _, index = torch.max(out, 1)
+            list_pred += index
 
         show_info("Prediction of patches done, please wait while the result image is being generated...")
-        compteur = Parallel(n_jobs=-1, require="sharedmem")(delayed(draw_predicted_contour)(compteur, prop, imagette_contours, labels)
+        compteur = Parallel(n_jobs=-1, require="sharedmem")(delayed(draw_predicted_contour)(compteur, prop, imagette_contours, i, list_pred)
                                                             for i, prop in enumerate(props))
 
         # computation of the cells segmentation edges
@@ -775,13 +755,11 @@ def Prediction():
         # Deletion of the old mask
         prediction_widget.viewer.value.layers.pop()
 
-        # Addition of the new one
-        prediction_widget.viewer.value.add_labels(imagette_contours.astype(np.uint8))
-        # Chose of the colours
-        prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
         stop = time.time()
         print("temps de traitement", stop - start)
         show_info(str(np.sum(compteur)) + " objects remaining over " + str(len(props)))
+
+        return imagette_contours.astype(np.uint8)
 
     @magicgui(
         auto_call=True,
@@ -825,9 +803,16 @@ def Prediction():
 
         return
 
+    def display_result(image):
+        prediction_widget.viewer.value.add_labels(image)
+        # Chose of the colours
+        prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
+
     @prediction_widget.launch_prediction_button.changed.connect
     def _launch_prediction(e: Any):
         prediction_worker = predict(image, mask, patch_size)
+        # Addition of the new labels
+        prediction_worker.returned.connect(display_result)
         prediction_worker.start()
         show_info('Training started')
 
