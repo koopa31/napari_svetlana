@@ -781,6 +781,7 @@ def Prediction():
         prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
         stop = time.time()
         print("temps de traitement", stop - start)
+        show_info(str(np.sum(compteur)) + " objects remaining over " + str(len(props)))
 
     @magicgui(
         auto_call=True,
