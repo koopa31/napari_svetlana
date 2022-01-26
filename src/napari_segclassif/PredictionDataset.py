@@ -4,25 +4,27 @@ from torchvision import transforms
 
 
 class PredictionDataset(Dataset):
-    def __init__(self, image, labels, props, half_patch_size):
+    def __init__(self, image, labels, props, half_patch_size, max_type_val):
         self.props = props
         self.image = image
         self.labels = labels
         self.half_patch_size = half_patch_size
         self.transform = transforms.Compose([transforms.ToTensor()])
+        self.max_type_val = max_type_val
 
     def __getitem__(self, index):
         prop = self.props[index]
         if np.isnan(prop.centroid[0]) == False and np.isnan(prop.centroid[1]) == False:
+            xmin = (int(prop.centroid[0]) + self.half_patch_size + 1) - self.half_patch_size
+            xmax = (int(prop.centroid[0]) + self.half_patch_size + 1) + self.half_patch_size
+            ymin = (int(prop.centroid[1]) + self.half_patch_size + 1) - self.half_patch_size
+            ymax = (int(prop.centroid[1]) + self.half_patch_size + 1) + self.half_patch_size
 
-            imagette = self.image[int(prop.centroid[0]) - self.half_patch_size:int(prop.centroid[0]) + self.half_patch_size,
-                       int(prop.centroid[1]) - self.half_patch_size:
-                       int(prop.centroid[1]) + self.half_patch_size].copy()
-            maskette = self.labels[int(prop.centroid[0]) - self.half_patch_size:int(prop.centroid[0]) + self.half_patch_size,
-                       int(prop.centroid[1]) - self.half_patch_size:
-                       int(prop.centroid[1]) + self.half_patch_size].copy()
+            imagette = self.image[xmin:xmax, ymin:ymax].copy()
+            maskette = self.labels[xmin:xmax, ymin:ymax].copy()
+
             maskette[maskette != prop.label] = 0
-            maskette[maskette == prop.label] = 255
+            maskette[maskette == prop.label] = self.max_type_val
 
             # L'imagette et son mask étant générés, on passe a la concaténation pour faire la prédiction du label par le CNN
 
