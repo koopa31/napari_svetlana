@@ -322,7 +322,7 @@ def Annotation():
                 image_path = im.source.path
 
         half_patch_size = patch_size // 2
-        contours_color = [0, 255, 0]
+        contours_color = [0, np.iinfo(image.dtype).max, 0]
 
         props = regionprops(labels)
         random.shuffle(props)
@@ -337,6 +337,8 @@ def Annotation():
         mini_props_list = []
         for i, prop in enumerate(mini_props):
             if prop.area != 0:
+                if len(image.shape) == 2:
+                    image = np.stack((image,) * 3, axis=-1)
                 if image.shape[2] <= 3:
                     mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords})
                     imagette = image[int(prop.centroid[0]) - half_patch_size:int(prop.centroid[0]) + half_patch_size,
@@ -726,6 +728,7 @@ def Prediction():
         # On fait une analyse en composantes connectées
         props = regionprops(labels)
 
+        global imagette_contours
         imagette_contours = np.zeros((image.shape[0], image.shape[1]))
 
         compteur = 0
@@ -744,11 +747,11 @@ def Prediction():
                                                             for i, prop in enumerate(props))
 
         # computation of the cells segmentation edges
-        eroded_contours = cv2.erode(np.uint16(labels), np.ones((7, 7), np.uint8))
-        eroded_labels = labels - eroded_contours
+        #eroded_contours = cv2.erode(np.uint16(labels), np.ones((7, 7), np.uint8))
+        #eroded_labels = labels - eroded_contours
 
         # Removing the inside of the cells in the binary result using the edges mask computed just before
-        imagette_contours[eroded_labels == 0] = 0
+        #imagette_contours[eroded_labels == 0] = 0
 
         # Deletion of the old mask
         prediction_widget.viewer.value.layers.pop()
@@ -766,12 +769,14 @@ def Prediction():
         batch_size=dict(widget_type='LineEdit', label='Batch size', value=100, tooltip='Batch size'),
         load_data_button=dict(widget_type='PushButton', text='Load data', tooltip='Load the image and the labels'),
         launch_prediction_button=dict(widget_type='PushButton', text='Launch prediction', tooltip='Launch prediction'),
+        bound=dict(widget_type='CheckBox', text='Show boundaries only', tooltip='Show boundaries only'),
     )
     def prediction_widget(  # label_logo,
             viewer: Viewer,
             load_data_button,
             batch_size,
             launch_prediction_button,
+            bound,
 
     ) -> None:
         # Import when users activate plugin
@@ -818,6 +823,25 @@ def Prediction():
         prediction_worker.returned.connect(display_result)
         prediction_worker.start()
         show_info('Prediction started')
+
+    @prediction_widget.bound.changed.connect
+    def show_boundaries(e: Any):
+
+        if "edge_im" in globals() is False:
+            # computation of the cells segmentation edges
+            eroded_contours = cv2.erode(np.uint16(mask), np.ones((7, 7), np.uint8))
+            eroded_labels = mask - eroded_contours
+
+            # Removing the inside of the cells in the binary result using the edges mask computed just before
+            global edge_im
+            edge_im = imagette_contours.copy()
+            edge_im[eroded_labels == 0] = 0
+        if e is True:
+            prediction_widget.viewer.value.layers.pop()
+            prediction_widget.viewer.value.layers.add_labels(edge_im)
+        else:
+            prediction_widget.viewer.value.layers.pop()
+            prediction_widget.viewer.value.layers.add_labels(imagette_contours)
 
     return prediction_widget
 
