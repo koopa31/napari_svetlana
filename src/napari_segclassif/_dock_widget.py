@@ -401,9 +401,12 @@ def Annotation():
                        tooltip='Number of possible labels'),
         extract_pacthes_button=dict(widget_type='PushButton', text='extract patches from image',
                                     tooltip='extraction of patches to be annotated from the segmentation mask'),
+        estimate_size_button=dict(widget_type='PushButton', text='Estimate patch size',
+                                  tooltip='Automatically estimate an optimal patch size'),
     )
     def annotation_widget(  # label_logo,
             viewer: Viewer,
+            estimate_size_button,
             patch_size,
             patch_nb,
             extract_pacthes_button,
@@ -432,6 +435,22 @@ def Annotation():
         patch_worker.returned.connect(display_first_patch)
         patch_worker.start()
         print('patch extraction done')
+
+    @annotation_widget.estimate_size_button.changed.connect
+    def estimate_patch_size():
+        for im in annotation_widget.viewer.value.layers:
+            if "mask" in im.name:
+                labels = im.data
+
+        props = regionprops(labels)
+        x = sorted(props, key=lambda r: r.area, reverse=True)
+        xmax = x[0].bbox[2] - x[0].bbox[0]
+        ymax = x[0].bbox[3] - x[0].bbox[1]
+
+        length = max(xmax, ymax)
+        patch_size = int(length + 0.4 * length)
+
+        annotation_widget.patch_size.value = patch_size
 
     return annotation_widget
 
