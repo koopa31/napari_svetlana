@@ -367,7 +367,7 @@ def Annotation():
                     imagettes_list.append(imagette)
                     maskettes_list.append(maskette)
                     imagettes_contours_list.append(imagette_contours)
-                    mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords})
+                    mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords, "label": prop.label})
 
                 else:
                     # TODO: arranger l'annotation en 3D avec le zero padding comme ci dessus
@@ -469,7 +469,7 @@ def Training():
             for param in model.parameters():
                 param.requires_grad = False
 
-    def get_image_patch(image, region_props, labels_list, torch_type):
+    def get_image_patch(image, labels, region_props, labels_list, torch_type):
         """
         This function aims at contructing the tensors of the images and their labels
         """
@@ -481,16 +481,16 @@ def Training():
         max_type_val = np.iinfo(image.dtype).max
         for i, position in enumerate(region_props):
 
-            imagette = image[int(region_props[i]["centroid"][0]) - (patch_size//2):int(region_props[i]["centroid"][0])
-                             + (patch_size//2), int(region_props[i]["centroid"][1]) - (patch_size//2):
-                             int(region_props[i]["centroid"][1]) + (patch_size//2)]
+            xmin = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) - (patch_size//2)
+            xmax = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) + (patch_size//2)
+            ymin = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) - (patch_size//2)
+            ymax = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) + (patch_size//2)
 
-            imagette_mask = np.zeros((imagette.shape[0], imagette.shape[1])).astype(image.dtype)
-            xb = int(region_props[i]["centroid"][0]) - (patch_size//2)
-            yb = int(region_props[i]["centroid"][1]) - (patch_size//2)
+            imagette = image[xmin:xmax, ymin:ymax].copy()
+            imagette_mask = labels[xmin:xmax, ymin:ymax].copy()
 
-            for x, y in region_props[i]["coords"]:
-                imagette_mask[x - xb, y - yb] = max_type_val
+            imagette_mask[imagette_mask != region_props[i]["label"]] = 0
+            imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
 
             concat_image = np.zeros((imagette.shape[0], imagette.shape[1], 4))
             concat_image[:, :, :3] = imagette
@@ -504,7 +504,7 @@ def Training():
         return train_data
 
     @thread_worker
-    def train(image, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
+    def train(image, mask, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
               v_flip, prob, batch_size):
 
         global transform
@@ -575,7 +575,11 @@ def Training():
         labels_list = np.array(labels_list)
 
         # Generators
-        train_data = get_image_patch(image, region_props, labels_list, torch_type)
+        pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                   (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
+        pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                   (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+        train_data = get_image_patch(pad_image, pad_labels, region_props, labels_list, torch_type)
         training_loader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True)
 
         # Optimizer
@@ -730,7 +734,7 @@ def Training():
 
     @training_widget.launch_training_button.changed.connect
     def _launch_training(e: Any):
-        training_worker = train(image, region_props, labels_list, training_widget.nn.value,
+        training_worker = train(image, mask, region_props, labels_list, training_widget.nn.value,
                                 training_widget.loss.value, float(training_widget.lr.value),
                                 int(training_widget.epochs.value), training_widget.rotations.value,
                                 training_widget.h_flip.value, training_widget.v_flip.value,
