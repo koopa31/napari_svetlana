@@ -347,10 +347,11 @@ def Annotation():
                     maskette = np.zeros((imagette.shape[0], imagette.shape[1]))
                     xb = int(prop.centroid[0]) - half_patch_size
                     yb = int(prop.centroid[1]) - half_patch_size
-                    if xb >= 0 and yb >= 0 and xb + 2 * half_patch_size + 1 < image.shape[
-                        0] and yb + 2 * half_patch_size + 1 < \
-                            image.shape[1]:
+                    if xb >= 0 and yb >= 0 and xb + 2 * half_patch_size + 1 < image.shape[0] and\
+                            yb + 2 * half_patch_size + 1 < image.shape[1]:
                         for x, y in prop.coords:
+                            if x - xb >= 2 * half_patch_size or y - yb >= 2 * half_patch_size:
+                                raise ValueError("The chosen patch size is too low, please increase it")
                             maskette[x - xb, y - yb] = 1
 
                         eroded_mask = cv2.erode(maskette, np.ones((3, 3), np.uint8))
@@ -360,9 +361,9 @@ def Annotation():
                         imagette_contours[:, :, 1][contours != 0] = contours_color[1]
                         imagette_contours[:, :, 2][contours != 0] = contours_color[2]
 
-                    imagettes_list.append(imagette)
-                    maskettes_list.append(maskette)
-                    imagettes_contours_list.append(imagette_contours)
+                        imagettes_list.append(imagette)
+                        maskettes_list.append(maskette)
+                        imagettes_contours_list.append(imagette_contours)
 
                 else:
                     imagette = image[int(prop.centroid[0]) - half_patch_size:int(prop.centroid[0]) + half_patch_size,
@@ -377,6 +378,9 @@ def Annotation():
                     if xb >= 0 and yb >= 0 and zb >= 0 and xb + 2 * half_patch_size + 1 < image.shape[0] and \
                        yb + 2 * half_patch_size + 1 < image.shape[1] and zb + 2 * half_patch_size + 1 < image.shape[2]:
                         for x, y, z in prop.coords:
+                            if x - xb >= 2 * half_patch_size or y - yb >= 2 * half_patch_size or\
+                               z - zb >= 2 * half_patch_size:
+                                raise ValueError("The chosen patch size is too low, please increase it")
                             maskette[x - xb, y - yb, z - zb] = 1
                         imagettes_list.append(imagette)
                         maskettes_list.append(maskette)
@@ -827,21 +831,25 @@ def Prediction():
     @prediction_widget.bound.changed.connect
     def show_boundaries(e: Any):
 
-        if "edge_im" in globals() is False:
+        if "edge_im" not in globals():
             # computation of the cells segmentation edges
             eroded_contours = cv2.erode(np.uint16(mask), np.ones((7, 7), np.uint8))
             eroded_labels = mask - eroded_contours
 
             # Removing the inside of the cells in the binary result using the edges mask computed just before
             global edge_im
-            edge_im = imagette_contours.copy()
+            edge_im = imagette_contours.copy().astype(np.uint8)
             edge_im[eroded_labels == 0] = 0
         if e is True:
             prediction_widget.viewer.value.layers.pop()
-            prediction_widget.viewer.value.layers.add_labels(edge_im)
+            prediction_widget.viewer.value.add_labels(edge_im)
+            if len(np.unique(prediction_widget.viewer.value.layers[1].data)) == 3:
+                prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
         else:
             prediction_widget.viewer.value.layers.pop()
-            prediction_widget.viewer.value.layers.add_labels(imagette_contours)
+            prediction_widget.viewer.value.add_labels(imagette_contours.astype(np.uint8))
+            if len(np.unique(prediction_widget.viewer.value.layers[1].data)) == 3:
+                prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
 
     return prediction_widget
 
