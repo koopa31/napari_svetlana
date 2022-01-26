@@ -322,7 +322,7 @@ def Annotation():
                 image_path = im.source.path
 
         half_patch_size = patch_size // 2
-        contours_color = [0, np.iinfo(image.dtype).max, 0]
+        contours_color = (0, np.iinfo(image.dtype).max, 0)
 
         props = regionprops(labels)
         random.shuffle(props)
@@ -333,39 +333,45 @@ def Annotation():
         imagettes_contours_list = []
         maskettes_list = []
 
+        if len(image.shape) == 2:
+            image = np.stack((image,) * 3, axis=-1)
+
+
+        pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                   (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
+        pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+
         global mini_props_list
         mini_props_list = []
         for i, prop in enumerate(mini_props):
             if prop.area != 0:
-                if len(image.shape) == 2:
-                    image = np.stack((image,) * 3, axis=-1)
                 if image.shape[2] <= 3:
+
+                    xmin = (int(prop.centroid[0]) + half_patch_size + 1) - half_patch_size
+                    xmax = (int(prop.centroid[0]) + half_patch_size + 1) + half_patch_size
+                    ymin = (int(prop.centroid[1]) + half_patch_size + 1) - half_patch_size
+                    ymax = (int(prop.centroid[1]) + half_patch_size + 1) + half_patch_size
+
+                    imagette = pad_image[xmin:xmax, ymin:ymax]
+                    maskette = pad_labels[xmin:xmax, ymin:ymax].copy()
+
+                    maskette[maskette != prop.label] = 0
+                    maskette[maskette == prop.label] = 1
+
+                    eroded_mask = cv2.erode(maskette, np.ones((3, 3), np.uint8))
+                    contours = maskette - eroded_mask
+                    imagette_contours = imagette.copy()
+                    imagette_contours[contours != 0] = contours_color
+
+                    imagettes_list.append(imagette)
+                    maskettes_list.append(maskette)
+                    imagettes_contours_list.append(imagette_contours)
                     mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords})
-                    imagette = image[int(prop.centroid[0]) - half_patch_size:int(prop.centroid[0]) + half_patch_size,
-                               int(prop.centroid[1]) - half_patch_size: int(prop.centroid[1]) + half_patch_size]
-
-                    maskette = np.zeros((imagette.shape[0], imagette.shape[1]))
-                    xb = int(prop.centroid[0]) - half_patch_size
-                    yb = int(prop.centroid[1]) - half_patch_size
-                    if xb >= 0 and yb >= 0 and xb + 2 * half_patch_size + 1 < image.shape[0] and\
-                            yb + 2 * half_patch_size + 1 < image.shape[1]:
-                        for x, y in prop.coords:
-                            if x - xb >= 2 * half_patch_size or y - yb >= 2 * half_patch_size:
-                                raise ValueError("The chosen patch size is too low, please increase it")
-                            maskette[x - xb, y - yb] = 1
-
-                        eroded_mask = cv2.erode(maskette, np.ones((3, 3), np.uint8))
-                        contours = maskette - eroded_mask
-                        imagette_contours = imagette.copy()
-                        imagette_contours[:, :, 0][contours != 0] = contours_color[0]
-                        imagette_contours[:, :, 1][contours != 0] = contours_color[1]
-                        imagette_contours[:, :, 2][contours != 0] = contours_color[2]
-
-                        imagettes_list.append(imagette)
-                        maskettes_list.append(maskette)
-                        imagettes_contours_list.append(imagette_contours)
 
                 else:
+                    # TODO: arranger l'annotation en 3D avec le zero padding comme ci dessus
+
                     imagette = image[int(prop.centroid[0]) - half_patch_size:int(prop.centroid[0]) + half_patch_size,
                                      int(prop.centroid[1]) - half_patch_size:int(prop.centroid[1]) + half_patch_size,
                                      int(prop.centroid[2]) - half_patch_size:int(prop.centroid[2]) + half_patch_size]
@@ -472,19 +478,19 @@ def Training():
         labels_tensor = nn.functional.one_hot(labels_tensor.type(torch.cuda.LongTensor))
 
         img_patch_list = []
-
+        max_type_val = np.iinfo(image.dtype).max
         for i, position in enumerate(region_props):
 
             imagette = image[int(region_props[i]["centroid"][0]) - (patch_size//2):int(region_props[i]["centroid"][0])
                              + (patch_size//2), int(region_props[i]["centroid"][1]) - (patch_size//2):
                              int(region_props[i]["centroid"][1]) + (patch_size//2)]
 
-            imagette_mask = np.zeros((imagette.shape[0], imagette.shape[1])).astype(np.uint8)
+            imagette_mask = np.zeros((imagette.shape[0], imagette.shape[1])).astype(image.dtype)
             xb = int(region_props[i]["centroid"][0]) - (patch_size//2)
             yb = int(region_props[i]["centroid"][1]) - (patch_size//2)
 
             for x, y in region_props[i]["coords"]:
-                imagette_mask[x - xb, y - yb] = 255
+                imagette_mask[x - xb, y - yb] = max_type_val
 
             concat_image = np.zeros((imagette.shape[0], imagette.shape[1], 4))
             concat_image[:, :, :3] = imagette
@@ -714,6 +720,8 @@ def Training():
         patch_size = int(b["patch_size"])
 
         image = np.array(Image.open(image_path))
+        if len(image.shape) == 2:
+            image = np.stack((image,) * 3, axis=-1)
         mask = np.array(Image.open(labels_path))
         training_widget.viewer.value.add_image(image)
         training_widget.viewer.value.add_labels(mask)
@@ -756,7 +764,11 @@ def Prediction():
 
         compteur = 0
 
-        data = PredictionDataset(image, labels, props, patch_size // 2)
+        pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                   (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
+        pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+        data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, np.iinfo(image.dtype).max)
         prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
 
         list_pred = []
@@ -826,6 +838,8 @@ def Prediction():
         model.eval()
 
         image = np.array(Image.open(image_path))
+        if len(image.shape) == 2:
+            image = np.stack((image,) * 3, axis=-1)
         mask = np.array(Image.open(labels_path))
         prediction_widget.viewer.value.add_image(image)
         prediction_widget.viewer.value.add_labels(mask)
