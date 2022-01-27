@@ -505,7 +505,7 @@ def Training():
         return train_data
 
     @thread_worker(start_thread=False, progress={"total": 1000, 'desc': 'training-progress'})
-    def train(image, mask, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
+    def train(viewer, image, mask, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
               v_flip, prob, batch_size, saving_ep, training_name):
 
         global transform
@@ -632,6 +632,7 @@ def Training():
                         optimizer.step()
                         LOSS_LIST.append(total_loss.item())
                         print(total_loss.item())
+                        viewer.value.status = "loss = " + str(total_loss.item())
                         # scheduler.step()
                         if (epoch + 1) % saving_ep == 0:
                             d = {"model": model, "optimizer_state_dict": optimizer,
@@ -761,7 +762,7 @@ def Training():
 
     @training_widget.launch_training_button.changed.connect
     def _launch_training(e: Any):
-        training_worker = train(image, mask, region_props, labels_list, training_widget.nn.value,
+        training_worker = train(training_widget.viewer, image, mask, region_props, labels_list, training_widget.nn.value,
                                 training_widget.loss.value, float(training_widget.lr.value),
                                 int(training_widget.epochs.value), training_widget.rotations.value,
                                 training_widget.h_flip.value, training_widget.v_flip.value,
