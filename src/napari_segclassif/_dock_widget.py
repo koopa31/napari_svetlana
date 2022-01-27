@@ -727,6 +727,7 @@ def Training():
 
     ) -> None:
         # Import when users activate plugin
+        training_widget.viewer.value.layers.clear()
         return
 
     @training_widget.load_data_button.changed.connect
@@ -816,13 +817,6 @@ def Prediction():
         compteur = Parallel(n_jobs=-1, require="sharedmem")(delayed(draw_predicted_contour)(compteur, prop, imagette_contours, i, list_pred)
                                                             for i, prop in enumerate(props))
 
-        # computation of the cells segmentation edges
-        #eroded_contours = cv2.erode(np.uint16(labels), np.ones((7, 7), np.uint8))
-        #eroded_labels = labels - eroded_contours
-
-        # Removing the inside of the cells in the binary result using the edges mask computed just before
-        #imagette_contours[eroded_labels == 0] = 0
-
         # Deletion of the old mask
         prediction_widget.viewer.value.layers.pop()
 
@@ -850,6 +844,8 @@ def Prediction():
 
     ) -> None:
         # Import when users activate plugin
+        # Removal of the remaining images of the previous widgets
+        prediction_widget.viewer.value.layers.clear()
         return
 
     @prediction_widget.load_data_button.changed.connect
