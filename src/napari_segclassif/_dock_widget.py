@@ -328,6 +328,7 @@ def Annotation():
         props = regionprops(labels)
         random.shuffle(props)
 
+        global mini_props
         mini_props = props[:imagettes_nb]
 
         imagettes_list = []
@@ -410,6 +411,8 @@ def Annotation():
                                     tooltip='extraction of patches to be annotated from the segmentation mask'),
         estimate_size_button=dict(widget_type='PushButton', text='Estimate patch size',
                                   tooltip='Automatically estimate an optimal patch size'),
+        save_regionprops_button=dict(widget_type='PushButton', text='Save objects statistics', tooltip='Save the '
+                                     'properties of the annotated objects in a binary file, loadable using torch.load')
     )
     def annotation_widget(  # label_logo,
             viewer: Viewer,
@@ -418,6 +421,7 @@ def Annotation():
             patch_nb,
             extract_pacthes_button,
             labels_nb,
+            save_regionprops_button
 
     ) -> None:
         # Import when users activate plugin
@@ -462,6 +466,19 @@ def Annotation():
         # Affichage nombre max de patch qu'on peut extraire
         annotation_widget.patch_nb.label = "patches number (" + str(len(props)) + " max)"
         annotation_widget.patch_nb.value = len(props)
+
+    @annotation_widget.save_regionprops_button.changed.connect
+    def save_regionprops():
+        if counter != len(mini_props):
+            raise ValueError("Please finish your annotation before saving the stats")
+        else:
+            path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
+            props_list = []
+            for i, prop in enumerate(mini_props):
+                props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
+                                   "eccentricity": prop.eccentricity, "area": prop.area, "perimeter": prop.perimeter,
+                                  "label": labels_list[i]})
+            torch.save(props_list, path)
 
     return annotation_widget
 
