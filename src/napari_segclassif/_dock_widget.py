@@ -314,6 +314,7 @@ def Annotation():
     def generate_patches(viewer, imagettes_nb, patch_size):
         for im in viewer:
             if "mask" in im.name:
+                global labels
                 labels = im.data
                 global labels_path
                 labels_path = im.source.path
@@ -412,7 +413,9 @@ def Annotation():
         estimate_size_button=dict(widget_type='PushButton', text='Estimate patch size',
                                   tooltip='Automatically estimate an optimal patch size'),
         save_regionprops_button=dict(widget_type='PushButton', text='Save objects statistics', tooltip='Save the '
-                                     'properties of the annotated objects in a binary file, loadable using torch.load')
+                                     'properties of the annotated objects in a binary file, loadable using torch.load'),
+        generate_im_labs_button=dict(widget_type='PushButton', text='Save masks of labels', tooltip='Save one '
+                                     'per attributed label'),
     )
     def annotation_widget(  # label_logo,
             viewer: Viewer,
@@ -421,7 +424,8 @@ def Annotation():
             patch_nb,
             extract_pacthes_button,
             labels_nb,
-            save_regionprops_button
+            save_regionprops_button,
+            generate_im_labs_button
 
     ) -> None:
         # Import when users activate plugin
@@ -479,6 +483,19 @@ def Annotation():
                                    "eccentricity": prop.eccentricity, "area": prop.area, "perimeter": prop.perimeter,
                                   "label": labels_list[i]})
             torch.save(props_list, path)
+
+    @annotation_widget.generate_im_labs_button.changed.connect
+    def generate_im_labels():
+        im_labs_list = []
+        # We create as many images as labels
+        for i in range(0, max(labels_list)):
+            im_labs_list.append(np.zeros_like(labels))
+
+        for i, prop in enumerate(mini_props):
+            im_labs_list[labels_list[i] - 1][prop.coords[:, 0], prop.coords[:, 1]] = i + 1
+
+        for i, im in enumerate(im_labs_list):
+            cv2.imwrite(os.path.splitext(labels_path)[0] + "_label" + str(i + 1) + os.path.splitext(labels_path)[1], im)
 
     return annotation_widget
 
