@@ -65,7 +65,8 @@ def read_logging(log_file, logwindow):
 
 
 labels_number = [('2', 2), ('3', 3), ('4', 4), ('5', 5), ('6', 6)]
-networks_list = ["ResNet18", "GoogleNet", "DenseNet"]
+networks_list = ["ResNet18", "ResNet34", "ResNet50", "ResNet101", "ResNet152", "AlexNet", "DenseNet121",
+                 "DenseNet161", "DenseNet169", "DenseNet201"]
 losses_list = ["CrossEntropy", "L1Smooth", "BCE", "Distance", "L1", "MSE"]
 
 counter = 0
@@ -503,7 +504,7 @@ def Training():
         train_data = CustomDataset(data_list=img_patch_list, labels_tensor=labels_tensor, transform=transform)
         return train_data
 
-    @thread_worker
+    @thread_worker(start_thread=False, progress={"total": 1000, 'desc': 'training-progress'})
     def train(image, mask, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
               v_flip, prob, batch_size):
 
@@ -539,16 +540,28 @@ def Training():
         else:
             transform = A.Compose([ToTensorV2()])
 
-        nn_dict = {"ResNet18": "resnet18", "GoogleNet": "googlenet", "DenseNet": "densenet"}
+        nn_dict = {"ResNet18": "resnet18", "ResNet34": "resnet34", "ResNet50": "resnet50", "ResNet101": "resnet101",
+                   "ResNet152": "resnet152", "AlexNet": "alexnet", "DenseNet121": "densenet121",
+                   "DenseNet161": "densenet161", "DenseNet169": "densenet169", "DenseNet201": "densenet201"}
         # Setting of network
         model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
 
         set_parameter_requires_grad(model, True)
-        # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1" as we have
-        # "labels_number" labels
-        num_ftrs = model.fc.in_features
-        model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-        model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+
+        if "resnet" in nn_dict[nn_type]:
+            # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1" as we have
+            # "labels_number" labels
+            num_ftrs = model.fc.in_features
+            model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+            model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+        elif "densenet" in nn_dict[nn_type]:
+            num_ftrs = model.classifier.in_features
+            model.classifier = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+            model.features.conv0 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+        elif nn_dict[nn_type] == "alexnet":
+            num_ftrs = model.classifier[6].in_features
+            model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+            model.features[0] = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
 
         torch_type = torch.cuda.FloatTensor
 
@@ -589,7 +602,7 @@ def Training():
             if param.requires_grad is True:
                 params_to_update.append(param)
                 print("\t", name)
-        optimizer = torch.optim.Adam(params_to_update, lr=LR)
+        optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
         # Loss function
         LOSS_LIST = []
@@ -630,6 +643,7 @@ def Training():
 
                 elif phase == "val":
                     pass
+            yield epoch + 1
         """
         folder = "/home/cazorla/Images/TEST"
         model = torch.load(os.path.join(folder, "training_ABS_full1000.pth"))["model"]
@@ -739,6 +753,11 @@ def Training():
                                 int(training_widget.epochs.value), training_widget.rotations.value,
                                 training_widget.h_flip.value, training_widget.v_flip.value,
                                 float(training_widget.prob.value), int(training_widget.b_size.value))
+        training_worker.pbar.total = int(training_widget.epochs.value)
+        from napari.utils import progress
+        #training_worker.pbar = progress(total=200)
+        from time import sleep
+        #sleep(0.5)
         training_worker.start()
         show_info('Training started')
 
@@ -755,13 +774,11 @@ def Prediction():
             compteur += 1
         return compteur
 
-    @thread_worker
-    def predict(image, labels, patch_size, batch_size):
+    @thread_worker(start_thread=False, progress={"total": 10, "desc": "Prediction progress"})
+    def predict(image, labels, props, patch_size, batch_size):
 
         import time
         start = time.time()
-        # On fait une analyse en composantes connectées
-        props = regionprops(labels)
 
         global imagette_contours
         imagette_contours = np.zeros((image.shape[0], image.shape[1]))
@@ -776,10 +793,11 @@ def Prediction():
         prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
 
         list_pred = []
-        for local_batch in prediction_loader:
+        for i, local_batch in enumerate(prediction_loader):
             out = model(local_batch)
             _, index = torch.max(out, 1)
             list_pred += index
+            yield i + 1
 
         show_info("Prediction of patches done, please wait while the result image is being generated...")
         compteur = Parallel(n_jobs=-1, require="sharedmem")(delayed(draw_predicted_contour)(compteur, prop, imagette_contours, i, list_pred)
@@ -859,9 +877,12 @@ def Prediction():
 
     @prediction_widget.launch_prediction_button.changed.connect
     def _launch_prediction(e: Any):
-        prediction_worker = predict(image, mask, patch_size, int(prediction_widget.batch_size.value))
+        props = regionprops(mask)
+        prediction_worker = predict(image, mask, props, patch_size, int(prediction_widget.batch_size.value))
         # Addition of the new labels
         prediction_worker.returned.connect(display_result)
+
+        prediction_worker.pbar.total = int(np.ceil(len(props)/int(prediction_widget.batch_size.value)))
         prediction_worker.start()
         show_info('Prediction started')
 
