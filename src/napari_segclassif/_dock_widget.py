@@ -115,10 +115,6 @@ def Annotation():
             path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
             res_dict = {"image_path": image_path, "labels_path": labels_path, "regionprops": mini_props_list,
                         "labels_list": labels_list, "patch_size": annotation_widget.patch_size.value}
-            """
-            with open(path, "wb") as handle:
-                pickle.dump(res_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            """
             torch.save(res_dict, path)
 
     @Viewer.bind_key('2')
@@ -339,11 +335,18 @@ def Annotation():
         if len(image.shape) == 2:
             image = np.stack((image,) * 3, axis=-1)
 
-
-        pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                   (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
-        pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+        if len(labels.shape) == 2:
+            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
+            pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+        else:
+            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+            pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                         (patch_size // 2 + 1, patch_size // 2 + 1),
+                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
         global mini_props_list
         mini_props_list = []
@@ -373,27 +376,25 @@ def Annotation():
                     mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords, "label": prop.label})
 
                 else:
-                    # TODO: arranger l'annotation en 3D avec le zero padding comme ci dessus
+                    # 3D case
+                    xmin = (int(prop.centroid[0]) + half_patch_size + 1) - half_patch_size
+                    xmax = (int(prop.centroid[0]) + half_patch_size + 1) + half_patch_size
+                    ymin = (int(prop.centroid[1]) + half_patch_size + 1) - half_patch_size
+                    ymax = (int(prop.centroid[1]) + half_patch_size + 1) + half_patch_size
+                    zmin = (int(prop.centroid[2]) + half_patch_size + 1) - half_patch_size
+                    zmax = (int(prop.centroid[2]) + half_patch_size + 1) + half_patch_size
 
-                    imagette = image[int(prop.centroid[0]) - half_patch_size:int(prop.centroid[0]) + half_patch_size,
-                                     int(prop.centroid[1]) - half_patch_size:int(prop.centroid[1]) + half_patch_size,
-                                     int(prop.centroid[2]) - half_patch_size:int(prop.centroid[2]) + half_patch_size]
+                    imagette = pad_image[xmin:xmax, ymin:ymax, zmin:zmax]
 
-                    maskette = np.zeros((imagette.shape[0], imagette.shape[1], imagette.shape[2]))
-                    xb = int(prop.centroid[0]) - half_patch_size
-                    yb = int(prop.centroid[1]) - half_patch_size
-                    zb = int(prop.centroid[2]) - half_patch_size
+                    maskette = pad_labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
 
-                    if xb >= 0 and yb >= 0 and zb >= 0 and xb + 2 * half_patch_size + 1 < image.shape[0] and \
-                       yb + 2 * half_patch_size + 1 < image.shape[1] and zb + 2 * half_patch_size + 1 < image.shape[2]:
-                        for x, y, z in prop.coords:
-                            if x - xb >= 2 * half_patch_size or y - yb >= 2 * half_patch_size or\
-                               z - zb >= 2 * half_patch_size:
-                                raise ValueError("The chosen patch size is too low, please increase it")
-                            maskette[x - xb, y - yb, z - zb] = 1
-                        imagettes_list.append(imagette)
-                        maskettes_list.append(maskette)
-                        imagettes_contours_list.append(imagette)
+                    maskette[maskette != prop.label] = 0
+                    maskette[maskette == prop.label] = 1
+
+                    imagettes_list.append(imagette)
+                    maskettes_list.append(maskette)
+                    imagettes_contours_list.append(imagette)
+                    mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords, "label": prop.label})
 
         print(len(imagettes_list))
 
@@ -459,10 +460,18 @@ def Annotation():
 
         props = regionprops(labels)
         x = sorted(props, key=lambda r: r.area, reverse=True)
-        xmax = x[0].bbox[2] - x[0].bbox[0]
-        ymax = x[0].bbox[3] - x[0].bbox[1]
 
-        length = max(xmax, ymax)
+        # Cas 2D/3D
+        if len(labels.shape) == 2:
+            xmax = x[0].bbox[2] - x[0].bbox[0]
+            ymax = x[0].bbox[3] - x[0].bbox[1]
+            length = max(xmax, ymax)
+        else:
+            xmax = x[0].bbox[3] - x[0].bbox[0]
+            ymax = x[0].bbox[4] - x[0].bbox[1]
+            zmax = x[0].bbox[5] - x[0].bbox[2]
+            length = max(xmax, ymax, zmax)
+
         patch_size = int(length + 0.4 * length)
 
         annotation_widget.patch_size.value = patch_size
