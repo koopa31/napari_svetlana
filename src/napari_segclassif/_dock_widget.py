@@ -768,10 +768,8 @@ def Training():
                                 float(training_widget.prob.value), int(training_widget.b_size.value),
                                 int(training_widget.saving_ep.value), str(training_widget.training_name.value))
         training_worker.pbar.total = int(training_widget.epochs.value)
-        from napari.utils import progress
-        #training_worker.pbar = progress(total=200)
-        from time import sleep
-        #sleep(0.5)
+        training_worker.pbar._pbar.setRange(0, int(training_widget.epochs.value))
+
         training_worker.start()
         show_info('Training started')
 
@@ -897,6 +895,7 @@ def Prediction():
         prediction_worker.returned.connect(display_result)
 
         prediction_worker.pbar.total = int(np.ceil(len(props)/int(prediction_widget.batch_size.value)))
+        prediction_worker.pbar._pbar.setRange(0, prediction_worker.pbar.total)
         prediction_worker.start()
         show_info('Prediction started')
 
