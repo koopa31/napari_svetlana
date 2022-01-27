@@ -489,13 +489,13 @@ def Annotation():
         im_labs_list = []
         # We create as many images as labels
         for i in range(0, max(labels_list)):
-            im_labs_list.append(np.zeros_like(labels))
+            im_labs_list.append(np.zeros_like(labels).astype(np.uint16))
 
         for i, prop in enumerate(mini_props):
-            im_labs_list[labels_list[i] - 1][prop.coords[:, 0], prop.coords[:, 1]] = i + 1
+            im_labs_list[labels_list[i] - 1][prop.coords[:, 0], prop.coords[:, 1]] = prop.label
 
         for i, im in enumerate(im_labs_list):
-            cv2.imwrite(os.path.splitext(labels_path)[0] + "_label" + str(i + 1) + os.path.splitext(labels_path)[1], im)
+            cv2.imwrite(os.path.splitext(labels_path)[0] + "_label" + str(i + 1) + ".tif", im)
 
     return annotation_widget
 
@@ -765,11 +765,11 @@ def Training():
 
     ) -> None:
         # Import when users activate plugin
-        training_widget.viewer.value.layers.clear()
         return
 
     @training_widget.load_data_button.changed.connect
     def _load_data(e: Any):
+        training_widget.viewer.value.layers.clear()
         path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
         """
         with open(path, 'rb') as handle:
@@ -844,6 +844,7 @@ def Prediction():
         data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, np.iinfo(image.dtype).max)
         prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
 
+        global list_pred
         list_pred = []
         for i, local_batch in enumerate(prediction_loader):
             out = model(local_batch)
@@ -872,6 +873,8 @@ def Prediction():
         load_data_button=dict(widget_type='PushButton', text='Load data', tooltip='Load the image and the labels'),
         launch_prediction_button=dict(widget_type='PushButton', text='Launch prediction', tooltip='Launch prediction'),
         bound=dict(widget_type='CheckBox', text='Show boundaries only', tooltip='Show boundaries only'),
+        generate_im_labs_button=dict(widget_type='PushButton', text='Save masks of labels', tooltip='Save one '
+                                     'per attributed label'),
     )
     def prediction_widget(  # label_logo,
             viewer: Viewer,
@@ -879,15 +882,16 @@ def Prediction():
             batch_size,
             launch_prediction_button,
             bound,
+            generate_im_labs_button,
 
     ) -> None:
         # Import when users activate plugin
-        # Removal of the remaining images of the previous widgets
-        prediction_widget.viewer.value.layers.clear()
         return
 
     @prediction_widget.load_data_button.changed.connect
     def _load_data(e: Any):
+        # Removal of the remaining images of the previous widgets
+        prediction_widget.viewer.value.layers.clear()
         path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
         """
         with open(path, 'rb') as handle:
@@ -899,6 +903,7 @@ def Prediction():
         global mask
         global model
         global patch_size
+        global labels_path
 
         image_path = b["image_path"]
         labels_path = b["labels_path"]
@@ -924,6 +929,7 @@ def Prediction():
 
     @prediction_widget.launch_prediction_button.changed.connect
     def _launch_prediction(e: Any):
+        global props
         props = regionprops(mask)
         prediction_worker = predict(image, mask, props, patch_size, int(prediction_widget.batch_size.value))
         # Addition of the new labels
@@ -956,6 +962,19 @@ def Prediction():
             prediction_widget.viewer.value.add_labels(imagette_contours.astype(np.uint8))
             if len(np.unique(prediction_widget.viewer.value.layers[1].data)) == 3:
                 prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
+
+    @prediction_widget.generate_im_labs_button.changed.connect
+    def generate_im_labels():
+        im_labs_list = []
+        # We create as many images as labels
+        for i in range(0, max(list_pred)):
+            im_labs_list.append(np.zeros_like(mask).astype(np.uint16))
+
+        for i, prop in enumerate(props):
+            im_labs_list[list_pred[i] - 1][prop.coords[:, 0], prop.coords[:, 1]] = prop.label
+
+        for i, im in enumerate(im_labs_list):
+            cv2.imwrite(os.path.splitext(labels_path)[0] + "_label" + str(i + 1) + ".tif", im)
 
     return prediction_widget
 
