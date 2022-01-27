@@ -506,7 +506,7 @@ def Training():
 
     @thread_worker(start_thread=False, progress={"total": 1000, 'desc': 'training-progress'})
     def train(image, mask, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
-              v_flip, prob, batch_size):
+              v_flip, prob, batch_size, saving_ep, training_name):
 
         global transform
         if rot is True and h_flip is False and v_flip is False:
@@ -613,6 +613,9 @@ def Training():
         # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
         # Loop over epochs
         iterations_number = epochs_nb
+        # folder where to save the training
+        save_folder = os.path.split(image_path)[0]
+
         for epoch in range(iterations_number):
             print("Epoch ", epoch + 1)
             for phase in ["train", "val"]:
@@ -630,12 +633,14 @@ def Training():
                         LOSS_LIST.append(total_loss.item())
                         print(total_loss.item())
                         # scheduler.step()
-                        folder = "/home/cazorla/Images/TEST"
-                        if (epoch + 1) % 100 == 0:
+                        if (epoch + 1) % saving_ep == 0:
                             d = {"model": model, "optimizer_state_dict": optimizer,
                                  "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
                                  "image_path": image_path, "labels_path": labels_path, "patch_size": patch_size}
-                            model_path = os.path.join(folder, "training_ABS_full" + str(epoch + 1))
+                            if training_name == "":
+                                model_path = os.path.join(save_folder, "training" + str(epoch + 1))
+                            else:
+                                model_path = os.path.join(save_folder, training_name + str(epoch + 1))
                             if model_path.endswith(".pt") or model_path.endswith(".pth"):
                                 torch.save(d, model_path)
                             else:
@@ -695,6 +700,11 @@ def Training():
         h_flip=dict(widget_type='CheckBox', text='Horizontal flip', tooltip='Horizontal flip'),
         prob=dict(widget_type='LineEdit', label='Probability', value=0.8, tooltip='Probability'),
         b_size=dict(widget_type='LineEdit', label='Batch Size', value=128, tooltip='Batch Size'),
+        SAVING_PARAMETERS=dict(widget_type='Label'),
+        saving_ep=dict(widget_type='LineEdit', label='Save training each (epochs)', value=100,
+                       tooltip='Each how many epoch the training should be saved'),
+        training_name=dict(widget_type='LineEdit', label='Training file name', tooltip='Training file name'),
+
     )
     def training_widget(  # label_logo,
             viewer: Viewer,
@@ -709,6 +719,9 @@ def Training():
             h_flip,
             v_flip,
             prob,
+            SAVING_PARAMETERS,
+            saving_ep,
+            training_name,
             launch_training_button,
 
     ) -> None:
@@ -752,7 +765,8 @@ def Training():
                                 training_widget.loss.value, float(training_widget.lr.value),
                                 int(training_widget.epochs.value), training_widget.rotations.value,
                                 training_widget.h_flip.value, training_widget.v_flip.value,
-                                float(training_widget.prob.value), int(training_widget.b_size.value))
+                                float(training_widget.prob.value), int(training_widget.b_size.value),
+                                int(training_widget.saving_ep.value), str(training_widget.training_name.value))
         training_worker.pbar.total = int(training_widget.epochs.value)
         from napari.utils import progress
         #training_worker.pbar = progress(total=200)
