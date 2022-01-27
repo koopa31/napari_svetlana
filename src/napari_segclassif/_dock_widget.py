@@ -875,6 +875,8 @@ def Prediction():
         bound=dict(widget_type='CheckBox', text='Show boundaries only', tooltip='Show boundaries only'),
         generate_im_labs_button=dict(widget_type='PushButton', text='Save masks of labels', tooltip='Save one '
                                      'per attributed label'),
+        save_regionprops_button=dict(widget_type='PushButton', text='Save objects statistics', tooltip='Save the '
+                                     'properties of the annotated objects in a binary file, loadable using torch.load'),
     )
     def prediction_widget(  # label_logo,
             viewer: Viewer,
@@ -882,6 +884,7 @@ def Prediction():
             batch_size,
             launch_prediction_button,
             bound,
+            save_regionprops_button,
             generate_im_labs_button,
 
     ) -> None:
@@ -962,6 +965,17 @@ def Prediction():
             prediction_widget.viewer.value.add_labels(imagette_contours.astype(np.uint8))
             if len(np.unique(prediction_widget.viewer.value.layers[1].data)) == 3:
                 prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
+
+    @prediction_widget.save_regionprops_button.changed.connect
+    def save_regionprops():
+
+        path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
+        props_list = []
+        for i, prop in enumerate(props):
+            props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
+                               "eccentricity": prop.eccentricity, "area": prop.area, "perimeter": prop.perimeter,
+                               "label": int(list_pred[i].item())})
+        torch.save(props_list, path)
 
     @prediction_widget.generate_im_labs_button.changed.connect
     def generate_im_labels():
