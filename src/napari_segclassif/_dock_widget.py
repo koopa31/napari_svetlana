@@ -459,6 +459,10 @@ def Annotation():
 
         annotation_widget.patch_size.value = patch_size
 
+        # Affichage nombre max de patch qu'on peut extraire
+        annotation_widget.patch_nb.label = "patches number (" + str(len(props)) + " max)"
+        annotation_widget.patch_nb.value = len(props)
+
     return annotation_widget
 
 
