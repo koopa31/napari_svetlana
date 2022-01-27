@@ -544,7 +544,7 @@ def Training():
 
     @thread_worker(start_thread=False, progress={"total": 1000, 'desc': 'training-progress'})
     def train(viewer, image, mask, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
-              v_flip, prob, batch_size, saving_ep, training_name):
+              v_flip, prob, batch_size, saving_ep, training_name, model=None):
 
         global transform
         if rot is True and h_flip is False and v_flip is False:
@@ -582,24 +582,25 @@ def Training():
                    "ResNet152": "resnet152", "AlexNet": "alexnet", "DenseNet121": "densenet121",
                    "DenseNet161": "densenet161", "DenseNet169": "densenet169", "DenseNet201": "densenet201"}
         # Setting of network
-        model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
 
-        set_parameter_requires_grad(model, True)
+        if model is None:
+            model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
+            set_parameter_requires_grad(model, True)
 
-        if "resnet" in nn_dict[nn_type]:
-            # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1" as we have
-            # "labels_number" labels
-            num_ftrs = model.fc.in_features
-            model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-            model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        elif "densenet" in nn_dict[nn_type]:
-            num_ftrs = model.classifier.in_features
-            model.classifier = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-            model.features.conv0 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        elif nn_dict[nn_type] == "alexnet":
-            num_ftrs = model.classifier[6].in_features
-            model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-            model.features[0] = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+            if "resnet" in nn_dict[nn_type]:
+                # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1" as we have
+                # "labels_number" labels
+                num_ftrs = model.fc.in_features
+                model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+            elif "densenet" in nn_dict[nn_type]:
+                num_ftrs = model.classifier.in_features
+                model.classifier = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                model.features.conv0 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+            elif nn_dict[nn_type] == "alexnet":
+                num_ftrs = model.classifier[6].in_features
+                model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                model.features[0] = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
 
         torch_type = torch.cuda.FloatTensor
 
@@ -729,6 +730,8 @@ def Training():
         lr=dict(widget_type='LineEdit', label='Learning rate', value=0.01, tooltip='Learning rate'),
         nn=dict(widget_type='ComboBox', label='Network architecture', choices=networks_list, value="ResNet18",
                        tooltip='All the available network architectures'),
+        load_custom_model_button=dict(widget_type='PushButton', text='Load custom NN',
+                                              tooltip='Load your own NN pretrained or not'),
         loss=dict(widget_type='ComboBox', label='Loss function', choices=losses_list, value="CrossEntropy",
                   tooltip='All the available loss functions'),
         epochs=dict(widget_type='LineEdit', label='Epochs number', value=1000, tooltip='Epochs number'),
@@ -749,6 +752,7 @@ def Training():
             viewer: Viewer,
             load_data_button,
             nn,
+            load_custom_model_button,
             loss,
             lr,
             epochs,
@@ -799,14 +803,32 @@ def Training():
 
         return
 
+    @training_widget.load_custom_model_button.changed.connect
+    def load_custom_model():
+        path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
+        checkpoint = torch.load(path)
+        global model
+        model = checkpoint["model"]
+        show_info("Model loaded successfully")
+
     @training_widget.launch_training_button.changed.connect
     def _launch_training(e: Any):
-        training_worker = train(training_widget.viewer, image, mask, region_props, labels_list, training_widget.nn.value,
-                                training_widget.loss.value, float(training_widget.lr.value),
-                                int(training_widget.epochs.value), training_widget.rotations.value,
-                                training_widget.h_flip.value, training_widget.v_flip.value,
-                                float(training_widget.prob.value), int(training_widget.b_size.value),
-                                int(training_widget.saving_ep.value), str(training_widget.training_name.value))
+        if "model" in globals():
+            training_worker = train(training_widget.viewer, image, mask, region_props, labels_list, training_widget.nn.value,
+                                    training_widget.loss.value, float(training_widget.lr.value),
+                                    int(training_widget.epochs.value), training_widget.rotations.value,
+                                    training_widget.h_flip.value, training_widget.v_flip.value,
+                                    float(training_widget.prob.value), int(training_widget.b_size.value),
+                                    int(training_widget.saving_ep.value), str(training_widget.training_name.value), model)
+        else:
+            training_worker = train(training_widget.viewer, image, mask, region_props, labels_list,
+                                    training_widget.nn.value,
+                                    training_widget.loss.value, float(training_widget.lr.value),
+                                    int(training_widget.epochs.value), training_widget.rotations.value,
+                                    training_widget.h_flip.value, training_widget.v_flip.value,
+                                    float(training_widget.prob.value), int(training_widget.b_size.value),
+                                    int(training_widget.saving_ep.value), str(training_widget.training_name.value),
+                                    None)
         training_worker.pbar.total = int(training_widget.epochs.value)
         training_worker.pbar._pbar.setRange(0, int(training_widget.epochs.value))
 
