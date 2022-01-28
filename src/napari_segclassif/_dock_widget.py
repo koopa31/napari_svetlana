@@ -21,7 +21,7 @@ from magicgui import magicgui
 
 from skimage.measure import regionprops
 from skimage.morphology import ball, erosion
-from skimage.io import imread
+from skimage.io import imread, imsave
 
 from CustomDataset import CustomDataset
 import torch
@@ -501,11 +501,15 @@ def Annotation():
         for i in range(0, max(labels_list)):
             im_labs_list.append(np.zeros_like(labels).astype(np.uint16))
 
-        for i, prop in enumerate(mini_props):
-            im_labs_list[labels_list[i] - 1][prop.coords[:, 0], prop.coords[:, 1]] = prop.label
+        if len(labels.shape) == 3:
+            for i, prop in enumerate(mini_props):
+                im_labs_list[labels_list[i] - 1][prop.coords[:, 0], prop.coords[:, 1], prop.coords[:, 2]] = prop.label
+        else:
+            for i, prop in enumerate(mini_props):
+                im_labs_list[labels_list[i] - 1][prop.coords[:, 0], prop.coords[:, 1]] = prop.label
 
         for i, im in enumerate(im_labs_list):
-            cv2.imwrite(os.path.splitext(labels_path)[0] + "_label" + str(i + 1) + ".tif", im)
+            imsave(os.path.splitext(labels_path)[0] + "_label" + str(i + 1) + ".tif", im)
 
     return annotation_widget
 
