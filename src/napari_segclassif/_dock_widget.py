@@ -43,6 +43,7 @@ from numba import jit, njit
 from CNN3D import CNN3D
 
 from napari_segclassif.PredictionDataset import PredictionDataset
+from napari_segclassif.Prediction3DDataset import Prediction3DDataset
 
 
 @ensure_main_thread
@@ -488,10 +489,17 @@ def Annotation():
         else:
             path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
             props_list = []
-            for i, prop in enumerate(mini_props):
-                props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
-                                   "eccentricity": prop.eccentricity, "area": prop.area, "perimeter": prop.perimeter,
-                                  "label": labels_list[i]})
+
+            if mini_props[0].coords.shape[1] == 3:
+                for i, prop in enumerate(mini_props):
+                    props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
+                                       "area": prop.area, "label": int(labels_list[i])})
+            else:
+                for i, prop in enumerate(mini_props):
+                    props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
+                                       "eccentricity": prop.eccentricity, "area": prop.area,
+                                       "perimeter": prop.perimeter,
+                                       "label": int(labels_list[i])})
             torch.save(props_list, path)
 
     @annotation_widget.generate_im_labs_button.changed.connect
@@ -895,22 +903,41 @@ def Prediction():
             compteur += 1
         return compteur
 
+    def draw_3d_prediction(compteur, prop, imagette_contours, i, list_pred):
+
+        imagette_contours[prop.coords[:, 0], prop.coords[:, 1], prop.coords[:, 2]] = list_pred[i].item()
+        if list_pred[i] == 1:
+            compteur += 1
+        return compteur
+
     @thread_worker(start_thread=False, progress={"total": 10, "desc": "Prediction progress"})
     def predict(image, labels, props, patch_size, batch_size):
 
         import time
         start = time.time()
-
-        global imagette_contours
-        imagette_contours = np.zeros((image.shape[0], image.shape[1]))
-
         compteur = 0
+        global imagette_contours
 
-        pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                   (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
-        pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
-        data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, np.iinfo(image.dtype).max)
+        if len(labels.shape) == 2:
+
+            imagette_contours = np.zeros((image.shape[0], image.shape[1]))
+            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
+            pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+
+            data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, np.iinfo(image.dtype).max)
+
+        else:
+            imagette_contours = np.zeros((image.shape[0], image.shape[1], image.shape[2]))
+            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+            pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                         (patch_size // 2 + 1, patch_size // 2 + 1),
+                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+
+            data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, np.iinfo(image.dtype).max)
         prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
 
         global list_pred
@@ -922,8 +949,13 @@ def Prediction():
             yield i + 1
 
         show_info("Prediction of patches done, please wait while the result image is being generated...")
-        compteur = Parallel(n_jobs=-1, require="sharedmem")(delayed(draw_predicted_contour)(compteur, prop, imagette_contours, i, list_pred)
-                                                            for i, prop in enumerate(props))
+        if len(labels.shape) == 2:
+            compteur = Parallel(n_jobs=-1, require="sharedmem")(delayed(draw_predicted_contour)(compteur, prop, imagette_contours, i, list_pred)
+                                                                for i, prop in enumerate(props))
+        else:
+            compteur = Parallel(n_jobs=-1, require="sharedmem")(
+                delayed(draw_3d_prediction)(compteur, prop, imagette_contours, i, list_pred)
+                for i, prop in enumerate(props))
 
         # Deletion of the old mask
         prediction_widget.viewer.value.layers.pop()
@@ -1040,10 +1072,15 @@ def Prediction():
 
         path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
         props_list = []
-        for i, prop in enumerate(props):
-            props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
-                               "eccentricity": prop.eccentricity, "area": prop.area, "perimeter": prop.perimeter,
-                               "label": int(list_pred[i].item())})
+        if len(mask.shape) == 3:
+            for i, prop in enumerate(props):
+                props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
+                                   "area": prop.area, "label": int(list_pred[i].item())})
+        else:
+            for i, prop in enumerate(props):
+                props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
+                                   "eccentricity": prop.eccentricity, "area": prop.area, "perimeter": prop.perimeter,
+                                   "label": int(list_pred[i].item())})
         torch.save(props_list, path)
 
     @prediction_widget.generate_im_labs_button.changed.connect
@@ -1053,7 +1090,7 @@ def Prediction():
         for i in range(0, max(list_pred)):
             im_labs_list.append(np.zeros_like(mask).astype(np.uint16))
 
-        if len(labels.shape) == 3:
+        if len(mask.shape) == 3:
             for i, prop in enumerate(props):
                 im_labs_list[list_pred[i] - 1][prop.coords[:, 0], prop.coords[:, 1], prop.coords[:, 2]] = prop.label
         else:
