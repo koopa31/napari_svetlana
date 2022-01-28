@@ -1,3 +1,4 @@
+import torch
 from torch.utils.data import Dataset
 
 
@@ -9,8 +10,12 @@ class CustomDataset(Dataset):
 
     def __getitem__(self, index):
         if self.transform is not None:
-            transformed = self.transform(image=self.data_list[index].astype("float32"))
-            return transformed["image"], self.labels_tensor[index]
+            if len(self.data_list[index].shape) == 4:
+                transformed = torch.from_numpy(self.data_list[index].astype("float32"))
+                return transformed, self.labels_tensor[index]
+            else:
+                transformed = self.transform(image=self.data_list[index].astype("float32"))
+                return transformed["image"], self.labels_tensor[index]
         else:
             return self.data_list[index].astype("float32"), self.labels_tensor[index]
 

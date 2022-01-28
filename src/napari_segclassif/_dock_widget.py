@@ -40,6 +40,7 @@ from qtpy.QtWidgets import QFileDialog
 
 from line_profiler_pycharm import profile
 from numba import jit, njit
+from CNN3D import CNN3D
 
 from napari_segclassif.PredictionDataset import PredictionDataset
 
@@ -528,25 +529,48 @@ def Training():
         img_patch_list = []
         max_type_val = np.iinfo(image.dtype).max
         for i, position in enumerate(region_props):
+            if image.shape[2] <= 3:
+                xmin = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) - (patch_size//2)
+                xmax = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) + (patch_size//2)
+                ymin = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) - (patch_size//2)
+                ymax = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) + (patch_size//2)
 
-            xmin = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) - (patch_size//2)
-            xmax = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) + (patch_size//2)
-            ymin = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) - (patch_size//2)
-            ymax = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) + (patch_size//2)
+                imagette = image[xmin:xmax, ymin:ymax].copy()
+                imagette_mask = labels[xmin:xmax, ymin:ymax].copy()
 
-            imagette = image[xmin:xmax, ymin:ymax].copy()
-            imagette_mask = labels[xmin:xmax, ymin:ymax].copy()
+                imagette_mask[imagette_mask != region_props[i]["label"]] = 0
+                imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
 
-            imagette_mask[imagette_mask != region_props[i]["label"]] = 0
-            imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
+                concat_image = np.zeros((imagette.shape[0], imagette.shape[1], 4))
+                concat_image[:, :, :3] = imagette
+                concat_image[:, :, 3] = imagette_mask
+                # Normalization of the image
+                concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
 
-            concat_image = np.zeros((imagette.shape[0], imagette.shape[1], 4))
-            concat_image[:, :, :3] = imagette
-            concat_image[:, :, 3] = imagette_mask
-            # Normalization of the image
-            concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
+                img_patch_list.append(concat_image)
+            else:
+                xmin = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) - (patch_size//2)
+                xmax = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) + (patch_size//2)
+                ymin = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) - (patch_size//2)
+                ymax = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) + (patch_size//2)
+                zmin = (int(region_props[i]["centroid"][2]) + (patch_size//2) + 1) - (patch_size//2)
+                zmax = (int(region_props[i]["centroid"][2]) + (patch_size//2) + 1) + (patch_size//2)
 
-            img_patch_list.append(concat_image)
+                imagette = image[xmin:xmax, ymin:ymax, zmin:zmax].copy()
+
+                imagette_mask = labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
+
+                imagette_mask[imagette_mask != region_props[i]["label"]] = 0
+                imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
+
+                concat_image = np.zeros((2, imagette.shape[0], imagette.shape[1], imagette.shape[2])).astype(image.dtype)
+
+                concat_image[0, :, :, :] = imagette
+                concat_image[1, :, :, :] = imagette_mask
+
+                concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
+
+                img_patch_list.append(concat_image)
 
         train_data = CustomDataset(data_list=img_patch_list, labels_tensor=labels_tensor, transform=transform)
         return train_data
@@ -593,23 +617,28 @@ def Training():
         # Setting of network
 
         if model is None:
-            model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
-            set_parameter_requires_grad(model, True)
+            # 3D case
+            if len(image.shape) == 3 and image.shape[2] > 3:
+                model = CNN3D(max(labels_list))
+            # 2D case
+            else:
+                model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
+                set_parameter_requires_grad(model, True)
 
-            if "resnet" in nn_dict[nn_type]:
-                # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1" as we have
-                # "labels_number" labels
-                num_ftrs = model.fc.in_features
-                model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-            elif "densenet" in nn_dict[nn_type]:
-                num_ftrs = model.classifier.in_features
-                model.classifier = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                model.features.conv0 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-            elif nn_dict[nn_type] == "alexnet":
-                num_ftrs = model.classifier[6].in_features
-                model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                model.features[0] = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+                if "resnet" in nn_dict[nn_type]:
+                    # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1" as we have
+                    # "labels_number" labels
+                    num_ftrs = model.fc.in_features
+                    model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                    model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+                elif "densenet" in nn_dict[nn_type]:
+                    num_ftrs = model.classifier.in_features
+                    model.classifier = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                    model.features.conv0 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+                elif nn_dict[nn_type] == "alexnet":
+                    num_ftrs = model.classifier[6].in_features
+                    model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                    model.features[0] = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
 
         torch_type = torch.cuda.FloatTensor
 
@@ -636,10 +665,18 @@ def Training():
         labels_list = np.array(labels_list)
 
         # Generators
-        pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                   (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
-        pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                   (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+        if len(mask.shape) == 2:
+            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                               (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
+            pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+        else:
+            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+            pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                (patch_size // 2 + 1, patch_size // 2 + 1),
+                                (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
         train_data = get_image_patch(pad_image, pad_labels, region_props, labels_list, torch_type)
         training_loader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True)
 
@@ -784,10 +821,7 @@ def Training():
     def _load_data(e: Any):
         training_widget.viewer.value.layers.clear()
         path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
-        """
-        with open(path, 'rb') as handle:
-            b = pickle.load(handle)
-        """
+
         b = torch.load(path)
 
         global image_path
@@ -803,10 +837,10 @@ def Training():
         labels_list = b["labels_list"]
         patch_size = int(b["patch_size"])
 
-        image = np.array(Image.open(image_path))
+        image = imread(image_path)
         if len(image.shape) == 2:
             image = np.stack((image,) * 3, axis=-1)
-        mask = np.array(Image.open(labels_path))
+        mask = imread(labels_path)
         training_widget.viewer.value.add_image(image)
         training_widget.viewer.value.add_labels(mask)
 
