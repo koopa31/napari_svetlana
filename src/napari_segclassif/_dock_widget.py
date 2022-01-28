@@ -983,10 +983,10 @@ def Prediction():
         patch_size = b["patch_size"]
         model.eval()
 
-        image = np.array(Image.open(image_path))
+        image = imread(image_path)
         if len(image.shape) == 2:
             image = np.stack((image,) * 3, axis=-1)
-        mask = np.array(Image.open(labels_path))
+        mask = imread(labels_path)
         prediction_widget.viewer.value.add_image(image)
         prediction_widget.viewer.value.add_labels(mask)
 
