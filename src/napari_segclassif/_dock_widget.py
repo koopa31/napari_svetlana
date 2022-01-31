@@ -23,7 +23,7 @@ from skimage.measure import regionprops
 from skimage.morphology import ball, erosion
 from skimage.io import imread, imsave
 
-from CustomDataset import CustomDataset
+from .CustomDataset import CustomDataset
 import torch
 from torch.utils.data import DataLoader
 from torch import nn
@@ -39,11 +39,10 @@ from superqt import ensure_main_thread
 from qtpy.QtWidgets import QFileDialog
 
 from line_profiler_pycharm import profile
-from numba import jit, njit
-from CNN3D import CNN3D
+from .CNN3D import CNN3D
 
-from napari_segclassif.PredictionDataset import PredictionDataset
-from napari_segclassif.Prediction3DDataset import Prediction3DDataset
+from .PredictionDataset import PredictionDataset
+from .Prediction3DDataset import Prediction3DDataset
 
 
 @ensure_main_thread
