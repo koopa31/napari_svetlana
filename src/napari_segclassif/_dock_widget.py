@@ -710,41 +710,55 @@ def Training():
         iterations_number = epochs_nb
         # folder where to save the training
         save_folder = os.path.split(image_path)[0]
+        found = False
+        while found is False:
+            try:
 
-        for epoch in range(iterations_number):
-            print("Epoch ", epoch + 1)
-            for phase in ["train", "val"]:
-                if phase == "train":
-                    # Training
-                    for local_batch, local_labels in training_loader:
-                        # Transfer to GPU
-                        local_batch, local_labels = local_batch.to(device), local_labels.to(device)
+                for epoch in range(iterations_number):
+                    print("Epoch ", epoch + 1)
+                    for phase in ["train", "val"]:
+                        if phase == "train":
+                            # Training
+                            for local_batch, local_labels in training_loader:
+                                # Transfer to GPU
+                                local_batch, local_labels = local_batch.to(device), local_labels.to(device)
 
-                        out = model(local_batch)
-                        total_loss = loss(out, local_labels.type(torch.cuda.FloatTensor))
-                        optimizer.zero_grad()
-                        total_loss.backward()
-                        optimizer.step()
-                        LOSS_LIST.append(total_loss.item())
-                        print(total_loss.item())
-                        viewer.value.status = "loss = " + str(total_loss.item())
-                        # scheduler.step()
-                        if (epoch + 1) % saving_ep == 0:
-                            d = {"model": model, "optimizer_state_dict": optimizer,
-                                 "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
-                                 "image_path": image_path, "labels_path": labels_path, "patch_size": patch_size}
-                            if training_name == "":
-                                model_path = os.path.join(save_folder, "training" + str(epoch + 1))
-                            else:
-                                model_path = os.path.join(save_folder, training_name + str(epoch + 1))
-                            if model_path.endswith(".pt") or model_path.endswith(".pth"):
-                                torch.save(d, model_path)
-                            else:
-                                torch.save(d, model_path + ".pth")
+                                out = model(local_batch)
+                                total_loss = loss(out, local_labels.type(torch.cuda.FloatTensor))
+                                optimizer.zero_grad()
+                                total_loss.backward()
+                                optimizer.step()
+                                LOSS_LIST.append(total_loss.item())
+                                print(total_loss.item())
+                                viewer.value.status = "loss = " + str(total_loss.item())
+                                # scheduler.step()
+                                if (epoch + 1) % saving_ep == 0:
+                                    d = {"model": model, "optimizer_state_dict": optimizer,
+                                         "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
+                                         "image_path": image_path, "labels_path": labels_path, "patch_size": patch_size}
+                                    if training_name == "":
+                                        model_path = os.path.join(save_folder, "training" + str(epoch + 1))
+                                    else:
+                                        model_path = os.path.join(save_folder, training_name + str(epoch + 1))
+                                    if model_path.endswith(".pt") or model_path.endswith(".pth"):
+                                        torch.save(d, model_path)
+                                    else:
+                                        torch.save(d, model_path + ".pth")
 
-                elif phase == "val":
-                    pass
-            yield epoch + 1
+                                found = True
+
+                        elif phase == "val":
+                            pass
+                    yield epoch + 1
+
+            except:
+                if "bs" in locals():
+                    bs -= 1
+                    bs = 2 ** (np.floor(np.log(bs) / np.log(2)))
+                else:
+                    bs = 2 ** (np.floor(np.log(batch_size) / np.log(2)))
+                training_loader = DataLoader(dataset=train_data, batch_size=int(bs), shuffle=True)
+
         """
         folder = "/home/cazorla/Images/TEST"
         model = torch.load(os.path.join(folder, "training_ABS_full1000.pth"))["model"]
