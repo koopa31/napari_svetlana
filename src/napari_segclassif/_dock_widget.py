@@ -586,7 +586,6 @@ def Training():
         train_data = CustomDataset(data_list=img_patch_list, labels_tensor=labels_tensor, transform=transform)
         return train_data
 
-    @thread_worker(start_thread=False, progress={"total": 1000, 'desc': 'training-progress'})
     def train(viewer, image, mask, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
               v_flip, prob, batch_size, saving_ep, training_name, model=None):
 
@@ -868,23 +867,22 @@ def Training():
     @training_widget.launch_training_button.changed.connect
     def _launch_training(e: Any):
         if "model" in globals():
-            training_worker = train(training_widget.viewer, image, mask, region_props, labels_list, training_widget.nn.value,
+            training_worker = thread_worker(train, progress={"total": int(training_widget.epochs.value)})\
+                (training_widget.viewer, image, mask, region_props, labels_list, training_widget.nn.value,
                                     training_widget.loss.value, float(training_widget.lr.value),
                                     int(training_widget.epochs.value), training_widget.rotations.value,
                                     training_widget.h_flip.value, training_widget.v_flip.value,
                                     float(training_widget.prob.value), int(training_widget.b_size.value),
                                     int(training_widget.saving_ep.value), str(training_widget.training_name.value), model)
         else:
-            training_worker = train(training_widget.viewer, image, mask, region_props, labels_list,
-                                    training_widget.nn.value,
-                                    training_widget.loss.value, float(training_widget.lr.value),
-                                    int(training_widget.epochs.value), training_widget.rotations.value,
-                                    training_widget.h_flip.value, training_widget.v_flip.value,
-                                    float(training_widget.prob.value), int(training_widget.b_size.value),
-                                    int(training_widget.saving_ep.value), str(training_widget.training_name.value),
-                                    None)
-        training_worker.pbar.total = int(training_widget.epochs.value)
-        training_worker.pbar._pbar.setRange(0, int(training_widget.epochs.value))
+
+            training_worker = thread_worker(train, progress={"total": int(training_widget.epochs.value)})(training_widget.viewer, image, mask, region_props, labels_list,
+                          training_widget.nn.value,
+                          training_widget.loss.value, float(training_widget.lr.value),
+                          int(training_widget.epochs.value), training_widget.rotations.value,
+                          training_widget.h_flip.value, training_widget.v_flip.value,
+                          float(training_widget.prob.value), int(training_widget.b_size.value),
+                          int(training_widget.saving_ep.value), str(training_widget.training_name.value), None)
 
         training_worker.start()
         show_info('Training started')
@@ -909,7 +907,6 @@ def Prediction():
             compteur += 1
         return compteur
 
-    @thread_worker(start_thread=False, progress={"total": 10, "desc": "Prediction progress"})
     def predict(image, labels, props, patch_size, batch_size):
 
         import time
@@ -1034,12 +1031,11 @@ def Prediction():
     def _launch_prediction(e: Any):
         global props
         props = regionprops(mask)
-        prediction_worker = predict(image, mask, props, patch_size, int(prediction_widget.batch_size.value))
+        prediction_worker = thread_worker(predict, progress={"total": int(np.ceil(len(props)/int(prediction_widget.batch_size.value)))})\
+            (image, mask, props, patch_size, int(prediction_widget.batch_size.value))
         # Addition of the new labels
         prediction_worker.returned.connect(display_result)
 
-        prediction_worker.pbar.total = int(np.ceil(len(props)/int(prediction_widget.batch_size.value)))
-        prediction_worker.pbar._pbar.setRange(0, prediction_worker.pbar.total)
         prediction_worker.start()
         show_info('Prediction started')
 
