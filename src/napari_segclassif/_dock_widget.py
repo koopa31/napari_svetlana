@@ -85,20 +85,12 @@ def Annotation():
         if counter < len(patch[2]) - 1:
             labels_list.append(1)
             counter += 1
-            if patch[0][counter].shape[2] > 3:
-                # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
-                viewer.layers.clear()
-                viewer.add_image(patch[2][counter])
-                viewer.add_labels(patch[1][counter].astype("int"))
-                annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                viewer.layers.selection.active = viewer.layers[0]
-            else:
-                # 2D case
-                viewer.layers.clear()
-                viewer.add_image(patch[0][counter])
-                viewer.add_labels(patch[2][counter])
-                annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                viewer.layers.selection.active = viewer.layers[0]
+
+            viewer.layers.clear()
+            viewer.add_image(patch[0][counter])
+            viewer.add_labels(patch[2][counter])
+            annotation_widget.viewer.value.layers[1].color = {1: "green"}
+            viewer.layers.selection.active = viewer.layers[0]
 
             print("label 1", labels_list)
             viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
@@ -125,20 +117,13 @@ def Annotation():
         if counter < len(patch[2]) - 1:
             labels_list.append(2)
             counter += 1
-            if patch[0][counter].shape[2] > 3:
-                # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
-                viewer.layers.clear()
-                viewer.add_image(patch[2][counter])
-                viewer.add_labels(patch[1][counter].astype("int"))
-                annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                viewer.layers.selection.active = viewer.layers[0]
-            else:
-                # 2D case
-                viewer.layers.clear()
-                viewer.add_image(patch[0][counter])
-                viewer.add_labels(patch[2][counter])
-                annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                viewer.layers.selection.active = viewer.layers[0]
+
+            viewer.layers.clear()
+            viewer.add_image(patch[0][counter])
+            viewer.add_labels(patch[2][counter])
+            annotation_widget.viewer.value.layers[1].color = {1: "green"}
+            viewer.layers.selection.active = viewer.layers[0]
+
             print("label 2", labels_list)
             viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
         elif counter == len(patch[2]) - 1:
@@ -162,20 +147,13 @@ def Annotation():
             if counter < len(patch[2]) - 1:
                 labels_list.append(3)
                 counter += 1
-                if patch[0][counter].shape[2] > 3:
-                    # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
-                    viewer.layers.clear()
-                    viewer.add_image(patch[2][counter])
-                    viewer.add_labels(patch[1][counter].astype("int"))
-                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                    viewer.layers.selection.active = viewer.layers[0]
-                else:
-                    # 2D case
-                    viewer.layers.clear()
-                    viewer.add_image(patch[0][counter])
-                    viewer.add_labels(patch[2][counter])
-                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                    viewer.layers.selection.active = viewer.layers[0]
+
+                viewer.layers.clear()
+                viewer.add_image(patch[0][counter])
+                viewer.add_labels(patch[2][counter])
+                annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                viewer.layers.selection.active = viewer.layers[0]
+
                 print("label 3", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
             elif counter == len(patch[2]) - 1:
@@ -199,20 +177,13 @@ def Annotation():
             if counter < len(patch[2]) - 1:
                 labels_list.append(4)
                 counter += 1
-                if patch[0][counter].shape[2] > 3:
-                    # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
-                    viewer.layers.clear()
-                    viewer.add_image(patch[2][counter])
-                    viewer.add_labels(patch[1][counter].astype("int"))
-                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                    viewer.layers.selection.active = viewer.layers[0]
-                else:
-                    # 2D case
-                    viewer.layers.clear()
-                    viewer.add_image(patch[0][counter])
-                    viewer.add_labels(patch[2][counter])
-                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                    viewer.layers.selection.active = viewer.layers[0]
+
+                viewer.layers.clear()
+                viewer.add_image(patch[0][counter])
+                viewer.add_labels(patch[2][counter])
+                annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                viewer.layers.selection.active = viewer.layers[0]
+
                 print("label 4", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
             elif counter == len(patch[2]) - 1:
@@ -236,20 +207,13 @@ def Annotation():
             if counter < len(patch[2]) - 1:
                 labels_list.append(5)
                 counter += 1
-                if patch[0][counter].shape[2] > 3:
-                    # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
-                    viewer.layers.clear()
-                    viewer.add_image(patch[2][counter])
-                    viewer.add_labels(patch[1][counter].astype("int"))
-                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                    viewer.layers.selection.active = viewer.layers[0]
-                else:
-                    # 2D case
-                    viewer.layers.clear()
-                    viewer.add_image(patch[0][counter])
-                    viewer.add_labels(patch[2][counter])
-                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                    viewer.layers.selection.active = viewer.layers[0]
+
+                viewer.layers.clear()
+                viewer.add_image(patch[0][counter])
+                viewer.add_labels(patch[2][counter])
+                annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                viewer.layers.selection.active = viewer.layers[0]
+
                 print("label 5", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
             elif counter == len(patch[2]) - 1:
@@ -273,20 +237,13 @@ def Annotation():
             if counter < len(patch[2]) - 1:
                 labels_list.append(6)
                 counter += 1
-                if patch[0][counter].shape[2] > 3:
-                    # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
-                    viewer.layers.clear()
-                    viewer.add_image(patch[2][counter])
-                    viewer.add_labels(patch[1][counter].astype("int"))
-                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                    viewer.layers.selection.active = viewer.layers[0]
-                else:
-                    # 2D case
-                    viewer.layers.clear()
-                    viewer.add_image(patch[0][counter])
-                    viewer.add_labels(patch[2][counter])
-                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                    viewer.layers.selection.active = viewer.layers[0]
+
+                viewer.layers.clear()
+                viewer.add_image(patch[0][counter])
+                viewer.add_labels(patch[2][counter])
+                annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                viewer.layers.selection.active = viewer.layers[0]
+
                 print("label 6", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
             elif counter == len(patch[2]) - 1:
@@ -307,9 +264,12 @@ def Annotation():
     def remove_label(viewer):
         global counter
         labels_list.pop()
-        viewer.layers.pop()
+        viewer.layers.clear()
         counter -= 1
-        viewer.add_image(patch[2][counter])
+        viewer.add_image(patch[0][counter])
+        viewer.add_labels(patch[2][counter])
+        annotation_widget.viewer.value.layers[1].color = {1: "green"}
+        viewer.layers.selection.active = viewer.layers[0]
         print("retour en arriere", labels_list)
         viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
 
@@ -342,11 +302,19 @@ def Annotation():
         if len(image.shape) == 2:
             image = np.stack((image,) * 3, axis=-1)
 
-        if len(labels.shape) == 2:
+        # 2D
+        if image.shape[2] <= 3:
             pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                        (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
             pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                          (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+        # Multi-spectral 2D
+        elif image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]:
+            pad_image = np.pad(image, ((0, 0), (patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+            pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+        # 3D
         else:
             pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                        (patch_size // 2 + 1, patch_size // 2 + 1),
@@ -382,6 +350,28 @@ def Annotation():
                     imagettes_contours_list.append(contours)
                     mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords, "label": prop.label})
 
+                elif image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]:
+                    xmin = (int(prop.centroid[0]) + half_patch_size + 1) - half_patch_size
+                    xmax = (int(prop.centroid[0]) + half_patch_size + 1) + half_patch_size
+                    ymin = (int(prop.centroid[1]) + half_patch_size + 1) - half_patch_size
+                    ymax = (int(prop.centroid[1]) + half_patch_size + 1) + half_patch_size
+
+                    imagette = pad_image[:, xmin:xmax, ymin:ymax].copy()
+                    maskette = pad_labels[xmin:xmax, ymin:ymax].copy()
+
+                    maskette[maskette != prop.label] = 0
+                    maskette[maskette == prop.label] = 1
+
+                    eroded_mask = cv2.erode(maskette, np.ones((3, 3), np.uint8))
+                    contours = maskette - eroded_mask
+                    # imagette_contours = imagette.copy()
+                    # imagette_contours[contours != 0] = contours_color
+
+                    imagettes_list.append(imagette)
+                    maskettes_list.append(maskette)
+                    imagettes_contours_list.append(contours)
+                    mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords, "label": prop.label})
+
                 else:
                     # 3D case
                     xmin = (int(prop.centroid[0]) + half_patch_size + 1) - half_patch_size
@@ -400,7 +390,7 @@ def Annotation():
 
                     imagettes_list.append(imagette)
                     maskettes_list.append(maskette)
-                    imagettes_contours_list.append(imagette)
+                    imagettes_contours_list.append(maskette)
                     mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords, "label": prop.label})
 
         print(len(imagettes_list))
@@ -442,15 +432,9 @@ def Annotation():
     def display_first_patch(patch):
         for i in range(0, len(annotation_widget.viewer.value.layers)):
             annotation_widget.viewer.value.layers.pop()
-        if patch[0][0].shape[2] > 3:
-            # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
-            annotation_widget.viewer.value.dims.ndisplay = 3
-            annotation_widget.viewer.value.add_image(patch[2][0])
-            annotation_widget.viewer.value.add_labels(patch[1][0].astype("int"))
 
-            annotation_widget.viewer.value.layers[1].color = {1: "green"}
-            annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[0]
-        else:
+        if patch[0][0].shape[2] <= 3 or (patch[0][0].shape[0] < patch[0][0].shape[1]
+                                         and patch[0][0].shape[0] < patch[0][0].shape[2]):
             # 2D case
             annotation_widget.viewer.value.add_image(patch[0][0])
             annotation_widget.viewer.value.add_labels(patch[2][0].astype("int"))
@@ -458,7 +442,14 @@ def Annotation():
             annotation_widget.viewer.value.layers[1].color = {1: "green"}
             annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[0]
 
+        else:
+            # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
+            annotation_widget.viewer.value.dims.ndisplay = 3
+            annotation_widget.viewer.value.add_image(patch[0][0])
+            annotation_widget.viewer.value.add_labels(patch[2][0].astype("int"))
 
+            annotation_widget.viewer.value.layers[1].color = {1: "green"}
+            annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[0]
 
 
     @annotation_widget.extract_pacthes_button.changed.connect
