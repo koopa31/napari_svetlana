@@ -85,25 +85,26 @@ def Annotation():
         if counter < len(patch[2]) - 1:
             labels_list.append(1)
             counter += 1
-            if patch[2][counter].shape[2] > 3:
+            if patch[0][counter].shape[2] > 3:
                 # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
-                viewer.layers.pop()
-                viewer.layers.pop()
-                viewer.add_labels(patch[1][counter].astype("int"))
+                viewer.layers.clear()
                 viewer.add_image(patch[2][counter])
+                viewer.add_labels(patch[1][counter].astype("int"))
+                annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                viewer.layers.selection.active = viewer.layers[0]
             else:
                 # 2D case
-                viewer.layers.pop()
-                viewer.add_image(patch[2][counter])
+                viewer.layers.clear()
+                viewer.add_image(patch[0][counter])
+                viewer.add_labels(patch[2][counter])
+                annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                viewer.layers.selection.active = viewer.layers[0]
+
             print("label 1", labels_list)
             viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
         elif counter == len(patch[2]) - 1:
             labels_list.append(1)
-            if patch[2][counter].shape[2] > 3:
-                viewer.layers.pop()
-                viewer.layers.pop()
-            else:
-                viewer.layers.pop()
+            viewer.layers.clear()
             counter += 1
             from skimage.io import imread
             viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
@@ -124,25 +125,26 @@ def Annotation():
         if counter < len(patch[2]) - 1:
             labels_list.append(2)
             counter += 1
-            if patch[2][counter].shape[2] > 3:
+            if patch[0][counter].shape[2] > 3:
                 # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
-                viewer.layers.pop()
-                viewer.layers.pop()
-                viewer.add_labels(patch[1][counter].astype("int"))
+                viewer.layers.clear()
                 viewer.add_image(patch[2][counter])
+                viewer.add_labels(patch[1][counter].astype("int"))
+                annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                viewer.layers.selection.active = viewer.layers[0]
             else:
                 # 2D case
-                viewer.layers.pop()
-                viewer.add_image(patch[2][counter])
+                viewer.layers.clear()
+                viewer.add_image(patch[0][counter])
+                viewer.add_labels(patch[2][counter])
+                annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                viewer.layers.selection.active = viewer.layers[0]
             print("label 2", labels_list)
             viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
         elif counter == len(patch[2]) - 1:
             labels_list.append(2)
-            if patch[2][counter].shape[2] > 3:
-                viewer.layers.pop()
-                viewer.layers.pop()
-            else:
-                viewer.layers.pop()
+            viewer.layers.clear()
+
             counter += 1
             from skimage.io import imread
             viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
@@ -160,25 +162,26 @@ def Annotation():
             if counter < len(patch[2]) - 1:
                 labels_list.append(3)
                 counter += 1
-                if patch[2][counter].shape[2] > 3:
+                if patch[0][counter].shape[2] > 3:
                     # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
-                    viewer.layers.pop()
-                    viewer.layers.pop()
-                    viewer.add_labels(patch[1][counter].astype("int"))
+                    viewer.layers.clear()
                     viewer.add_image(patch[2][counter])
+                    viewer.add_labels(patch[1][counter].astype("int"))
+                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                    viewer.layers.selection.active = viewer.layers[0]
                 else:
                     # 2D case
-                    viewer.layers.pop()
-                    viewer.add_image(patch[2][counter])
-                print("label 2", labels_list)
+                    viewer.layers.clear()
+                    viewer.add_image(patch[0][counter])
+                    viewer.add_labels(patch[2][counter])
+                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                    viewer.layers.selection.active = viewer.layers[0]
+                print("label 3", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
             elif counter == len(patch[2]) - 1:
                 labels_list.append(3)
-                if patch[2][counter].shape[2] > 3:
-                    viewer.layers.pop()
-                    viewer.layers.pop()
-                else:
-                    viewer.layers.pop()
+                viewer.layers.clear()
+
                 counter += 1
                 from skimage.io import imread
                 viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
@@ -196,25 +199,26 @@ def Annotation():
             if counter < len(patch[2]) - 1:
                 labels_list.append(4)
                 counter += 1
-                if patch[2][counter].shape[2] > 3:
+                if patch[0][counter].shape[2] > 3:
                     # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
-                    viewer.layers.pop()
-                    viewer.layers.pop()
-                    viewer.add_labels(patch[1][counter].astype("int"))
+                    viewer.layers.clear()
                     viewer.add_image(patch[2][counter])
+                    viewer.add_labels(patch[1][counter].astype("int"))
+                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                    viewer.layers.selection.active = viewer.layers[0]
                 else:
                     # 2D case
-                    viewer.layers.pop()
-                    viewer.add_image(patch[2][counter])
-                print("label 2", labels_list)
+                    viewer.layers.clear()
+                    viewer.add_image(patch[0][counter])
+                    viewer.add_labels(patch[2][counter])
+                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                    viewer.layers.selection.active = viewer.layers[0]
+                print("label 4", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
             elif counter == len(patch[2]) - 1:
                 labels_list.append(4)
-                if patch[2][counter].shape[2] > 3:
-                    viewer.layers.pop()
-                    viewer.layers.pop()
-                else:
-                    viewer.layers.pop()
+                viewer.layers.clear()
+
                 counter += 1
                 from skimage.io import imread
                 viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
@@ -232,25 +236,26 @@ def Annotation():
             if counter < len(patch[2]) - 1:
                 labels_list.append(5)
                 counter += 1
-                if patch[2][counter].shape[2] > 3:
+                if patch[0][counter].shape[2] > 3:
                     # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
-                    viewer.layers.pop()
-                    viewer.layers.pop()
-                    viewer.add_labels(patch[1][counter].astype("int"))
+                    viewer.layers.clear()
                     viewer.add_image(patch[2][counter])
+                    viewer.add_labels(patch[1][counter].astype("int"))
+                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                    viewer.layers.selection.active = viewer.layers[0]
                 else:
                     # 2D case
-                    viewer.layers.pop()
-                    viewer.add_image(patch[2][counter])
-                print("label 2", labels_list)
+                    viewer.layers.clear()
+                    viewer.add_image(patch[0][counter])
+                    viewer.add_labels(patch[2][counter])
+                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                    viewer.layers.selection.active = viewer.layers[0]
+                print("label 5", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
             elif counter == len(patch[2]) - 1:
                 labels_list.append(5)
-                if patch[2][counter].shape[2] > 3:
-                    viewer.layers.pop()
-                    viewer.layers.pop()
-                else:
-                    viewer.layers.pop()
+                viewer.layers.clear()
+
                 counter += 1
                 from skimage.io import imread
                 viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
@@ -268,25 +273,26 @@ def Annotation():
             if counter < len(patch[2]) - 1:
                 labels_list.append(6)
                 counter += 1
-                if patch[2][counter].shape[2] > 3:
+                if patch[0][counter].shape[2] > 3:
                     # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
-                    viewer.layers.pop()
-                    viewer.layers.pop()
-                    viewer.add_labels(patch[1][counter].astype("int"))
+                    viewer.layers.clear()
                     viewer.add_image(patch[2][counter])
+                    viewer.add_labels(patch[1][counter].astype("int"))
+                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                    viewer.layers.selection.active = viewer.layers[0]
                 else:
                     # 2D case
-                    viewer.layers.pop()
-                    viewer.add_image(patch[2][counter])
-                print("label 2", labels_list)
+                    viewer.layers.clear()
+                    viewer.add_image(patch[0][counter])
+                    viewer.add_labels(patch[2][counter])
+                    annotation_widget.viewer.value.layers[1].color = {1: "green"}
+                    viewer.layers.selection.active = viewer.layers[0]
+                print("label 6", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
             elif counter == len(patch[2]) - 1:
                 labels_list.append(6)
-                if patch[2][counter].shape[2] > 3:
-                    viewer.layers.pop()
-                    viewer.layers.pop()
-                else:
-                    viewer.layers.pop()
+                viewer.layers.clear()
+
                 counter += 1
                 from skimage.io import imread
                 viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
@@ -368,12 +374,12 @@ def Annotation():
 
                     eroded_mask = cv2.erode(maskette, np.ones((3, 3), np.uint8))
                     contours = maskette - eroded_mask
-                    imagette_contours = imagette.copy()
-                    imagette_contours[contours != 0] = contours_color
+                    #imagette_contours = imagette.copy()
+                    #imagette_contours[contours != 0] = contours_color
 
                     imagettes_list.append(imagette)
                     maskettes_list.append(maskette)
-                    imagettes_contours_list.append(imagette_contours)
+                    imagettes_contours_list.append(contours)
                     mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords, "label": prop.label})
 
                 else:
@@ -436,14 +442,24 @@ def Annotation():
     def display_first_patch(patch):
         for i in range(0, len(annotation_widget.viewer.value.layers)):
             annotation_widget.viewer.value.layers.pop()
-        if patch[2][0].shape[2] > 3:
+        if patch[0][0].shape[2] > 3:
             # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
             annotation_widget.viewer.value.dims.ndisplay = 3
-            annotation_widget.viewer.value.add_labels(patch[1][0].astype("int"))
             annotation_widget.viewer.value.add_image(patch[2][0])
+            annotation_widget.viewer.value.add_labels(patch[1][0].astype("int"))
+
+            annotation_widget.viewer.value.layers[1].color = {1: "green"}
+            annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[0]
         else:
             # 2D case
-            annotation_widget.viewer.value.add_image(patch[2][0])
+            annotation_widget.viewer.value.add_image(patch[0][0])
+            annotation_widget.viewer.value.add_labels(patch[2][0].astype("int"))
+
+            annotation_widget.viewer.value.layers[1].color = {1: "green"}
+            annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[0]
+
+
+
 
     @annotation_widget.extract_pacthes_button.changed.connect
     def _extract_patches(e: Any):
