@@ -309,11 +309,21 @@ def Annotation():
             pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                          (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
         # Multi-spectral 2D
+        elif len(image.shape) == 4:
+            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1), (0, 0),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+            pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                         (patch_size // 2 + 1, patch_size // 2 + 1),
+                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+
+        # Multi-spectral 3D
         elif image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]:
             pad_image = np.pad(image, ((0, 0), (patch_size // 2 + 1, patch_size // 2 + 1),
                                        (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
             pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                          (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+
         # 3D
         else:
             pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
@@ -370,6 +380,27 @@ def Annotation():
                     imagettes_list.append(imagette)
                     maskettes_list.append(maskette)
                     imagettes_contours_list.append(contours)
+                    mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords, "label": prop.label})
+
+                elif len(image.shape) == 4:
+
+                    xmin = (int(prop.centroid[0]) + half_patch_size + 1) - half_patch_size
+                    xmax = (int(prop.centroid[0]) + half_patch_size + 1) + half_patch_size
+                    ymin = (int(prop.centroid[1]) + half_patch_size + 1) - half_patch_size
+                    ymax = (int(prop.centroid[1]) + half_patch_size + 1) + half_patch_size
+                    zmin = (int(prop.centroid[2]) + half_patch_size + 1) - half_patch_size
+                    zmax = (int(prop.centroid[2]) + half_patch_size + 1) + half_patch_size
+
+                    imagette = pad_image[xmin:xmax, :, ymin:ymax, zmin:zmax]
+
+                    maskette = pad_labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
+
+                    maskette[maskette != prop.label] = 0
+                    maskette[maskette == prop.label] = 1
+
+                    imagettes_list.append(imagette)
+                    maskettes_list.append(maskette)
+                    imagettes_contours_list.append(maskette)
                     mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords, "label": prop.label})
 
                 else:
@@ -436,6 +467,14 @@ def Annotation():
         if patch[0][0].shape[2] <= 3 or (patch[0][0].shape[0] < patch[0][0].shape[1]
                                          and patch[0][0].shape[0] < patch[0][0].shape[2]):
             # 2D case
+            annotation_widget.viewer.value.add_image(patch[0][0])
+            annotation_widget.viewer.value.add_labels(patch[2][0].astype("int"))
+
+            annotation_widget.viewer.value.layers[1].color = {1: "green"}
+            annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[0]
+
+        elif len(patch[0][0].shape) == 4:
+            annotation_widget.viewer.value.dims.ndisplay = 3
             annotation_widget.viewer.value.add_image(patch[0][0])
             annotation_widget.viewer.value.add_labels(patch[2][0].astype("int"))
 
