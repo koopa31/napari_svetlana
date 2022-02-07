@@ -28,9 +28,9 @@ class PredictionDataset(Dataset):
 
             # L'imagette et son mask étant générés, on passe a la concaténation pour faire la prédiction du label par le CNN
 
-            concat_image = np.zeros((imagette.shape[0], imagette.shape[1], 4))
-            concat_image[:, :, :3] = imagette
-            concat_image[:, :, 3] = maskette
+            concat_image = np.zeros((imagette.shape[0], imagette.shape[1], imagette.shape[2] + 1))
+            concat_image[:, :, :-1] = imagette
+            concat_image[:, :, -1] = maskette
             if concat_image.shape[0] == 0 or concat_image.shape[1] == 0:
                 pass
             else:
