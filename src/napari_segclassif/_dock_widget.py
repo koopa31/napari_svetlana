@@ -490,7 +490,6 @@ def Annotation():
             annotation_widget.viewer.value.layers[1].color = {1: "green"}
             annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[0]
 
-
     @annotation_widget.extract_pacthes_button.changed.connect
     def _extract_patches(e: Any):
         patch_worker = generate_patches(annotation_widget.viewer.value.layers, int(annotation_widget.patch_nb.value),
@@ -575,7 +574,7 @@ def Training():
             for param in model.parameters():
                 param.requires_grad = False
 
-    def get_image_patch(image, labels, region_props, labels_list, torch_type):
+    def get_image_patch(image, labels, region_props, labels_list, torch_type, case):
         """
         This function aims at contructing the tensors of the images and their labels
         """
@@ -586,7 +585,7 @@ def Training():
         img_patch_list = []
         max_type_val = np.iinfo(image.dtype).max
         for i, position in enumerate(region_props):
-            if image.shape[2] <= 3:
+            if case == "2D" or case == "multi_2D":
                 xmin = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) - (patch_size//2)
                 xmax = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) + (patch_size//2)
                 ymin = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) - (patch_size//2)
@@ -598,9 +597,9 @@ def Training():
                 imagette_mask[imagette_mask != region_props[i]["label"]] = 0
                 imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
 
-                concat_image = np.zeros((imagette.shape[0], imagette.shape[1], 4))
-                concat_image[:, :, :3] = imagette
-                concat_image[:, :, 3] = imagette_mask
+                concat_image = np.zeros((imagette.shape[0], imagette.shape[1], image.shape[2] + 1))
+                concat_image[:, :, :-1] = imagette
+                concat_image[:, :, -1] = imagette_mask
                 # Normalization of the image
                 concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
 
@@ -673,11 +672,9 @@ def Training():
         # Setting of network
 
         if model is None:
-            # 3D case
-            if len(image.shape) == 3 and image.shape[2] > 3:
-                model = CNN3D(max(labels_list))
             # 2D case
-            else:
+            if image.shape[2] <= 3:
+                case = "2D"
                 model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
                 set_parameter_requires_grad(model, True)
 
@@ -695,6 +692,32 @@ def Training():
                     num_ftrs = model.classifier[6].in_features
                     model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
                     model.features[0] = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+
+            elif image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]:
+                case = "multi_2D"
+                model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
+                set_parameter_requires_grad(model, True)
+                image = np.transpose(image, (1, 2, 0))
+
+                if "resnet" in nn_dict[nn_type]:
+                    # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1" as we have
+                    # "labels_number" labels
+                    num_ftrs = model.fc.in_features
+                    model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                    model.conv1 = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+                elif "densenet" in nn_dict[nn_type]:
+                    num_ftrs = model.classifier.in_features
+                    model.classifier = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                    model.features.conv0 = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+                elif nn_dict[nn_type] == "alexnet":
+                    num_ftrs = model.classifier[6].in_features
+                    model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                    model.features[0] = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+
+            # 3D case
+            else:
+                case = "3D"
+                model = CNN3D(max(labels_list))
 
         torch_type = torch.cuda.FloatTensor
 
@@ -733,7 +756,7 @@ def Training():
             pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                 (patch_size // 2 + 1, patch_size // 2 + 1),
                                 (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
-        train_data = get_image_patch(pad_image, pad_labels, region_props, labels_list, torch_type)
+        train_data = get_image_patch(pad_image, pad_labels, region_props, labels_list, torch_type, case)
         training_loader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True)
 
         # Optimizer
@@ -974,7 +997,9 @@ def Prediction():
         compteur = 0
         global imagette_contours
 
-        if len(labels.shape) == 2:
+        if image.shape[2] <= 3 or (image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]):
+            if image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]:
+                image = np.transpose(image, (1, 2, 0))
 
             imagette_contours = np.zeros((image.shape[0], image.shape[1]))
             pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
