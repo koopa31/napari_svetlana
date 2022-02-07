@@ -3,10 +3,10 @@ from torch.nn import Sequential, Conv3d, BatchNorm3d, ReLU, MaxPool3d, AdaptiveA
 
 
 class CNN3D(Module):
-    def __init__(self, labels_number):
+    def __init__(self, labels_number, channels_nb):
         super(CNN3D, self).__init__()
 
-        self.conv1 = Conv3d(2, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = Conv3d(channels_nb, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = BatchNorm3d(64)
         self.relu = ReLU(inplace=True)
         self.maxpool = MaxPool3d(kernel_size=3, stride=2, padding=1)

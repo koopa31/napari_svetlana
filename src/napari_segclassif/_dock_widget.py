@@ -604,6 +604,31 @@ def Training():
                 concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
 
                 img_patch_list.append(concat_image)
+            elif case == "multi_3D":
+                xmin = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) - (patch_size//2)
+                xmax = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) + (patch_size//2)
+                ymin = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) - (patch_size//2)
+                ymax = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) + (patch_size//2)
+                zmin = (int(region_props[i]["centroid"][2]) + (patch_size//2) + 1) - (patch_size//2)
+                zmax = (int(region_props[i]["centroid"][2]) + (patch_size//2) + 1) + (patch_size//2)
+
+                imagette = image[:, xmin:xmax, ymin:ymax, zmin:zmax].copy()
+
+                imagette_mask = labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
+
+                imagette_mask[imagette_mask != region_props[i]["label"]] = 0
+                imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
+
+                concat_image = np.zeros((imagette.shape[0] + 1, imagette.shape[1], imagette.shape[2],
+                                         imagette.shape[3])).astype(image.dtype)
+
+                concat_image[:-1, :, :, :] = imagette
+                concat_image[-1, :, :, :] = imagette_mask
+
+                concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
+
+                img_patch_list.append(concat_image)
+
             else:
                 xmin = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) - (patch_size//2)
                 xmax = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) + (patch_size//2)
@@ -714,10 +739,15 @@ def Training():
                     model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
                     model.features[0] = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
 
+            elif len(image.shape) == 4:
+                case = "multi_3D"
+                image = np.transpose(image, (1, 2, 3, 0))
+                model = CNN3D(max(labels_list), image.shape[0] + 1)
+
             # 3D case
             else:
                 case = "3D"
-                model = CNN3D(max(labels_list))
+                model = CNN3D(max(labels_list), 2)
 
         torch_type = torch.cuda.FloatTensor
 
@@ -749,6 +779,16 @@ def Training():
                                (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
             pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                 (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+
+        elif len(image.shape) == 4:
+            pad_image = np.pad(image, ((0, 0),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+            pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+
         else:
             pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                        (patch_size // 2 + 1, patch_size // 2 + 1),
