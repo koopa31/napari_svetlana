@@ -605,12 +605,12 @@ def Training():
 
                 img_patch_list.append(concat_image)
             elif case == "multi_3D":
-                xmin = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) - (patch_size//2)
-                xmax = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) + (patch_size//2)
-                ymin = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) - (patch_size//2)
-                ymax = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) + (patch_size//2)
-                zmin = (int(region_props[i]["centroid"][2]) + (patch_size//2) + 1) - (patch_size//2)
-                zmax = (int(region_props[i]["centroid"][2]) + (patch_size//2) + 1) + (patch_size//2)
+                xmin = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) - (patch_size//2)
+                xmax = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) + (patch_size//2)
+                ymin = (int(region_props[i]["centroid"][2]) + (patch_size//2) + 1) - (patch_size//2)
+                ymax = (int(region_props[i]["centroid"][2]) + (patch_size//2) + 1) + (patch_size//2)
+                zmin = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) - (patch_size//2)
+                zmax = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) + (patch_size//2)
 
                 imagette = image[:, xmin:xmax, ymin:ymax, zmin:zmax].copy()
 
@@ -742,6 +742,7 @@ def Training():
             elif len(image.shape) == 4:
                 case = "multi_3D"
                 image = np.transpose(image, (1, 2, 3, 0))
+                mask = np.transpose(mask, (1, 2, 0))
                 model = CNN3D(max(labels_list), image.shape[0] + 1)
 
             # 3D case
