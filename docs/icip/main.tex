@@ -12,223 +12,140 @@
 
 % Title.
 % ------
-\title{SegClassif: A Napari plugin to improve a segmentation mask by classifying it}
+\title{SVETLANA: a Supervised Segmentation Classifier for Napari}
 %
-% Single address.
+% - STALIN
+% - SALSIFI
+% - SALSA
+% - SCAN
+% 
 % ---------------
 \name{Clément Cazorla, Pierre Weiss, Renaud Morin\thanks{Thanks to XYZ agency for funding.}}
 \address{Imactiv-3D, IMT}
 %
-% For example:
-% ------------
-%\address{School\\
-%	Department\\
-%	Address}
-%
 % Two addresses (uncomment and modify for two-address case).
 % ----------------------------------------------------------
-%\twoauthors
-%  {A. Author-one, B. Author-two\sthanks{Thanks to XYZ agency for funding.}}
-%	{School A-B\\
-%	Department A-B\\
-%	Address A-B}
-%  {C. Author-three, D. Author-four\sthanks{The fourth author performed the work
-%	while at ...}}
-%	{School C-D\\
-%	Department C-D\\
-%	Address C-D}
-%
+\twoauthors
+ {Clément Cazorla, Renaud Morin \sthanks{C. Cazorla is partially funded by ANR CIFRE 2020/0843.}}
+	{IMACTIV-3D\\
+	1 place Pierre Potier, 31100 - Toulouse}
+ {Pierre Weiss \sthanks{P. Weiss acknoledges a support from ANR-3IA Artificial
+and Natural Intelligence Toulouse Institute and ANR Micro-Blind}}
+	{CNRS \& Université de Toulouse\\
+	31400 - Toulouse}
+
 \begin{document}
 %\ninept
 %
 \maketitle
 %
 \begin{abstract}
-The abstract should appear at the top of the left-hand column of text, about
-0.5 inch (12 mm) below the title area and no more than 3.125 inches (80 mm) in
-length.  Leave a 0.5 inch (12 mm) space between the end of the abstract and the
-beginning of the main text.  The abstract should contain about 100 to 150
-words, and should be identical to the abstract text submitted electronically
-along with the paper cover sheet.  All manuscripts must be in English, printed
-in black ink.
+We develop and present a Napari plugin called SVETLANA (SuperVised sEgmenTation cLAssifier for NapAri). It is dedicated to the manual or automatic classification of segmentation results in bio-medical imaging.
+While many open-source softwares now make it possible to automatically segment complex 2D and 3D objects such as cells in biology, the subsequent analysis of the results is not yet accessible to non specialists. 
+This plugin allows end-users to train and use efficient neural network classifiers such as residual networks. 
+The resulting network can as a post-processing tool to improve the segmentation, or as a classifier for various tasks (e.g. separating different cell populations).
+We showcase its practicality through various real-life problems in 2D, 3D and multi-spectral imaging.
 \end{abstract}
 %
 \begin{keywords}
-One, two, three, four, five
+Segmentation, Classification, Convolutional Neural Networks, bio-medical imaging
 \end{keywords}
 %
 \section{Introduction}
 \label{sec:intro}
 
-These guidelines include complete descriptions of the fonts, spacing, and
-related information for producing your proceedings manuscripts. Please follow
-them and if you have any questions, direct them 
-\texttt{info@icip2014.org}.
+The last decade has made automatic segmentation of bio-medical images much more accessible to users not familiar with signal processing. 
+This is largely due to the progress in machine learning and to the emergence of convolutional neural networks. These technologies provide unprecedented results. In addition, they make it possible to avoid setting many hyperparameters - which are oftentimes hard to tune - and whose meaning is obscure to the uninitiated. 
+As an example, we can quote recent, powerful and popular tools such as Ilastik \cite{berg2019ilastik}, CellPose \cite{stringer2021cellpose}, StarDist \cite{fazeli2020automated} or Deep-ImageJ \cite{gomez2021deepimagej}. 
 
-\section{Formatting your paper}
+\subsection{Our motivation}
+
+Unfortunately, segmentation masks -- as good as they are -- are rarely directly exploitable to answer biological questions. In particular, it is often necessary to classify the detected objects in order to perform statistical analyses that give a concrete meaning to the results. 
+While these excellent segmentation tools have solved an important problem, a difficult part of the analysis remains inaccessible.
+
+\subsection{Our contribution}
+
+The goal of this work is to continue filling the gap between methodological advances and end-users, by providing easy-to-use tools for the classification of segmentation results. 
+We resort to the newborn Napari environment \cite{perkel2021python} which allows visualizing and analyzing complex multi-dimensional images (e.g. 2D, 3D, 3D+t, hyperspectral) in Python.
+Our software takes the form of a Napari plugin called SVETLANA (for SuperVised sEgmenTation cLAssifier for NapAri). 
+It is separated in three different modules: 
+\begin{description}
+  \item[\emph{Annotation}] This module picks connected components of the segmentation masks at random and displays them within their neighborhood, so that the user can label them.
+  \item[\emph{Training}] This module allows to pick an arbitrary Pytorch \cite{paszke2019pytorch} neural network architecture (possibly pretrained) and to further train it with the annotations generated with the previous module.
+  \item[\emph{Prediction}] This module uses the trained network to classify the connected components of the segmentation mask.
+\end{description}
+This relatively simple procedure meets a need to further enhance the excellent results obtained with recent learning technologies.
+
+\subsection{Related works}
+
+Different options can be adopted to learn how to segment and classify objects in images. 
+One or the other may be chosen depending on the type and amount of training data collected.
+In particular, the following pipelines are frequent :
+\begin{itemize}
+  \item Segment, extract features within the masks, train a classifier lassify using the features only (cite something).
+  \item Segment and then train a classifier which automatically infers the features (CNN, Svetlana)
+  \item Segment and classify jointly (Ilastik)
+\end{itemize}
+
+The first one highly depends on the non trivial choice of features (texture, edges, directions) and seems to be progressively outperformed by more adaptive methods.
+
+The third one is probably the most precise and interesting choice. The difficulty in using it lies in the need to 
+
+The second one that we choose is interesting when generic neural networks, trained with huge amount of heterogeneous data provides satisfactory results with nearly no human interaction required. 
+
+In many methods, the segmentation and classification tasks are done jointly. This is the case for instance in Ilastik \cite{berg2019ilastik}
+
+
+\section{Plugin description}
 \label{sec:format}
 
-All printed material, including text, illustrations, and charts, must be kept
-within a print area of 7 inches (178 mm) wide by 9 inches (229 mm) high. Do
-not write or print anything outside the print area. The top margin must be 1
-inch (25 mm), except for the title page, and the left margin must be 0.75 inch
-(19 mm).  All {\it text} must be in a two-column format. Columns are to be 3.39
-inches (86 mm) wide, with a 0.24 inch (6 mm) space between them. Text must be
-fully justified.
+SVETLANA is separated in 3 different stages, similar to what is done in Ilastik \cite{berg2019ilastik}. 
 
-\section{PAGE TITLE SECTION}
-\label{sec:pagestyle}
 
-The paper title (on the first page) should begin 1.38 inches (35 mm) from the
-top edge of the page, centered, completely capitalized, and in Times 12-point,
-boldface type.  The authors' name(s) and affiliation(s) appear below the title
-in capital and lower case letters.  Papers with multiple authors and
-affiliations may require two or more lines for this information. Please note
-that papers should not be submitted blind; include the authors' names on the
-PDF.
+Apporter un outil permettant de "trier" les résultats de segmentation, de façon manuelle ou automatique. 
+Cet outil permet de faire plusieurs choses:
+\begin{itemize}
+  \item Labélisation manuelle
+  \item Entraînement de réseaux de classification. 
+  \item Utilisation des réseaux entraînés pour la prédiction lorsqu'il y a de larges collections.
+\end{itemize}
 
-\section{TYPE-STYLE AND FONTS}
-\label{sec:typestyle}
 
-To achieve the best rendering both in printed proceedings and electronic proceedings, we
-strongly encourage you to use Times-Roman font.  In addition, this will give
-the proceedings a more uniform look.  Use a font that is no smaller than nine
-point type throughout the paper, including figure captions.
+\subsection{The choice of Napari}
 
-In nine point type font, capital letters are 2 mm high.  {\bf If you use the
-smallest point size, there should be no more than 3.2 lines/cm (8 lines/inch)
-vertically.}  This is a minimum spacing; 2.75 lines/cm (7 lines/inch) will make
-the paper much more readable.  Larger type sizes require correspondingly larger
-vertical spacing.  Please do not double-space your paper.  TrueType or
-Postscript Type 1 fonts are preferred.
+Napari VS Fiji.
+outils open-source, intuitifs et user-friendly sous la forme de plugins pour des logiciels libres tels que Fiji \cite{schindelin2012fiji} ou plus récemment 
 
-The first paragraph in each section should not be indented, but all the
-following paragraphs within the section should be indented as these paragraphs
-demonstrate.
 
-\section{MAJOR HEADINGS}
-\label{sec:majhead}
+\subsection{The annotation mode}
 
-Major headings, for example, ``1. Introduction'', should appear in all capital
-letters, bold face if possible, centered in the column, with one blank line
-before, and one blank line after. Use a period (``.'') after the heading number,
-not a colon.
+\subsection{The training mode}
 
-\subsection{Subheadings}
-\label{ssec:subhead}
+Parler de Deep Image Prior (i.e. on peut entraîner avec peu de labels, rasoir d'Ockham, Yann Ollivier).
 
-Subheadings should appear in lower case (initial word capitalized) in
-boldface.  They should start at the left margin on a separate line.
- 
-\subsubsection{Sub-subheadings}
-\label{sssec:subsubhead}
+\subsection{The prediction mode}
 
-Sub-subheadings, as in this paragraph, are discouraged. However, if you
-must use them, they should appear in lower case (initial word
-capitalized) and start at the left margin on a separate line, with paragraph
-text beginning on the following line.  They should be in italics.
 
-\section{PAPER FORMAT}
-\label{sec:print}
+\section{Numerical Experiments}
+\label{sec:experiments}
 
-Format you paper for US letter, $8.5 \times 11$-inch paper.
-A4 paper is also acceptable, but please leave the extra 0.5 inch (12 mm)
-empty at the BOTTOM of the page and follow the top and left margins as
-specified.  If the last page of your paper is only partially filled, arrange
-the columns so that they are evenly balanced if possible, rather than having
-one long column.
 
-In LaTeX, to start a new column (but not a new page) and help balance the
-last-page column lengths, you can use the command ``$\backslash$pagebreak'' as
-demonstrated on this page (see the LaTeX source below).
 
-\section{PAGE NUMBERING}
-\label{sec:page}
 
-Please do {\bf not} paginate your paper.  Page numbers, session numbers, and
-conference identification will be inserted when the paper is included in the
-proceedings.
+\section{Conclusion}
+\label{sec:conclusion}
 
-\section{ILLUSTRATIONS, GRAPHS, AND PHOTOGRAPHS}
-\label{sec:illust}
 
-Illustrations must appear within the designated margins.  They may span the two
-columns.  If possible, position illustrations at the top of columns, rather
-than in the middle or at the bottom.  Caption and number every illustration.
-All halftone illustrations must be clear black and white prints.  Colors may be
-used, but they should be selected so as to be readable when printed on a
-black-only printer.
-
-Since there are many ways, often incompatible, of including images (e.g., with
-experimental results) in a LaTeX document, below is an example of how to do
-this \cite{Lamp86}.
-
-\section{FOOTNOTES}
-\label{sec:foot}
-
-Use footnotes sparingly (or not at all!) and place them at the bottom of the
-column on the page on which they are referenced. Use Times 9-point type,
-single-spaced. To help your readers, avoid using footnotes altogether and
-include necessary peripheral observations in the text (within parentheses, if
-you prefer, as in this sentence).
-
-% Below is an example of how to insert images. Delete the ``\vspace'' line,
-% uncomment the preceding line ``\centerline...'' and replace ``imageX.ps''
-% with a suitable PostScript file name.
-% -------------------------------------------------------------------------
-\begin{figure}[t]
-
-\begin{minipage}[b]{1.0\linewidth}
-  \centering
-  \centerline{\includegraphics[width=8.5cm]{Figures/image1}}
-%  \vspace{2.0cm}
-  \centerline{(a) Result 1}\medskip
-\end{minipage}
-%
-\begin{minipage}[b]{.48\linewidth}
-  \centering
-  \centerline{\includegraphics[width=4.0cm]{Figures/image3}}
-%  \vspace{1.5cm}
-  \centerline{(b) Results 3}\medskip
-\end{minipage}
-\hfill
-\begin{minipage}[b]{0.48\linewidth}
-  \centering
-  \centerline{\includegraphics[width=4.0cm]{Figures/image4}}
-%  \vspace{1.5cm}
-  \centerline{(c) Result 4}\medskip
-\end{minipage}
-%
-\caption{Example of placing a figure with experimental results.}
-\label{fig:res}
-%
-\end{figure}
 
 
 % To start a new column (but not a new page) and help balance the last-page
 % column length use \vfill\pagebreak.
 % -------------------------------------------------------------------------
-%\vfill
-%\pagebreak
+\vfill
+\pagebreak
 
-\section{COPYRIGHT FORMS}
-\label{sec:copyright}
-
-You must include your fully completed, signed IEEE copyright release form when
-form when you submit your paper. We {\bf must} have this form before your paper
-can be published in the proceedings.
-
-\section{REFERENCES}
-\label{sec:ref}
-
-List and number all bibliographical references at the end of the
-paper. The references can be numbered in alphabetic order or in
-order of appearance in the document. When referring to them in
-the text, type the corresponding reference number in square
-brackets as shown at the end of this sentence \cite{C2}. An
-additional final page (the fifth page, in most cases) is
-allowed, but must contain only references to the prior
-literature.
+% \section{REFERENCES}
+% \label{sec:ref}
 
 % References should be produced using the bibtex program from suitable
 % BiBTeX files (here: refs). The IEEEbib.bst bibliography
@@ -238,3 +155,38 @@ literature.
 \bibliography{refs}
 
 \end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+La dernière décennie a rendu la segmentation automatique d'images bio-médicales bien plus accessible à des utilisateurs non experts en traitement du signal. 
+Ceci est largement dû aux progrès en apprentissage automatique et notamment en apprentissage par réseaux de neurones convolutionnels. Ils permettent notamment d'éviter le réglage de nombreux hyperparamètres dont le tuning est difficile et dont la signification est obscure pour les non initiés. 
+A titre d'exemple, on peut citer des outils récents, puissants et populaires tels que Ilastik \cite{berg2019ilastik}, Cellpose \cite{stringer2021cellpose}, StarDist \cite{fazeli2020automated} ou plus récemment Deep-ImageJ \cite{gomez2021deepimagej}. 
+
+Malheureusement, les résultats de segmentation -- aussi bons soient-t'ils -- sont rarement exploitables directement pour répondre à des questions biologiques. Il est en effet fréquent qu'il faille  classifier les objets détectés pour effectuer des analyses statistiques apportant un sens concret aux résultats. En un sens, ces outils ont résolu une partie du problème, mais une partie importante et difficile de l'analyse reste inaccessible.
+
+L'objectif de ce travail est de continuer à combler le fossé entre les progrès méthodologiques et les end-users, en fournissant des outils faciles d'utilisation pour la classification des résultats de segmentation.
+Ces outils prennent la forme d'un plugin Napari \cite{perkel2021python}, qui est un nouvel outil de visualisation d'images complexes sous Python.
+
