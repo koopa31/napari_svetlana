@@ -43,6 +43,7 @@ from .CNN3D import CNN3D
 
 from .PredictionDataset import PredictionDataset
 from .Prediction3DDataset import Prediction3DDataset
+from .PredictionMulti3DDataset import PredictionMulti3DDataset
 
 
 @ensure_main_thread
@@ -1049,6 +1050,20 @@ def Prediction():
                                        (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
             data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, np.iinfo(image.dtype).max)
+
+        elif len(image.shape) == 4:
+            image = np.transpose(image, (1, 2, 3, 0))
+            labels = np.transpose(labels, (1, 2, 0))
+            imagette_contours = np.zeros((image.shape[3], image.shape[1], image.shape[2]))
+            pad_image = np.pad(image, ((0, 0),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+            pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+
+            data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, np.iinfo(image.dtype).max)
 
         else:
             imagette_contours = np.zeros((image.shape[0], image.shape[1], image.shape[2]))
