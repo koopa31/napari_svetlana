@@ -4,6 +4,7 @@
 % --------------------------------------------------------------------------
 \documentclass{article}
 \usepackage{spconf,amsmath,graphicx}
+\usepackage{hyperref}
 
 % Example definitions.
 % --------------------
@@ -94,7 +95,17 @@ When precision is critical, the rapidly evolving state-of-the-art is rather base
 {}
 The objective of SVETLANA as a whole is to provide a tool to "sort" the segmentation results, either manually or automatically. 
 It is separated in 3 different stages, similar to what is done in Ilastik \cite{berg2019ilastik}. 
-\subsection{The annotation}
+
+\subsection{The choice of Napari}
+
+Just as Fiji \cite{schindelin2012fiji}, Napari is a completely free and open-source project. The two programs are similar in a number of ways, but we chose Napari for several reasons:
+\begin{itemize}
+  \item Napari is based on Python and Qt whereas Fiji is based on Java. As we all know, Python is much more efficient than Java for scientific computing. Moreover, it is compatible with all the most recent Deep Learning and optimization libraries which are developed in Python, not in Java. It is also very fast at loading loading huge images as it supports image pyramids.
+  \item The ability to use cookiecutter to generate a plugin template easily makes the integration very pleasant and intuitive. This explains the important growth of the number of plugins and the rapid expansion of Napari. Moreover, the developer community is extremely responsive on \url{https://forum.image.sc/} and helped us a lot in the development of Svetlana.
+  \item It also already embeds several segmentation reference methods such as Cellpose \cite{stringer2021cellpose} and allows the user to easily load several plugins in series and create his custom processing pipeline, which makes the integration Svetlana natural since it is in line with a segmentation method.
+\end{itemize}
+
+\subsection{The annotation mode}
 
 This first sub-plugin takes as input two images: the image itself and its segmentation mask. Each object ot the latter should be given a different label. For instance, a 20-cell image would have a mask with values in a range of 0-20.
 \\
@@ -106,9 +117,18 @@ There are two philosophies for using this software:
 
 As shown in \ref{labelization}, since it is not easy for the user to determine the optimal patch size, there is a feature to suggest it to the user, as well as the maximum number of thumbnails that can be extracted, i.e. the number of objects of which the segmentation mask is composed. 
 
-It works on 2D and 3D images, whatever the channels number. Each patch represents the object in its neighbourhood, as shown in \ref{patch}. Tne user can choose the maximum label number he wants, and each label is attributed licking on the number we want to give him. Each time a label is goven, the next image is automatically loaded. If an error is commited, a backward step is possible by clicking on the "r" key.
+It works on 2D and 3D images, whatever the channels number and each patch represents the object in its neighbourhood, as shown in \ref{patch}. The user can choose the maximum label number he wants, and each label is attributed clicking on the number we want to give him. As soon as the patch is labeled, the next image is automatically loaded. If an error is commited, a backward step is possible by clicking on the "r" key.
 
-Once the patches have been extracted and the annotation completed, it is possible to save a new mask per existing label, as well as a binary file that can be reloaded using the torch.load() function. It contains morphological features of interest of each of the objects that were extracted from the connected component analysis.
+Once the patches have been extracted and the annotation completed, all the information which are necessary for the training are stored in a bonary file:
+\begin{itemize}
+  \item The image path 
+  \item The labels image path
+  \item The coordinates list for each object
+  \item The labels list
+  \item The chosen patch size  
+\end{itemize}
+Additionnaly, it is possible to save a new mask per existing label, as well as a binary file that can be reloaded using the torch.load() function. It contains morphological features of interest of each of the objects that were extracted from the connected component analysis.
+
 
 \begin{figure}[htp!]
  \centering
@@ -136,13 +156,8 @@ Cet outil permet de faire plusieurs choses:
 \end{itemize}
 
 
-\subsection{The choice of Napari}
-
-Napari VS Fiji.
-outils open-source, intuitifs et user-friendly sous la forme de plugins pour des logiciels libres tels que Fiji \cite{schindelin2012fiji} ou plus récemment 
 
 
-\subsection{The annotation mode}
 
 \subsection{The training mode}
 
