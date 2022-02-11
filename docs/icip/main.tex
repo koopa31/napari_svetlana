@@ -91,14 +91,46 @@ When precision is critical, the rapidly evolving state-of-the-art is rather base
 
 \section{Plugin description}
 \label{sec:format}
+{}
+The objective of SVETLANA as a whole is to provide a tool to "sort" the segmentation results, either manually or automatically. 
+It is separated in 3 different stages, similar to what is done in Ilastik \cite{berg2019ilastik}. 
+\subsection{The annotation}
 
-SVETLANA is separated in 3 different stages, similar to what is done in Ilastik \cite{berg2019ilastik}. 
+This first sub-plugin takes as input two images: the image itself and its segmentation mask. Each object ot the latter should be given a different label. For instance, a 20-cell image would have a mask with values in a range of 0-20.
+\\
+There are two philosophies for using this software:
+\begin{itemize}
+  \item It can be seen as an annotation tool in its own right. For an image with a reasonable amount of segmented objects, it could be used to classify them in a simple and efficient way, in order to perform statistical analyses afterwards.
+  \item Nevertheless, if the image contains an astronomical number of detected objects, this software becomes an aid for the creation of a training data set for a classifier. Indeed, the tool extracts a subset of thumbnails of a size chosen by the user and randomly selected in order to maximize the chances of obtaining a minimal and representative data set. 
+\end{itemize}
 
+As shown in \ref{labelization}, since it is not easy for the user to determine the optimal patch size, there is a feature to suggest it to the user, as well as the maximum number of thumbnails that can be extracted, i.e. the number of objects of which the segmentation mask is composed. 
+
+It works on 2D and 3D images, whatever the channels number. Each patch represents the object in its neighbourhood, as shown in \ref{patch}. Tne user can choose the maximum label number he wants, and each label is attributed licking on the number we want to give him. Each time a label is goven, the next image is automatically loaded. If an error is commited, a backward step is possible by clicking on the "r" key.
+
+Once the patches have been extracted and the annotation completed, it is possible to save a new mask per existing label, as well as a binary file that can be reloaded using the torch.load() function. It contains morphological features of interest of each of the objects that were extracted from the connected component analysis.
+
+\begin{figure}[htp!]
+ \centering
+ \includegraphics[scale=0.2]{Figures/annotations.png}
+  \caption{Annotation interface}
+  \label{labelization}
+
+\end{figure}
+
+
+\begin{figure}[htp!]
+ \centering
+ \includegraphics[scale=0.2]{Figures/patch.png}
+  \caption{Visualisation of a patch to be annotated}
+  \label{patch}
+
+\end{figure}
 
 Apporter un outil permettant de "trier" les résultats de segmentation, de façon manuelle ou automatique. 
 Cet outil permet de faire plusieurs choses:
 \begin{itemize}
-  \item Labélisation manuelle
+  \item Annotation: This first sub-plugin can be seen as a simple facilitation tool for manual annotation of objects into different classes. It can also be used as a tool to annotate a minimal database that will be used to train a classification model. 
   \item Entraînement de réseaux de classification. 
   \item Utilisation des réseaux entraînés pour la prédiction lorsqu'il y a de larges collections.
 \end{itemize}
