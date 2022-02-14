@@ -73,6 +73,8 @@ losses_list = ["CrossEntropy", "L1Smooth", "BCE", "Distance", "L1", "MSE"]
 
 counter = 0
 labels_list = []
+
+
 # logo = os.path.join(__file__, 'logo/logo_small.png')
 
 
@@ -92,6 +94,8 @@ def Annotation():
             viewer.add_labels(patch[2][counter])
             annotation_widget.viewer.value.layers[1].color = {1: "green"}
             viewer.layers.selection.active = viewer.layers[0]
+            if "freeze" in globals() and freeze is True:
+                viewer.layers[0].contrast_limits_range = [m, M]
 
             print("label 1", labels_list)
             viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
@@ -124,6 +128,8 @@ def Annotation():
             viewer.add_labels(patch[2][counter])
             annotation_widget.viewer.value.layers[1].color = {1: "green"}
             viewer.layers.selection.active = viewer.layers[0]
+            if "freeze" in globals() and freeze is True:
+                viewer.layers[0].contrast_limits_range = [m, M]
 
             print("label 2", labels_list)
             viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
@@ -154,6 +160,8 @@ def Annotation():
                 viewer.add_labels(patch[2][counter])
                 annotation_widget.viewer.value.layers[1].color = {1: "green"}
                 viewer.layers.selection.active = viewer.layers[0]
+                if "freeze" in globals() and freeze is True:
+                    viewer.layers[0].contrast_limits_range = [m, M]
 
                 print("label 3", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
@@ -184,6 +192,8 @@ def Annotation():
                 viewer.add_labels(patch[2][counter])
                 annotation_widget.viewer.value.layers[1].color = {1: "green"}
                 viewer.layers.selection.active = viewer.layers[0]
+                if "freeze" in globals() and freeze is True:
+                    viewer.layers[0].contrast_limits_range = [m, M]
 
                 print("label 4", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
@@ -214,6 +224,8 @@ def Annotation():
                 viewer.add_labels(patch[2][counter])
                 annotation_widget.viewer.value.layers[1].color = {1: "green"}
                 viewer.layers.selection.active = viewer.layers[0]
+                if "freeze" in globals() and freeze is True:
+                    viewer.layers[0].contrast_limits_range = [m, M]
 
                 print("label 5", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
@@ -244,6 +256,8 @@ def Annotation():
                 viewer.add_labels(patch[2][counter])
                 annotation_widget.viewer.value.layers[1].color = {1: "green"}
                 viewer.layers.selection.active = viewer.layers[0]
+                if "freeze" in globals() and freeze is True:
+                    viewer.layers[0].contrast_limits_range = [m, M]
 
                 print("label 6", labels_list)
                 viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
@@ -271,6 +285,8 @@ def Annotation():
         viewer.add_labels(patch[2][counter])
         annotation_widget.viewer.value.layers[1].color = {1: "green"}
         viewer.layers.selection.active = viewer.layers[0]
+        if "freeze" in globals() and freeze is True:
+            viewer.layers[0].contrast_limits_range = [m, M]
         print("retour en arriere", labels_list)
         viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
 
@@ -288,7 +304,7 @@ def Annotation():
                 image_path = im.source.path
 
         half_patch_size = patch_size // 2
-        contours_color = (0, np.iinfo(image.dtype).max, 0)
+        # contours_color = (0, np.iinfo(image.dtype).max, 0)
 
         props = regionprops(labels)
         random.shuffle(props)
@@ -353,8 +369,8 @@ def Annotation():
 
                     eroded_mask = cv2.erode(maskette, np.ones((3, 3), np.uint8))
                     contours = maskette - eroded_mask
-                    #imagette_contours = imagette.copy()
-                    #imagette_contours[contours != 0] = contours_color
+                    # imagette_contours = imagette.copy()
+                    # imagette_contours[contours != 0] = contours_color
 
                     imagettes_list.append(imagette)
                     maskettes_list.append(maskette)
@@ -443,9 +459,10 @@ def Annotation():
         estimate_size_button=dict(widget_type='PushButton', text='Estimate patch size',
                                   tooltip='Automatically estimate an optimal patch size'),
         save_regionprops_button=dict(widget_type='PushButton', text='Save objects statistics', tooltip='Save the '
-                                     'properties of the annotated objects in a binary file, loadable using torch.load'),
+                                                                                                       'properties of the annotated objects in a binary file, loadable using torch.load'),
         generate_im_labs_button=dict(widget_type='PushButton', text='Save masks of labels', tooltip='Save one '
-                                     'per attributed label'),
+                                                                                                    'per attributed label'),
+        fc=dict(widget_type='CheckBox', text='Freeze contrast', tooltip='Freeze contrast'),
     )
     def annotation_widget(  # label_logo,
             viewer: Viewer,
@@ -455,7 +472,8 @@ def Annotation():
             extract_pacthes_button,
             labels_nb,
             save_regionprops_button,
-            generate_im_labs_button
+            generate_im_labs_button,
+            fc,
 
     ) -> None:
         # Import when users activate plugin
@@ -473,6 +491,8 @@ def Annotation():
 
             annotation_widget.viewer.value.layers[1].color = {1: "green"}
             annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[0]
+            if "freeze" in globals() and freeze is True:
+                annotation_widget.viewer.value.layers[0].contrast_limits_range = [m, M]
 
         elif len(patch[0][0].shape) == 4:
             annotation_widget.viewer.value.dims.ndisplay = 3
@@ -481,6 +501,9 @@ def Annotation():
 
             annotation_widget.viewer.value.layers[1].color = {1: "green"}
             annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[0]
+            annotation_widget.viewer.value.layers[0].contrast_limits_range = [m, M]
+            if "freeze" in globals() and freeze is True:
+                annotation_widget.viewer.value.layers[0].contrast_limits_range = [m, M]
 
         else:
             # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
@@ -490,6 +513,21 @@ def Annotation():
 
             annotation_widget.viewer.value.layers[1].color = {1: "green"}
             annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[0]
+            if "freeze" in globals() and freeze is True:
+                annotation_widget.viewer.value.layers[0].contrast_limits_range = [m, M]
+
+    @annotation_widget.fc.changed.connect
+    def freeze_contrast(e: Any):
+        global freeze
+        if e is True:
+            global m, M
+            freeze = True
+            for im in annotation_widget.viewer.value.layers:
+                if "mask" not in im.name and im._type_string == "image":
+                    m = im.contrast_limits[0]
+                    M = im.contrast_limits[1]
+        else:
+            freeze = False
 
     @annotation_widget.extract_pacthes_button.changed.connect
     def _extract_patches(e: Any):
@@ -584,13 +622,17 @@ def Training():
         labels_tensor = nn.functional.one_hot(labels_tensor.type(torch.cuda.LongTensor))
 
         img_patch_list = []
-        max_type_val = np.iinfo(image.dtype).max
+        try:
+            max_type_val = np.iinfo(image.dtype).max
+        except ValueError:
+            max_type_val = np.finfo(image.dtype).max
+
         for i, position in enumerate(region_props):
             if case == "2D" or case == "multi_2D":
-                xmin = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) - (patch_size//2)
-                xmax = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) + (patch_size//2)
-                ymin = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) - (patch_size//2)
-                ymax = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) + (patch_size//2)
+                xmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
+                xmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
+                ymin = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) - (patch_size // 2)
+                ymax = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) + (patch_size // 2)
 
                 imagette = image[xmin:xmax, ymin:ymax].copy()
                 imagette_mask = labels[xmin:xmax, ymin:ymax].copy()
@@ -606,12 +648,12 @@ def Training():
 
                 img_patch_list.append(concat_image)
             elif case == "multi_3D":
-                xmin = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) - (patch_size//2)
-                xmax = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) + (patch_size//2)
-                ymin = (int(region_props[i]["centroid"][2]) + (patch_size//2) + 1) - (patch_size//2)
-                ymax = (int(region_props[i]["centroid"][2]) + (patch_size//2) + 1) + (patch_size//2)
-                zmin = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) - (patch_size//2)
-                zmax = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) + (patch_size//2)
+                xmin = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) - (patch_size // 2)
+                xmax = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) + (patch_size // 2)
+                ymin = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) - (patch_size // 2)
+                ymax = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) + (patch_size // 2)
+                zmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
+                zmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
 
                 imagette = image[:, xmin:xmax, ymin:ymax, zmin:zmax].copy()
 
@@ -631,12 +673,12 @@ def Training():
                 img_patch_list.append(concat_image)
 
             else:
-                xmin = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) - (patch_size//2)
-                xmax = (int(region_props[i]["centroid"][0]) + (patch_size//2) + 1) + (patch_size//2)
-                ymin = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) - (patch_size//2)
-                ymax = (int(region_props[i]["centroid"][1]) + (patch_size//2) + 1) + (patch_size//2)
-                zmin = (int(region_props[i]["centroid"][2]) + (patch_size//2) + 1) - (patch_size//2)
-                zmax = (int(region_props[i]["centroid"][2]) + (patch_size//2) + 1) + (patch_size//2)
+                xmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
+                xmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
+                ymin = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) - (patch_size // 2)
+                ymax = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) + (patch_size // 2)
+                zmin = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) - (patch_size // 2)
+                zmax = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) + (patch_size // 2)
 
                 imagette = image[xmin:xmax, ymin:ymax, zmin:zmax].copy()
 
@@ -645,7 +687,8 @@ def Training():
                 imagette_mask[imagette_mask != region_props[i]["label"]] = 0
                 imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
 
-                concat_image = np.zeros((2, imagette.shape[0], imagette.shape[1], imagette.shape[2])).astype(image.dtype)
+                concat_image = np.zeros((2, imagette.shape[0], imagette.shape[1], imagette.shape[2])).astype(
+                    image.dtype)
 
                 concat_image[0, :, :, :] = imagette
                 concat_image[1, :, :, :] = imagette_mask
@@ -713,7 +756,8 @@ def Training():
                 elif "densenet" in nn_dict[nn_type]:
                     num_ftrs = model.classifier.in_features
                     model.classifier = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                    model.features.conv0 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+                    model.features.conv0 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3),
+                                                     bias=False)
                 elif nn_dict[nn_type] == "alexnet":
                     num_ftrs = model.classifier[6].in_features
                     model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
@@ -730,15 +774,18 @@ def Training():
                     # "labels_number" labels
                     num_ftrs = model.fc.in_features
                     model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                    model.conv1 = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+                    model.conv1 = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3),
+                                            bias=False)
                 elif "densenet" in nn_dict[nn_type]:
                     num_ftrs = model.classifier.in_features
                     model.classifier = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                    model.features.conv0 = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+                    model.features.conv0 = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2),
+                                                     padding=(3, 3), bias=False)
                 elif nn_dict[nn_type] == "alexnet":
                     num_ftrs = model.classifier[6].in_features
                     model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                    model.features[0] = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+                    model.features[0] = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2),
+                                                  padding=(3, 3), bias=False)
 
             elif len(image.shape) == 4:
                 case = "multi_3D"
@@ -778,9 +825,9 @@ def Training():
         # Generators
         if len(mask.shape) == 2:
             pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                               (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
+                                       (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
             pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
         elif len(image.shape) == 4:
             pad_image = np.pad(image, ((0, 0),
@@ -796,8 +843,8 @@ def Training():
                                        (patch_size // 2 + 1, patch_size // 2 + 1),
                                        (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
             pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                (patch_size // 2 + 1, patch_size // 2 + 1),
-                                (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+                                       (patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
         train_data = get_image_patch(pad_image, pad_labels, region_props, labels_list, torch_type, case)
         training_loader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True)
 
@@ -910,9 +957,9 @@ def Training():
         load_data_button=dict(widget_type='PushButton', text='Load data', tooltip='Load the image and the labels'),
         lr=dict(widget_type='LineEdit', label='Learning rate', value=0.01, tooltip='Learning rate'),
         nn=dict(widget_type='ComboBox', label='Network architecture', choices=networks_list, value="ResNet18",
-                       tooltip='All the available network architectures'),
+                tooltip='All the available network architectures'),
         load_custom_model_button=dict(widget_type='PushButton', text='Load custom NN',
-                                              tooltip='Load your own NN pretrained or not'),
+                                      tooltip='Load your own NN pretrained or not'),
         loss=dict(widget_type='ComboBox', label='Loss function', choices=losses_list, value="CrossEntropy",
                   tooltip='All the available loss functions'),
         epochs=dict(widget_type='LineEdit', label='Epochs number', value=1000, tooltip='Epochs number'),
@@ -992,22 +1039,23 @@ def Training():
     @training_widget.launch_training_button.changed.connect
     def _launch_training(e: Any):
         if "model" in globals():
-            training_worker = thread_worker(train, progress={"total": int(training_widget.epochs.value)})\
+            training_worker = thread_worker(train, progress={"total": int(training_widget.epochs.value)}) \
                 (training_widget.viewer, image, mask, region_props, labels_list, training_widget.nn.value,
-                                    training_widget.loss.value, float(training_widget.lr.value),
-                                    int(training_widget.epochs.value), training_widget.rotations.value,
-                                    training_widget.h_flip.value, training_widget.v_flip.value,
-                                    float(training_widget.prob.value), int(training_widget.b_size.value),
-                                    int(training_widget.saving_ep.value), str(training_widget.training_name.value), model)
+                 training_widget.loss.value, float(training_widget.lr.value),
+                 int(training_widget.epochs.value), training_widget.rotations.value,
+                 training_widget.h_flip.value, training_widget.v_flip.value,
+                 float(training_widget.prob.value), int(training_widget.b_size.value),
+                 int(training_widget.saving_ep.value), str(training_widget.training_name.value), model)
         else:
 
-            training_worker = thread_worker(train, progress={"total": int(training_widget.epochs.value)})(training_widget.viewer, image, mask, region_props, labels_list,
-                          training_widget.nn.value,
-                          training_widget.loss.value, float(training_widget.lr.value),
-                          int(training_widget.epochs.value), training_widget.rotations.value,
-                          training_widget.h_flip.value, training_widget.v_flip.value,
-                          float(training_widget.prob.value), int(training_widget.b_size.value),
-                          int(training_widget.saving_ep.value), str(training_widget.training_name.value), None)
+            training_worker = thread_worker(train, progress={"total": int(training_widget.epochs.value)})(
+                training_widget.viewer, image, mask, region_props, labels_list,
+                training_widget.nn.value,
+                training_widget.loss.value, float(training_widget.lr.value),
+                int(training_widget.epochs.value), training_widget.rotations.value,
+                training_widget.h_flip.value, training_widget.v_flip.value,
+                float(training_widget.prob.value), int(training_widget.b_size.value),
+                int(training_widget.saving_ep.value), str(training_widget.training_name.value), None)
 
         training_worker.start()
         show_info('Training started')
@@ -1039,6 +1087,11 @@ def Prediction():
         compteur = 0
         global imagette_contours
 
+        try:
+            max = np.iinfo(image.dtype).max
+        except TypeError:
+            max = np.finfo(image.dtype).max
+
         if image.shape[2] <= 3 or (image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]):
             if image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]:
                 image = np.transpose(image, (1, 2, 0))
@@ -1047,9 +1100,9 @@ def Prediction():
             pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                        (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
             pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-            data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, np.iinfo(image.dtype).max)
+            data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, max)
 
         elif len(image.shape) == 4:
             image = np.transpose(image, (1, 2, 3, 0))
@@ -1060,10 +1113,10 @@ def Prediction():
                                        (patch_size // 2 + 1, patch_size // 2 + 1),
                                        (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
             pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+                                         (patch_size // 2 + 1, patch_size // 2 + 1),
+                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-            data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, np.iinfo(image.dtype).max)
+            data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, max)
 
         else:
             imagette_contours = np.zeros((image.shape[0], image.shape[1], image.shape[2]))
@@ -1074,7 +1127,7 @@ def Prediction():
                                          (patch_size // 2 + 1, patch_size // 2 + 1),
                                          (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-            data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, np.iinfo(image.dtype).max)
+            data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, max)
         prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
 
         global list_pred
@@ -1087,8 +1140,9 @@ def Prediction():
 
         show_info("Prediction of patches done, please wait while the result image is being generated...")
         if len(labels.shape) == 2:
-            compteur = Parallel(n_jobs=-1, require="sharedmem")(delayed(draw_predicted_contour)(compteur, prop, imagette_contours, i, list_pred)
-                                                                for i, prop in enumerate(props))
+            compteur = Parallel(n_jobs=-1, require="sharedmem")(
+                delayed(draw_predicted_contour)(compteur, prop, imagette_contours, i, list_pred)
+                for i, prop in enumerate(props))
         else:
             compteur = Parallel(n_jobs=-1, require="sharedmem")(
                 delayed(draw_3d_prediction)(compteur, prop, imagette_contours, i, list_pred)
@@ -1112,9 +1166,9 @@ def Prediction():
         launch_prediction_button=dict(widget_type='PushButton', text='Launch prediction', tooltip='Launch prediction'),
         bound=dict(widget_type='CheckBox', text='Show boundaries only', tooltip='Show boundaries only'),
         generate_im_labs_button=dict(widget_type='PushButton', text='Save masks of labels', tooltip='Save one '
-                                     'per attributed label'),
+                                                                                                    'per attributed label'),
         save_regionprops_button=dict(widget_type='PushButton', text='Save objects statistics', tooltip='Save the '
-                                     'properties of the annotated objects in a binary file, loadable using torch.load'),
+                                                                                                       'properties of the annotated objects in a binary file, loadable using torch.load'),
     )
     def prediction_widget(  # label_logo,
             viewer: Viewer,
@@ -1172,7 +1226,8 @@ def Prediction():
     def _launch_prediction(e: Any):
         global props
         props = regionprops(mask)
-        prediction_worker = thread_worker(predict, progress={"total": int(np.ceil(len(props)/int(prediction_widget.batch_size.value)))})\
+        prediction_worker = thread_worker(predict, progress={
+            "total": int(np.ceil(len(props) / int(prediction_widget.batch_size.value)))}) \
             (image, mask, props, patch_size, int(prediction_widget.batch_size.value))
         # Addition of the new labels
         prediction_worker.returned.connect(display_result)
