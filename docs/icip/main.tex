@@ -5,6 +5,8 @@
 \documentclass{article}
 \usepackage{spconf,amsmath,graphicx}
 \usepackage{hyperref}
+\usepackage{caption}
+\usepackage{subcaption}
 
 % Example definitions.
 % --------------------
@@ -132,7 +134,7 @@ Additionally, it is possible to save a new mask per existing label, as well as a
 
 \begin{figure}[htp!]
  \centering
- \includegraphics[scale=0.18]{Figures/annotations.png}
+ \includegraphics[scale=0.18]{Figures/annotation.png}
   \caption{Annotation interface}
   \label{labelization}
 
@@ -205,7 +207,7 @@ This plugin is very minimalist, as shown in figure \ref{predict}. Indeed, it all
 
 \begin{figure}[htp!]{}
  \centering
- \includegraphics[scale=0.15]{Figures/predict.png}
+ \includegraphics[scale=0.15]{Figures/resultat.png}
   \caption{Example of a 2D prediction with two labels}
   \label{predict}
 
@@ -214,7 +216,7 @@ This plugin is very minimalist, as shown in figure \ref{predict}. Indeed, it all
 
 \begin{figure}[h!]{}
  \centering
- \includegraphics[scale=0.15]{Figures/predict_contours.png}
+ \includegraphics[scale=0.15]{Figures/resultat_contour.png}
   \caption{An alternative representation of the labels}
   \label{predict_contours}
 
@@ -228,9 +230,37 @@ As for the annotation plugin, the user has the opportunity to save a mask per la
 \section{Numerical Experiments}
 \label{sec:experiments}
 
-In this section we are going to present the potential of the method on real biomedical data of interest such as transmitted-light microscopy and 3D multi-channel microscopy.
 
-\subsection{First experiment}
+\subsection{First experiment: artificial texture classification}
+
+For this first experiment, we generated an image composed of  345 circular objects differentiable only by their texture that we seek to order into two classes. The distribution of the two textures in the image is about 70/30 and we extract 100 thumbnails to annotate. 
+As we have very few data, we decided to demonstrate the efficiency of shallow convolutional networks. As shown in Figure \ref{CNN2D}, we designed a tiny 2-layer CNN of 3000 parameters.
+
+We have a misclassified objects rate of 0.8\%
+
+
+\begin{figure}[h!]{}
+ \centering
+ \includegraphics[scale=0.35]{Figures/myfirstcnn.pdf}
+  \caption{Our 2-layer custom CNN}
+  \label{CNN2D}
+
+\end{figure}
+
+
+\begin{figure}[h!]
+  \begin{center}
+    \subfloat[Original texture image]{
+      \includegraphics[scale=0.25875]{Figures/textures.png}
+      \label{textures}
+                         }
+    \subfloat[Classified mask]{
+      \includegraphics[scale=0.15]{Figures/textures_res.png}
+      \label{textures res}
+                         }
+     \end{center}
+\caption{Result of the textures classification}
+\end{figure}
 
 
 \section{Conclusion}
