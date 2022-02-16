@@ -15,8 +15,10 @@ import brydson_sampling
 import matplotlib.pyplot as plt
 import imageio
 
+plt.ion()
+
 ## Parameters
-N = 512
+N = 256
 radius = 20
 sigma1 = 3
 sigma2 = 1
@@ -90,5 +92,21 @@ imageio.imsave("label.png", labels.astype('uint16'))
 imageio.imsave("mask1.png", u1)
 imageio.imsave("mask2.png", u2)
 imageio.imsave("image.png", u)
+imageio.imsave("mask.png", u1 + u2)
+
+## Saving patches
+perm = np.random.permutation(npts)
+pts = pts[perm,:]
+ps = 20
+u=np.uint8(255*u/np.max(u))
+for i in range(20):
+  if (pts[i,0]-ps>0) & (pts[i,0]+ps<N) & (pts[i,1]-ps>0) & (pts[i,1]+ps<N):
+    imageio.imsave("annotate_%i.png"%i, u[pts[i,0]-ps:pts[i,0]+ps,pts[i,1]-ps:pts[i,1]+ps])
+
+ucol = np.zeros((N,N,3))
+ucol[:,:,0] = 255*u1
+ucol[:,:,1] = 255*u2
+
+imageio.imsave("prediction.png",ucol)
 
 
