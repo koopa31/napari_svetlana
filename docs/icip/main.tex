@@ -234,9 +234,9 @@ As for the annotation plugin, the user has the opportunity to save a mask per la
 \subsection{First experiment: artificial texture classification}
 
 For this first experiment, we generated an image composed of  345 circular objects differentiable only by their texture that we seek to order into two classes. The distribution of the two textures in the image is about 70/30 and we extract 100 thumbnails to annotate. 
-As we have very few data, we decided to demonstrate the efficiency of shallow convolutional networks. As shown in Figure \ref{CNN2D}, we designed a tiny 2-layer CNN of 3000 parameters.
+As we have very few data, we decided to demonstrate the efficiency of shallow convolutional networks. As shown in Figure \ref{CNN2D}, we designed a 2-layer CNN of 3000 parameters only.
 
-We have a misclassified objects rate of 0.8\%
+Training 500 epochs, i.e. a calculation time of 20 seconds, with a constant learning rate of 0.01, we get a misclassified objects rate of 0.8\%.
 
 
 \begin{figure}[h!]{}
