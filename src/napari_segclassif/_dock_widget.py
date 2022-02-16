@@ -40,6 +40,7 @@ from qtpy.QtWidgets import QFileDialog
 
 from line_profiler_pycharm import profile
 from .CNN3D import CNN3D
+from .CNN2D import CNN2D
 
 from .PredictionDataset import PredictionDataset
 from .Prediction3DDataset import Prediction3DDataset
@@ -798,6 +799,21 @@ def Training():
                 case = "3D"
                 model = CNN3D(max(labels_list), 2)
 
+        else:
+            if image.shape[2] <= 3:
+                case = "2D"
+                model = CNN2D(max(labels_list), 4)
+
+            elif image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]:
+                case = "multi_2D"
+
+            elif len(image.shape) == 4:
+                case = "multi_3D"
+
+            # 3D case
+            else:
+                case = "3D"
+
         torch_type = torch.cuda.FloatTensor
 
         losses_dict = {
@@ -1089,7 +1105,7 @@ def Prediction():
 
         try:
             max = np.iinfo(image.dtype).max
-        except TypeError:
+        except:
             max = np.finfo(image.dtype).max
 
         if image.shape[2] <= 3 or (image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]):
