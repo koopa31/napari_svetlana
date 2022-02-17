@@ -263,6 +263,36 @@ Training 500 epochs, i.e. a calculation time of 20 seconds, with a constant lear
 \end{figure}
 
 
+\subsection{Second experiment: Infected cells detection in virology}
+
+This image depicts cells that are, for some, infected with an adenovirus. It is composed of:
+\begin{itemize}
+  \item a first channel containing a Hoechst labeling of the nuclei
+  \item a second channel where the sites of viral proliferation have been marked using the ANCHOR system and which will serve as our ground truth.
+\end{itemize}
+ It is not trivial to determine the infection of a cell only from the first channel, but based on the ground truth, we annotated 100 cells in order to train the model to distinguish them only from the Hoechst channel.    
+
+
+\begin{figure}[h!]
+  \begin{center}
+    \subfloat[Hoechst staining]{
+      \includegraphics[scale=0.07]{Figures/viro_canal0.png}
+      \label{textures}
+                         }
+    \subfloat[ANCHOR channel showing the infected cells]{
+      \includegraphics[scale=0.07]{Figures/viro_canal1.png}
+      \label{textures res}
+                         }
+   \subfloat[Our classification result]{
+      \includegraphics[scale=0.091]{Figures/resultat_viro.png}
+      \label{textures res}
+                         }
+     \end{center}
+\caption{Result of the textures classification}
+\end{figure}
+
+
+
 \section{Conclusion}
 \label{sec:conclusion}
 
