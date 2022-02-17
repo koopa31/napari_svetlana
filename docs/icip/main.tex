@@ -270,7 +270,7 @@ This image depicts cells that are, for some, infected with an adenovirus. It is 
   \item a first channel containing a Hoechst labeling of the nuclei
   \item a second channel where the sites of viral proliferation have been marked using the ANCHOR system and which will serve as our ground truth.
 \end{itemize}
- It is not trivial to determine the infection of a cell only from the first channel, but based on the ground truth, we annotated 100 cells in order to train the model to distinguish them only from the Hoechst channel.    
+ It is not trivial to determine the infection of a cell only from the first channel, but based on the ground truth, we annotated 100 cells over 245 in order to train the model to distinguish them only from the Hoechst channel.    
 
 
 \begin{figure}[h!]
@@ -279,17 +279,19 @@ This image depicts cells that are, for some, infected with an adenovirus. It is 
       \includegraphics[scale=0.07]{Figures/viro_canal0.png}
       \label{textures}
                          }
-    \subfloat[ANCHOR channel showing the infected cells]{
+    \subfloat[ANCHOR channel]{
       \includegraphics[scale=0.07]{Figures/viro_canal1.png}
       \label{textures res}
                          }
-   \subfloat[Our classification result]{
+   \subfloat[classification result]{
       \includegraphics[scale=0.091]{Figures/resultat_viro.png}
       \label{textures res}
                          }
      \end{center}
 \caption{Result of the textures classification}
 \end{figure}
+
+95.5\% of the cells were well classified.
 
 
 
