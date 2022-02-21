@@ -86,29 +86,46 @@ def Annotation():
     def set_label_1(viewer):
         global counter
 
-        if counter < len(patch[2]) - 1:
+        if counter < len(props) - 1:
             labels_list.append(1)
+
+            mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
+                                    "label": props[counter].label})
             counter += 1
 
-            viewer.layers.clear()
-            viewer.add_image(patch[0][counter])
-            viewer.add_labels(patch[2][counter])
-            annotation_widget.viewer.value.layers[1].color = {1: "green"}
-            viewer.layers.selection.active = viewer.layers[0]
-            if "freeze" in globals() and freeze is True:
-                viewer.layers[0].contrast_limits_range = [m, M]
+            # focus on the next object to annotate
+            viewer.camera.zoom = zoom_factor
+            viewer.camera.center = (0, int(props[counter].centroid[0]), int(props[counter].centroid[1]))
+            viewer.camera.zoom = zoom_factor + 10 ** -8
+
+            # deletion of the old contours and drawing of the new one
+            viewer.layers.pop()
+
+            circle_mask[circle_mask != 0] = 0
+            circle_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+
+            eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
+            eroded_labels = circle_mask - eroded_contours
+
+            annotation_widget.viewer.value.add_labels(eroded_labels)
+
+            annotation_widget.viewer.value.layers[-1].color = {1: "green"}
+            annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
+                image_layer_name]
 
             print("label 1", labels_list)
-            viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
-        elif counter == len(patch[2]) - 1:
+            viewer.status = str(counter) + " images processed over " + str(len(props))
+        elif counter == len(props) - 1:
             labels_list.append(1)
-            viewer.layers.clear()
+            mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
+                                    "label": props[counter].label})
             counter += 1
             from skimage.io import imread
+            viewer.layers.clear()
             viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
                                     "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
             print("annotation over", labels_list)
-            viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+            viewer.status = str(counter) + " images processed over " + str(len(props))
             show_info("Annotation over, press 1 to save the result")
         else:
             # Saving of the annotation result in a binary file
@@ -120,30 +137,45 @@ def Annotation():
     @Viewer.bind_key('2')
     def set_label_2(viewer):
         global counter
-        if counter < len(patch[2]) - 1:
+        if counter < len(props) - 1:
             labels_list.append(2)
+
+            mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
+                                    "label": props[counter].label})
             counter += 1
+            # focus on the next object to annotate
+            viewer.camera.zoom = zoom_factor
+            viewer.camera.center = (0, int(props[counter].centroid[0]), int(props[counter].centroid[1]))
+            viewer.camera.zoom = zoom_factor + 10 ** -8
 
-            viewer.layers.clear()
-            viewer.add_image(patch[0][counter])
-            viewer.add_labels(patch[2][counter])
-            annotation_widget.viewer.value.layers[1].color = {1: "green"}
-            viewer.layers.selection.active = viewer.layers[0]
-            if "freeze" in globals() and freeze is True:
-                viewer.layers[0].contrast_limits_range = [m, M]
+            # deletion of the old contours and drawing of the new one
+            viewer.layers.pop()
 
-            print("label 2", labels_list)
-            viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
-        elif counter == len(patch[2]) - 1:
+            circle_mask[circle_mask != 0] = 0
+            circle_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+
+            eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
+            eroded_labels = circle_mask - eroded_contours
+
+            annotation_widget.viewer.value.add_labels(eroded_labels)
+
+            annotation_widget.viewer.value.layers[-1].color = {1: "green"}
+            annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
+                image_layer_name]
+
+            print("label 1", labels_list)
+            viewer.status = str(counter) + " images processed over " + str(len(props))
+        elif counter == len(props) - 1:
             labels_list.append(2)
-            viewer.layers.clear()
-
+            mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
+                                    "label": props[counter].label})
             counter += 1
             from skimage.io import imread
+            viewer.layers.clear()
             viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
                                     "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
             print("annotation over", labels_list)
-            viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+            viewer.status = str(counter) + " images processed over " + str(len(props))
             show_info("Annotation over, press 1 to save the result")
         else:
             pass
@@ -152,30 +184,45 @@ def Annotation():
     def set_label_3(viewer):
         global counter
         if (int(annotation_widget.labels_nb.value) < 3) is False:
-            if counter < len(patch[2]) - 1:
+            if counter < len(props) - 1:
                 labels_list.append(3)
+
+                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
+                                        "label": props[counter].label})
                 counter += 1
+                # focus on the next object to annotate
+                viewer.camera.zoom = zoom_factor
+                viewer.camera.center = (0, int(props[counter].centroid[0]), int(props[counter].centroid[1]))
+                viewer.camera.zoom = zoom_factor + 10 ** -8
 
-                viewer.layers.clear()
-                viewer.add_image(patch[0][counter])
-                viewer.add_labels(patch[2][counter])
-                annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                viewer.layers.selection.active = viewer.layers[0]
-                if "freeze" in globals() and freeze is True:
-                    viewer.layers[0].contrast_limits_range = [m, M]
+                # deletion of the old contours and drawing of the new one
+                viewer.layers.pop()
 
-                print("label 3", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
-            elif counter == len(patch[2]) - 1:
+                circle_mask[circle_mask != 0] = 0
+                circle_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+
+                eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
+                eroded_labels = circle_mask - eroded_contours
+
+                annotation_widget.viewer.value.add_labels(eroded_labels)
+
+                annotation_widget.viewer.value.layers[-1].color = {1: "green"}
+                annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
+                    image_layer_name]
+
+                print("label 1", labels_list)
+                viewer.status = str(counter) + " images processed over " + str(len(props))
+            elif counter == len(props) - 1:
                 labels_list.append(3)
-                viewer.layers.clear()
-
+                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
+                                        "label": props[counter].label})
                 counter += 1
                 from skimage.io import imread
+                viewer.layers.clear()
                 viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
                                         "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
                 print("annotation over", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+                viewer.status = str(counter) + " images processed over " + str(len(props))
                 show_info("Annotation over, press 1 to save the result")
             else:
                 pass
@@ -184,30 +231,45 @@ def Annotation():
     def set_label_4(viewer):
         global counter
         if (int(annotation_widget.labels_nb.value) < 4) is False:
-            if counter < len(patch[2]) - 1:
+            if counter < len(props) - 1:
                 labels_list.append(4)
+
+                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
+                                        "label": props[counter].label})
                 counter += 1
+                # focus on the next object to annotate
+                viewer.camera.zoom = zoom_factor
+                viewer.camera.center = (0, int(props[counter].centroid[0]), int(props[counter].centroid[1]))
+                viewer.camera.zoom = zoom_factor + 10 ** -8
 
-                viewer.layers.clear()
-                viewer.add_image(patch[0][counter])
-                viewer.add_labels(patch[2][counter])
-                annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                viewer.layers.selection.active = viewer.layers[0]
-                if "freeze" in globals() and freeze is True:
-                    viewer.layers[0].contrast_limits_range = [m, M]
+                # deletion of the old contours and drawing of the new one
+                viewer.layers.pop()
 
-                print("label 4", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
-            elif counter == len(patch[2]) - 1:
+                circle_mask[circle_mask != 0] = 0
+                circle_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+
+                eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
+                eroded_labels = circle_mask - eroded_contours
+
+                annotation_widget.viewer.value.add_labels(eroded_labels)
+
+                annotation_widget.viewer.value.layers[-1].color = {1: "green"}
+                annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
+                    image_layer_name]
+
+                print("label 1", labels_list)
+                viewer.status = str(counter) + " images processed over " + str(len(props))
+            elif counter == len(props) - 1:
                 labels_list.append(4)
-                viewer.layers.clear()
-
+                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
+                                        "label": props[counter].label})
                 counter += 1
                 from skimage.io import imread
+                viewer.layers.clear()
                 viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
                                         "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
                 print("annotation over", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+                viewer.status = str(counter) + " images processed over " + str(len(props))
                 show_info("Annotation over, press 1 to save the result")
             else:
                 pass
@@ -216,30 +278,45 @@ def Annotation():
     def set_label_5(viewer):
         global counter
         if (int(annotation_widget.labels_nb.value) < 5) is False:
-            if counter < len(patch[2]) - 1:
+            if counter < len(props) - 1:
                 labels_list.append(5)
+
+                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
+                                        "label": props[counter].label})
                 counter += 1
+                # focus on the next object to annotate
+                viewer.camera.zoom = zoom_factor
+                viewer.camera.center = (0, int(props[counter].centroid[0]), int(props[counter].centroid[1]))
+                viewer.camera.zoom = zoom_factor + 10 ** -8
 
-                viewer.layers.clear()
-                viewer.add_image(patch[0][counter])
-                viewer.add_labels(patch[2][counter])
-                annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                viewer.layers.selection.active = viewer.layers[0]
-                if "freeze" in globals() and freeze is True:
-                    viewer.layers[0].contrast_limits_range = [m, M]
+                # deletion of the old contours and drawing of the new one
+                viewer.layers.pop()
 
-                print("label 5", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
-            elif counter == len(patch[2]) - 1:
+                circle_mask[circle_mask != 0] = 0
+                circle_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+
+                eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
+                eroded_labels = circle_mask - eroded_contours
+
+                annotation_widget.viewer.value.add_labels(eroded_labels)
+
+                annotation_widget.viewer.value.layers[-1].color = {1: "green"}
+                annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
+                    image_layer_name]
+
+                print("label 1", labels_list)
+                viewer.status = str(counter) + " images processed over " + str(len(props))
+            elif counter == len(props) - 1:
                 labels_list.append(5)
-                viewer.layers.clear()
-
+                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
+                                        "label": props[counter].label})
                 counter += 1
                 from skimage.io import imread
+                viewer.layers.clear()
                 viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
                                         "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
                 print("annotation over", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+                viewer.status = str(counter) + " images processed over " + str(len(props))
                 show_info("Annotation over, press 1 to save the result")
             else:
                 pass
@@ -248,30 +325,45 @@ def Annotation():
     def set_label_6(viewer):
         global counter
         if (int(annotation_widget.labels_nb.value) < 6) is False:
-            if counter < len(patch[2]) - 1:
+            if counter < len(props) - 1:
                 labels_list.append(6)
+
+                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
+                                        "label": props[counter].label})
                 counter += 1
+                # focus on the next object to annotate
+                viewer.camera.zoom = zoom_factor
+                viewer.camera.center = (0, int(props[counter].centroid[0]), int(props[counter].centroid[1]))
+                viewer.camera.zoom = zoom_factor + 10 ** -8
 
-                viewer.layers.clear()
-                viewer.add_image(patch[0][counter])
-                viewer.add_labels(patch[2][counter])
-                annotation_widget.viewer.value.layers[1].color = {1: "green"}
-                viewer.layers.selection.active = viewer.layers[0]
-                if "freeze" in globals() and freeze is True:
-                    viewer.layers[0].contrast_limits_range = [m, M]
+                # deletion of the old contours and drawing of the new one
+                viewer.layers.pop()
 
-                print("label 6", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
-            elif counter == len(patch[2]) - 1:
+                circle_mask[circle_mask != 0] = 0
+                circle_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+
+                eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
+                eroded_labels = circle_mask - eroded_contours
+
+                annotation_widget.viewer.value.add_labels(eroded_labels)
+
+                annotation_widget.viewer.value.layers[-1].color = {1: "green"}
+                annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
+                    image_layer_name]
+
+                print("label 1", labels_list)
+                viewer.status = str(counter) + " images processed over " + str(len(props))
+            elif counter == len(props) - 1:
                 labels_list.append(6)
-                viewer.layers.clear()
-
+                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
+                                        "label": props[counter].label})
                 counter += 1
                 from skimage.io import imread
+                viewer.layers.clear()
                 viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
                                         "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
                 print("annotation over", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+                viewer.status = str(counter) + " images processed over " + str(len(props))
                 show_info("Annotation over, press 1 to save the result")
             else:
                 pass
@@ -280,19 +372,31 @@ def Annotation():
     def remove_label(viewer):
         global counter
         labels_list.pop()
-        viewer.layers.clear()
+        mini_props_list.pop()
         counter -= 1
-        viewer.add_image(patch[0][counter])
-        viewer.add_labels(patch[2][counter])
-        annotation_widget.viewer.value.layers[1].color = {1: "green"}
-        viewer.layers.selection.active = viewer.layers[0]
-        if "freeze" in globals() and freeze is True:
-            viewer.layers[0].contrast_limits_range = [m, M]
+        viewer.camera.zoom = zoom_factor
+        viewer.camera.center = (0, int(props[counter].centroid[0]), int(props[counter].centroid[1]))
+        viewer.camera.zoom = zoom_factor + 10 ** -8
+
+        viewer.layers.pop()
+
+        circle_mask[circle_mask != 0] = 0
+        circle_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+
+        eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
+        eroded_labels = circle_mask - eroded_contours
+
+        annotation_widget.viewer.value.add_labels(eroded_labels)
+
+        annotation_widget.viewer.value.layers[-1].color = {1: "green"}
+        annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
+            image_layer_name]
+
         print("retour en arriere", labels_list)
-        viewer.status = str(counter) + " images processed over " + str(len(patch[2]))
+        viewer.status = str(counter) + " images processed over " + str(len(props))
 
     @thread_worker
-    def generate_patches(viewer, imagettes_nb, patch_size):
+    def generate_patches(viewer, patch_size):
         for im in viewer:
             if "mask" in im.name:
                 global labels
@@ -304,236 +408,95 @@ def Annotation():
                 global image_path
                 image_path = im.source.path
 
-        half_patch_size = patch_size // 2
         # contours_color = (0, np.iinfo(image.dtype).max, 0)
-
+        global props
         props = regionprops(labels)
         random.shuffle(props)
 
-        global mini_props
-        mini_props = props[:imagettes_nb]
-
-        imagettes_list = []
-        imagettes_contours_list = []
-        maskettes_list = []
-
-        if len(image.shape) == 2:
-            image = np.stack((image,) * 3, axis=-1)
-
-        # 2D
-        if image.shape[2] <= 3:
-            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
-            pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
-        # Multi-spectral 2D
-        elif len(image.shape) == 4:
-            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1), (0, 0),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
-            pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                         (patch_size // 2 + 1, patch_size // 2 + 1),
-                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
-
-        # Multi-spectral 3D
-        elif image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]:
-            pad_image = np.pad(image, ((0, 0), (patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
-            pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
-
-        # 3D
-        else:
-            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
-            pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                         (patch_size // 2 + 1, patch_size // 2 + 1),
-                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+        global zoom_factor
+        zoom_factor = image.shape[1] / patch_size
 
         global mini_props_list
         mini_props_list = []
-        for i, prop in enumerate(mini_props):
-            if prop.area != 0:
-                if image.shape[2] <= 3:
 
-                    xmin = (int(prop.centroid[0]) + half_patch_size + 1) - half_patch_size
-                    xmax = (int(prop.centroid[0]) + half_patch_size + 1) + half_patch_size
-                    ymin = (int(prop.centroid[1]) + half_patch_size + 1) - half_patch_size
-                    ymax = (int(prop.centroid[1]) + half_patch_size + 1) + half_patch_size
-
-                    imagette = pad_image[xmin:xmax, ymin:ymax]
-                    maskette = pad_labels[xmin:xmax, ymin:ymax].copy()
-
-                    maskette[maskette != prop.label] = 0
-                    maskette[maskette == prop.label] = 1
-
-                    eroded_mask = cv2.erode(maskette, np.ones((3, 3), np.uint8))
-                    contours = maskette - eroded_mask
-                    # imagette_contours = imagette.copy()
-                    # imagette_contours[contours != 0] = contours_color
-
-                    imagettes_list.append(imagette)
-                    maskettes_list.append(maskette)
-                    imagettes_contours_list.append(contours)
-                    mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords, "label": prop.label})
-
-                elif image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]:
-                    xmin = (int(prop.centroid[0]) + half_patch_size + 1) - half_patch_size
-                    xmax = (int(prop.centroid[0]) + half_patch_size + 1) + half_patch_size
-                    ymin = (int(prop.centroid[1]) + half_patch_size + 1) - half_patch_size
-                    ymax = (int(prop.centroid[1]) + half_patch_size + 1) + half_patch_size
-
-                    imagette = pad_image[:, xmin:xmax, ymin:ymax].copy()
-                    maskette = pad_labels[xmin:xmax, ymin:ymax].copy()
-
-                    maskette[maskette != prop.label] = 0
-                    maskette[maskette == prop.label] = 1
-
-                    eroded_mask = cv2.erode(maskette, np.ones((3, 3), np.uint8))
-                    contours = maskette - eroded_mask
-                    # imagette_contours = imagette.copy()
-                    # imagette_contours[contours != 0] = contours_color
-
-                    imagettes_list.append(imagette)
-                    maskettes_list.append(maskette)
-                    imagettes_contours_list.append(contours)
-                    mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords, "label": prop.label})
-
-                elif len(image.shape) == 4:
-
-                    xmin = (int(prop.centroid[0]) + half_patch_size + 1) - half_patch_size
-                    xmax = (int(prop.centroid[0]) + half_patch_size + 1) + half_patch_size
-                    ymin = (int(prop.centroid[1]) + half_patch_size + 1) - half_patch_size
-                    ymax = (int(prop.centroid[1]) + half_patch_size + 1) + half_patch_size
-                    zmin = (int(prop.centroid[2]) + half_patch_size + 1) - half_patch_size
-                    zmax = (int(prop.centroid[2]) + half_patch_size + 1) + half_patch_size
-
-                    imagette = pad_image[xmin:xmax, :, ymin:ymax, zmin:zmax]
-
-                    maskette = pad_labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
-
-                    maskette[maskette != prop.label] = 0
-                    maskette[maskette == prop.label] = 1
-
-                    imagettes_list.append(imagette)
-                    maskettes_list.append(maskette)
-                    imagettes_contours_list.append(maskette)
-                    mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords, "label": prop.label})
-
-                else:
-                    # 3D case
-                    xmin = (int(prop.centroid[0]) + half_patch_size + 1) - half_patch_size
-                    xmax = (int(prop.centroid[0]) + half_patch_size + 1) + half_patch_size
-                    ymin = (int(prop.centroid[1]) + half_patch_size + 1) - half_patch_size
-                    ymax = (int(prop.centroid[1]) + half_patch_size + 1) + half_patch_size
-                    zmin = (int(prop.centroid[2]) + half_patch_size + 1) - half_patch_size
-                    zmax = (int(prop.centroid[2]) + half_patch_size + 1) + half_patch_size
-
-                    imagette = pad_image[xmin:xmax, ymin:ymax, zmin:zmax]
-
-                    maskette = pad_labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
-
-                    maskette[maskette != prop.label] = 0
-                    maskette[maskette == prop.label] = 1
-
-                    imagettes_list.append(imagette)
-                    maskettes_list.append(maskette)
-                    imagettes_contours_list.append(maskette)
-                    mini_props_list.append({"centroid": prop.centroid, "coords": prop.coords, "label": prop.label})
-
-        print(len(imagettes_list))
-
-        global patch
-        patch = (imagettes_list, maskettes_list, imagettes_contours_list)
-        return patch
+        return props, zoom_factor
 
     @magicgui(
         auto_call=True,
         layout='vertical',
         patch_size=dict(widget_type='LineEdit', label='patch size', value=200, tooltip='extracted patch size'),
-        patch_nb=dict(widget_type='LineEdit', label='patches number', value=10, tooltip='number of extracted patches'),
         labels_nb=dict(widget_type='ComboBox', label='labels number', choices=labels_number, value=2,
                        tooltip='Number of possible labels'),
-        extract_pacthes_button=dict(widget_type='PushButton', text='extract patches from image',
-                                    tooltip='extraction of patches to be annotated from the segmentation mask'),
+        extract_pacthes_button=dict(widget_type='PushButton', text='Start annotation',
+                                    tooltip='Start annotation'),
         estimate_size_button=dict(widget_type='PushButton', text='Estimate patch size',
                                   tooltip='Automatically estimate an optimal patch size'),
+        save_button=dict(widget_type='PushButton', text='Save annotation', tooltip='Save annotation'),
+
         save_regionprops_button=dict(widget_type='PushButton', text='Save objects statistics', tooltip='Save the '
-                                                                                                       'properties of the annotated objects in a binary file, loadable using torch.load'),
+                                     'properties of the annotated objects in a binary file, loadable using torch.load'),
         generate_im_labs_button=dict(widget_type='PushButton', text='Save masks of labels', tooltip='Save one '
-                                                                                                    'per attributed label'),
-        fc=dict(widget_type='CheckBox', text='Freeze contrast', tooltip='Freeze contrast'),
+                                     'per attributed label'),
     )
     def annotation_widget(  # label_logo,
             viewer: Viewer,
             estimate_size_button,
             patch_size,
-            patch_nb,
             extract_pacthes_button,
             labels_nb,
+            save_button,
             save_regionprops_button,
             generate_im_labs_button,
-            fc,
 
     ) -> None:
         # Import when users activate plugin
+        global layer
+        layer = viewer.layers[0]
+
+        @layer.mouse_double_click_callbacks.append
+        def update_layer(layer, event):
+            print("coucou")
+
         return
 
-    def display_first_patch(patch):
-        for i in range(0, len(annotation_widget.viewer.value.layers)):
-            annotation_widget.viewer.value.layers.pop()
+    def display_first_patch(x):
 
-        if patch[0][0].shape[2] <= 3 or (patch[0][0].shape[0] < patch[0][0].shape[1]
-                                         and patch[0][0].shape[0] < patch[0][0].shape[2]):
-            # 2D case
-            annotation_widget.viewer.value.add_image(patch[0][0])
-            annotation_widget.viewer.value.add_labels(patch[2][0].astype("int"))
+        # the first object to annotate is focused
+        props = x[0]
+        zoom_factor = x[1]
+        annotation_widget.viewer.value.camera.center = (0, props[0].centroid[0], props[0].centroid[1])
+        annotation_widget.viewer.value.camera.zoom = zoom_factor
 
-            annotation_widget.viewer.value.layers[1].color = {1: "green"}
-            annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[0]
-            if "freeze" in globals() and freeze is True:
-                annotation_widget.viewer.value.layers[0].contrast_limits_range = [m, M]
+        global circle_mask, circle_layer_name, image_layer_name
+        for layer in annotation_widget.viewer.value.layers:
+            if "mask" in layer.name:
+                circle_layer_name = layer.name
+                circle_mask = np.zeros_like(layer.data)
+            else:
+                image_layer_name = layer.name
 
-        elif len(patch[0][0].shape) == 4:
-            annotation_widget.viewer.value.dims.ndisplay = 3
-            annotation_widget.viewer.value.add_image(patch[0][0])
-            annotation_widget.viewer.value.add_labels(patch[2][0].astype("int"))
 
-            annotation_widget.viewer.value.layers[1].color = {1: "green"}
-            annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[0]
-            annotation_widget.viewer.value.layers[0].contrast_limits_range = [m, M]
-            if "freeze" in globals() and freeze is True:
-                annotation_widget.viewer.value.layers[0].contrast_limits_range = [m, M]
+        # Contour of object to annotate
+        circle_mask[props[0].coords[:, 0], props[0].coords[:, 1]] = 1
 
-        else:
-            # if the image is 3D, we switch to 3D view and to display the overlay of patch and mask patch
-            annotation_widget.viewer.value.dims.ndisplay = 3
-            annotation_widget.viewer.value.add_image(patch[0][0])
-            annotation_widget.viewer.value.add_labels(patch[2][0].astype("int"))
+        eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
+        eroded_labels = circle_mask - eroded_contours
 
-            annotation_widget.viewer.value.layers[1].color = {1: "green"}
-            annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[0]
-            if "freeze" in globals() and freeze is True:
-                annotation_widget.viewer.value.layers[0].contrast_limits_range = [m, M]
+        annotation_widget.viewer.value.add_labels(eroded_labels)
 
-    @annotation_widget.fc.changed.connect
-    def freeze_contrast(e: Any):
-        global freeze
-        if e is True:
-            global m, M
-            freeze = True
-            for im in annotation_widget.viewer.value.layers:
-                if "mask" not in im.name and im._type_string == "image":
-                    m = im.contrast_limits[0]
-                    M = im.contrast_limits[1]
-        else:
-            freeze = False
+        annotation_widget.viewer.value.layers[-1].color = {1: "green"}
+        annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[image_layer_name]
+
+    @annotation_widget.save_button.changed.connect
+    def save_annotations(e: Any):
+        path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
+        res_dict = {"image_path": image_path, "labels_path": labels_path, "regionprops": mini_props_list,
+                    "labels_list": labels_list, "patch_size": annotation_widget.patch_size.value}
+        torch.save(res_dict, path)
 
     @annotation_widget.extract_pacthes_button.changed.connect
     def _extract_patches(e: Any):
-        patch_worker = generate_patches(annotation_widget.viewer.value.layers, int(annotation_widget.patch_nb.value),
-                                        int(annotation_widget.patch_size.value))
+        patch_worker = generate_patches(annotation_widget.viewer.value.layers, int(annotation_widget.patch_size.value))
         patch_worker.returned.connect(display_first_patch)
         patch_worker.start()
         print('patch extraction done')
@@ -562,29 +525,23 @@ def Annotation():
 
         annotation_widget.patch_size.value = patch_size
 
-        # Affichage nombre max de patch qu'on peut extraire
-        annotation_widget.patch_nb.label = "patches number (" + str(len(props)) + " max)"
-        annotation_widget.patch_nb.value = len(props)
-
     @annotation_widget.save_regionprops_button.changed.connect
     def save_regionprops():
-        if counter != len(mini_props):
-            raise ValueError("Please finish your annotation before saving the stats")
-        else:
-            path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
-            props_list = []
 
-            if mini_props[0].coords.shape[1] == 3:
-                for i, prop in enumerate(mini_props):
-                    props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
-                                       "area": prop.area, "label": int(labels_list[i])})
-            else:
-                for i, prop in enumerate(mini_props):
-                    props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
-                                       "eccentricity": prop.eccentricity, "area": prop.area,
-                                       "perimeter": prop.perimeter,
-                                       "label": int(labels_list[i])})
-            torch.save(props_list, path)
+        path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
+        props_list = []
+
+        if props[:counter + 1][0].coords.shape[1] == 3:
+            for i, prop in enumerate(props[:counter]):
+                props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
+                                   "area": prop.area, "label": int(labels_list[i])})
+        else:
+            for i, prop in enumerate(props[:counter]):
+                props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
+                                   "eccentricity": prop.eccentricity, "area": prop.area,
+                                   "perimeter": prop.perimeter,
+                                   "label": int(labels_list[i])})
+        torch.save(props_list, path)
 
     @annotation_widget.generate_im_labs_button.changed.connect
     def generate_im_labels():
@@ -594,10 +551,10 @@ def Annotation():
             im_labs_list.append(np.zeros_like(labels).astype(np.uint16))
 
         if len(labels.shape) == 3:
-            for i, prop in enumerate(mini_props):
+            for i, prop in enumerate(props[:counter]):
                 im_labs_list[labels_list[i] - 1][prop.coords[:, 0], prop.coords[:, 1], prop.coords[:, 2]] = prop.label
         else:
-            for i, prop in enumerate(mini_props):
+            for i, prop in enumerate(props[:counter]):
                 im_labs_list[labels_list[i] - 1][prop.coords[:, 0], prop.coords[:, 1]] = prop.label
 
         for i, im in enumerate(im_labs_list):
