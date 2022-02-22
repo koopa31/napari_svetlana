@@ -91,6 +91,7 @@ def Annotation():
 
             mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
                                     "label": props[counter].label})
+            progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
             counter += 1
 
             # focus on the next object to annotate
@@ -119,6 +120,7 @@ def Annotation():
             labels_list.append(1)
             mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
                                     "label": props[counter].label})
+            progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
             counter += 1
             from skimage.io import imread
             viewer.layers.clear()
@@ -142,6 +144,7 @@ def Annotation():
 
             mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
                                     "label": props[counter].label})
+            progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 2
             counter += 1
             # focus on the next object to annotate
             viewer.camera.zoom = zoom_factor
@@ -169,6 +172,7 @@ def Annotation():
             labels_list.append(2)
             mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
                                     "label": props[counter].label})
+            progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 2
             counter += 1
             from skimage.io import imread
             viewer.layers.clear()
@@ -189,6 +193,7 @@ def Annotation():
 
                 mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
                                         "label": props[counter].label})
+                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 3
                 counter += 1
                 # focus on the next object to annotate
                 viewer.camera.zoom = zoom_factor
@@ -216,6 +221,7 @@ def Annotation():
                 labels_list.append(3)
                 mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
                                         "label": props[counter].label})
+                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 3
                 counter += 1
                 from skimage.io import imread
                 viewer.layers.clear()
@@ -236,6 +242,7 @@ def Annotation():
 
                 mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
                                         "label": props[counter].label})
+                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 4
                 counter += 1
                 # focus on the next object to annotate
                 viewer.camera.zoom = zoom_factor
@@ -263,6 +270,7 @@ def Annotation():
                 labels_list.append(4)
                 mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
                                         "label": props[counter].label})
+                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 4
                 counter += 1
                 from skimage.io import imread
                 viewer.layers.clear()
@@ -283,6 +291,7 @@ def Annotation():
 
                 mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
                                         "label": props[counter].label})
+                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 5
                 counter += 1
                 # focus on the next object to annotate
                 viewer.camera.zoom = zoom_factor
@@ -310,6 +319,7 @@ def Annotation():
                 labels_list.append(5)
                 mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
                                         "label": props[counter].label})
+                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 5
                 counter += 1
                 from skimage.io import imread
                 viewer.layers.clear()
@@ -330,6 +340,7 @@ def Annotation():
 
                 mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
                                         "label": props[counter].label})
+                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 6
                 counter += 1
                 # focus on the next object to annotate
                 viewer.camera.zoom = zoom_factor
@@ -357,6 +368,7 @@ def Annotation():
                 labels_list.append(6)
                 mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
                                         "label": props[counter].label})
+                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 6
                 counter += 1
                 from skimage.io import imread
                 viewer.layers.clear()
@@ -373,6 +385,7 @@ def Annotation():
         global counter
         labels_list.pop()
         mini_props_list.pop()
+        progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 0
         counter -= 1
         viewer.camera.zoom = zoom_factor
         viewer.camera.center = (0, int(props[counter].centroid[0]), int(props[counter].centroid[1]))
@@ -411,7 +424,11 @@ def Annotation():
         # contours_color = (0, np.iinfo(image.dtype).max, 0)
         global props
         props = regionprops(labels)
-        random.shuffle(props)
+        from collections import deque
+        global indexes
+        indexes = deque(np.random.permutation(np.arange(0, len(props))))
+
+        #random.shuffle(props)
 
         global zoom_factor
         zoom_factor = image.shape[1] / patch_size
@@ -437,6 +454,7 @@ def Annotation():
                                      'properties of the annotated objects in a binary file, loadable using torch.load'),
         generate_im_labs_button=dict(widget_type='PushButton', text='Save masks of labels', tooltip='Save one '
                                      'per attributed label'),
+        show_labs=dict(widget_type='CheckBox', text='Show labelized objects', tooltip='Show labelized objects'),
     )
     def annotation_widget(  # label_logo,
             viewer: Viewer,
@@ -447,37 +465,40 @@ def Annotation():
             save_button,
             save_regionprops_button,
             generate_im_labs_button,
+            show_labs,
 
     ) -> None:
         # Import when users activate plugin
         global layer
-        layer = viewer.layers[0]
+        for l in viewer.layers:
+            if "mask" not in l.name:
+                layer = l
 
         @layer.mouse_double_click_callbacks.append
         def update_layer(layer, event):
-            print("coucou")
-
-        return
+            print('position', event.position)
 
     def display_first_patch(x):
 
         # the first object to annotate is focused
+        current_index = indexes[counter]
         props = x[0]
         zoom_factor = x[1]
-        annotation_widget.viewer.value.camera.center = (0, props[0].centroid[0], props[0].centroid[1])
+        annotation_widget.viewer.value.camera.center = (0, props[current_index].centroid[0], props[current_index].centroid[1])
         annotation_widget.viewer.value.camera.zoom = zoom_factor
 
-        global circle_mask, circle_layer_name, image_layer_name
+        global circle_mask, circle_layer_name, image_layer_name, progression_mask
         for layer in annotation_widget.viewer.value.layers:
             if "mask" in layer.name:
                 circle_layer_name = layer.name
                 circle_mask = np.zeros_like(layer.data)
+                progression_mask = np.zeros_like(circle_mask)
             else:
                 image_layer_name = layer.name
 
 
         # Contour of object to annotate
-        circle_mask[props[0].coords[:, 0], props[0].coords[:, 1]] = 1
+        circle_mask[props[current_index].coords[:, 0], props[current_index].coords[:, 1]] = 1
 
         eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
         eroded_labels = circle_mask - eroded_contours
@@ -486,6 +507,14 @@ def Annotation():
 
         annotation_widget.viewer.value.layers[-1].color = {1: "green"}
         annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[image_layer_name]
+
+    @annotation_widget.show_labs.changed.connect
+    def show_labs(e: Any):
+
+        if e is True:
+            annotation_widget.viewer.value.add_labels(progression_mask, name="progression_mask")
+        else:
+            annotation_widget.viewer.value.layers.pop()
 
     @annotation_widget.save_button.changed.connect
     def save_annotations(e: Any):
