@@ -89,21 +89,22 @@ def Annotation():
         if counter < len(props) - 1:
             labels_list.append(1)
 
-            mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
-                                    "label": props[counter].label})
-            progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+            mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                                    "label": props[indexes[counter]].label})
+            progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
             counter += 1
 
             # focus on the next object to annotate
             viewer.camera.zoom = zoom_factor
-            viewer.camera.center = (0, int(props[counter].centroid[0]), int(props[counter].centroid[1]))
+            viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                    int(props[indexes[counter]].centroid[1]))
             viewer.camera.zoom = zoom_factor + 10 ** -8
 
             # deletion of the old contours and drawing of the new one
             viewer.layers.pop()
 
             circle_mask[circle_mask != 0] = 0
-            circle_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+            circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
 
             eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
             eroded_labels = circle_mask - eroded_contours
@@ -118,9 +119,9 @@ def Annotation():
             viewer.status = str(counter) + " images processed over " + str(len(props))
         elif counter == len(props) - 1:
             labels_list.append(1)
-            mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
-                                    "label": props[counter].label})
-            progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+            mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                                    "label": props[indexes[counter]].label})
+            progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
             counter += 1
             from skimage.io import imread
             viewer.layers.clear()
@@ -142,20 +143,20 @@ def Annotation():
         if counter < len(props) - 1:
             labels_list.append(2)
 
-            mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
-                                    "label": props[counter].label})
-            progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 2
+            mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                                    "label": props[indexes[counter]].label})
+            progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 2
             counter += 1
             # focus on the next object to annotate
             viewer.camera.zoom = zoom_factor
-            viewer.camera.center = (0, int(props[counter].centroid[0]), int(props[counter].centroid[1]))
+            viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]))
             viewer.camera.zoom = zoom_factor + 10 ** -8
 
             # deletion of the old contours and drawing of the new one
             viewer.layers.pop()
 
             circle_mask[circle_mask != 0] = 0
-            circle_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+            circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
 
             eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
             eroded_labels = circle_mask - eroded_contours
@@ -170,9 +171,9 @@ def Annotation():
             viewer.status = str(counter) + " images processed over " + str(len(props))
         elif counter == len(props) - 1:
             labels_list.append(2)
-            mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
-                                    "label": props[counter].label})
-            progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 2
+            mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                                    "label": props[indexes[counter]].label})
+            progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 2
             counter += 1
             from skimage.io import imread
             viewer.layers.clear()
@@ -191,20 +192,20 @@ def Annotation():
             if counter < len(props) - 1:
                 labels_list.append(3)
 
-                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
-                                        "label": props[counter].label})
-                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 3
+                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                                        "label": props[indexes[counter]].label})
+                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 3
                 counter += 1
                 # focus on the next object to annotate
                 viewer.camera.zoom = zoom_factor
-                viewer.camera.center = (0, int(props[counter].centroid[0]), int(props[counter].centroid[1]))
+                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]))
                 viewer.camera.zoom = zoom_factor + 10 ** -8
 
                 # deletion of the old contours and drawing of the new one
                 viewer.layers.pop()
 
                 circle_mask[circle_mask != 0] = 0
-                circle_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+                circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
 
                 eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                 eroded_labels = circle_mask - eroded_contours
@@ -219,9 +220,9 @@ def Annotation():
                 viewer.status = str(counter) + " images processed over " + str(len(props))
             elif counter == len(props) - 1:
                 labels_list.append(3)
-                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
-                                        "label": props[counter].label})
-                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 3
+                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                                        "label": props[indexes[counter]].label})
+                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 3
                 counter += 1
                 from skimage.io import imread
                 viewer.layers.clear()
@@ -240,20 +241,20 @@ def Annotation():
             if counter < len(props) - 1:
                 labels_list.append(4)
 
-                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
-                                        "label": props[counter].label})
-                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 4
+                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                                        "label": props[indexes[counter]].label})
+                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 4
                 counter += 1
                 # focus on the next object to annotate
                 viewer.camera.zoom = zoom_factor
-                viewer.camera.center = (0, int(props[counter].centroid[0]), int(props[counter].centroid[1]))
+                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]))
                 viewer.camera.zoom = zoom_factor + 10 ** -8
 
                 # deletion of the old contours and drawing of the new one
                 viewer.layers.pop()
 
                 circle_mask[circle_mask != 0] = 0
-                circle_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+                circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
 
                 eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                 eroded_labels = circle_mask - eroded_contours
@@ -268,9 +269,9 @@ def Annotation():
                 viewer.status = str(counter) + " images processed over " + str(len(props))
             elif counter == len(props) - 1:
                 labels_list.append(4)
-                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
-                                        "label": props[counter].label})
-                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 4
+                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                                        "label": props[indexes[counter]].label})
+                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 4
                 counter += 1
                 from skimage.io import imread
                 viewer.layers.clear()
@@ -289,20 +290,20 @@ def Annotation():
             if counter < len(props) - 1:
                 labels_list.append(5)
 
-                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
-                                        "label": props[counter].label})
-                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 5
+                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                                        "label": props[indexes[counter]].label})
+                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 5
                 counter += 1
                 # focus on the next object to annotate
                 viewer.camera.zoom = zoom_factor
-                viewer.camera.center = (0, int(props[counter].centroid[0]), int(props[counter].centroid[1]))
+                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]))
                 viewer.camera.zoom = zoom_factor + 10 ** -8
 
                 # deletion of the old contours and drawing of the new one
                 viewer.layers.pop()
 
                 circle_mask[circle_mask != 0] = 0
-                circle_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+                circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
 
                 eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                 eroded_labels = circle_mask - eroded_contours
@@ -317,9 +318,9 @@ def Annotation():
                 viewer.status = str(counter) + " images processed over " + str(len(props))
             elif counter == len(props) - 1:
                 labels_list.append(5)
-                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
-                                        "label": props[counter].label})
-                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 5
+                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                                        "label": props[indexes[counter]].label})
+                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 5
                 counter += 1
                 from skimage.io import imread
                 viewer.layers.clear()
@@ -338,20 +339,20 @@ def Annotation():
             if counter < len(props) - 1:
                 labels_list.append(6)
 
-                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
-                                        "label": props[counter].label})
-                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 6
+                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                                        "label": props[indexes[counter]].label})
+                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 6
                 counter += 1
                 # focus on the next object to annotate
                 viewer.camera.zoom = zoom_factor
-                viewer.camera.center = (0, int(props[counter].centroid[0]), int(props[counter].centroid[1]))
+                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]))
                 viewer.camera.zoom = zoom_factor + 10 ** -8
 
                 # deletion of the old contours and drawing of the new one
                 viewer.layers.pop()
 
                 circle_mask[circle_mask != 0] = 0
-                circle_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+                circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
 
                 eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                 eroded_labels = circle_mask - eroded_contours
@@ -366,9 +367,9 @@ def Annotation():
                 viewer.status = str(counter) + " images processed over " + str(len(props))
             elif counter == len(props) - 1:
                 labels_list.append(6)
-                mini_props_list.append({"centroid": props[counter].centroid, "coords": props[counter].coords,
-                                        "label": props[counter].label})
-                progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 6
+                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                                        "label": props[indexes[counter]].label})
+                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 6
                 counter += 1
                 from skimage.io import imread
                 viewer.layers.clear()
@@ -385,16 +386,16 @@ def Annotation():
         global counter
         labels_list.pop()
         mini_props_list.pop()
-        progression_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 0
         counter -= 1
+        progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 0
         viewer.camera.zoom = zoom_factor
-        viewer.camera.center = (0, int(props[counter].centroid[0]), int(props[counter].centroid[1]))
+        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]))
         viewer.camera.zoom = zoom_factor + 10 ** -8
 
         viewer.layers.pop()
 
         circle_mask[circle_mask != 0] = 0
-        circle_mask[props[counter].coords[:, 0], props[counter].coords[:, 1]] = 1
+        circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
 
         eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
         eroded_labels = circle_mask - eroded_contours
@@ -426,7 +427,10 @@ def Annotation():
         props = regionprops(labels)
         from collections import deque
         global indexes
-        indexes = deque(np.random.permutation(np.arange(0, len(props))))
+        indexes = np.random.permutation(np.arange(0, len(props))).tolist()
+
+        for p in props:
+            p.annotation = None
 
         #random.shuffle(props)
 
@@ -474,9 +478,13 @@ def Annotation():
             if "mask" not in l.name:
                 layer = l
 
-        @layer.mouse_double_click_callbacks.append
-        def update_layer(layer, event):
+        @Viewer.layers.mouse_double_click_callbacks.append
+        def label_clicking(layer, event):
+            ind = labels[int(event.position[0]), int(event.position[1])] - 1
+            indexes.remove(ind)
+            indexes.insert(counter, ind)
             print('position', event.position)
+            show_info("Choose a label for that object")
 
     def display_first_patch(x):
 
