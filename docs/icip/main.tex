@@ -302,7 +302,7 @@ We annotated 100 cells over 245 to train our 2-layer model and got a rate of 95.
       \label{ABS image}
                          }
     \subfloat[Zoomed crop in the image showing the cells variety]{
-      \includegraphics[scale=0.16]{Figures/crop_ABS.png}
+      \includegraphics[scale=0.425]{Figures/crop_ABS.png}
       \label{Zoomed crop}
                          }
      \end{center}
@@ -334,14 +334,21 @@ We annotated 100 cells over 245 to train our 2-layer model and got a rate of 95.
 \end{figure}
 
 
-
-\begin{figure}[h!]{}
- \centering
- \includegraphics[scale=0.0445]{Figures/res_ABS.png}
-  \caption{Resultat classification}
-  \label{res ABS}
-
+\begin{figure}[h!]
+  \begin{center}
+    \subfloat[Overview of the classification result]{
+      \includegraphics[scale=0.0445]{Figures/res_ABS.png}
+      \label{overview}
+                         }
+    \subfloat[Zoomed crop of the classification result]{
+      \includegraphics[scale=0.425]{Figures/crop_mask.png}
+      \label{crop classif res}
+                         }
+     \end{center}
+\caption{Classification result}
 \end{figure}
+
+
 
 4591 kept over 16671 after classification.
 
