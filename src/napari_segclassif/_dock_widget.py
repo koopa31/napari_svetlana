@@ -101,7 +101,6 @@ def Annotation():
             viewer.camera.zoom = zoom_factor + 10 ** -8
 
             # deletion of the old contours and drawing of the new one
-            viewer.layers.pop()
 
             circle_mask[circle_mask != 0] = 0
             circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
@@ -109,7 +108,7 @@ def Annotation():
             eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
             eroded_labels = circle_mask - eroded_contours
 
-            annotation_widget.viewer.value.add_labels(eroded_labels)
+            annotation_widget.viewer.value.layers[-1].data = eroded_labels
 
             annotation_widget.viewer.value.layers[-1].color = {1: "green"}
             annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
@@ -153,7 +152,6 @@ def Annotation():
             viewer.camera.zoom = zoom_factor + 10 ** -8
 
             # deletion of the old contours and drawing of the new one
-            viewer.layers.pop()
 
             circle_mask[circle_mask != 0] = 0
             circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
@@ -161,7 +159,7 @@ def Annotation():
             eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
             eroded_labels = circle_mask - eroded_contours
 
-            annotation_widget.viewer.value.add_labels(eroded_labels)
+            annotation_widget.viewer.value.layers[-1].data = eroded_labels
 
             annotation_widget.viewer.value.layers[-1].color = {1: "green"}
             annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
@@ -202,7 +200,6 @@ def Annotation():
                 viewer.camera.zoom = zoom_factor + 10 ** -8
 
                 # deletion of the old contours and drawing of the new one
-                viewer.layers.pop()
 
                 circle_mask[circle_mask != 0] = 0
                 circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
@@ -210,7 +207,7 @@ def Annotation():
                 eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                 eroded_labels = circle_mask - eroded_contours
 
-                annotation_widget.viewer.value.add_labels(eroded_labels)
+                annotation_widget.viewer.value.layers[-1].data = eroded_labels
 
                 annotation_widget.viewer.value.layers[-1].color = {1: "green"}
                 annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
@@ -251,7 +248,6 @@ def Annotation():
                 viewer.camera.zoom = zoom_factor + 10 ** -8
 
                 # deletion of the old contours and drawing of the new one
-                viewer.layers.pop()
 
                 circle_mask[circle_mask != 0] = 0
                 circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
@@ -259,7 +255,7 @@ def Annotation():
                 eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                 eroded_labels = circle_mask - eroded_contours
 
-                annotation_widget.viewer.value.add_labels(eroded_labels)
+                annotation_widget.viewer.value.layers[-1].data = eroded_labels
 
                 annotation_widget.viewer.value.layers[-1].color = {1: "green"}
                 annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
@@ -300,7 +296,6 @@ def Annotation():
                 viewer.camera.zoom = zoom_factor + 10 ** -8
 
                 # deletion of the old contours and drawing of the new one
-                viewer.layers.pop()
 
                 circle_mask[circle_mask != 0] = 0
                 circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
@@ -308,7 +303,7 @@ def Annotation():
                 eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                 eroded_labels = circle_mask - eroded_contours
 
-                annotation_widget.viewer.value.add_labels(eroded_labels)
+                annotation_widget.viewer.value.layers[-1].data = eroded_labels
 
                 annotation_widget.viewer.value.layers[-1].color = {1: "green"}
                 annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
@@ -349,7 +344,6 @@ def Annotation():
                 viewer.camera.zoom = zoom_factor + 10 ** -8
 
                 # deletion of the old contours and drawing of the new one
-                viewer.layers.pop()
 
                 circle_mask[circle_mask != 0] = 0
                 circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
@@ -357,7 +351,7 @@ def Annotation():
                 eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                 eroded_labels = circle_mask - eroded_contours
 
-                annotation_widget.viewer.value.add_labels(eroded_labels)
+                annotation_widget.viewer.value.layers[-1].data = eroded_labels
 
                 annotation_widget.viewer.value.layers[-1].color = {1: "green"}
                 annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
@@ -392,15 +386,13 @@ def Annotation():
         viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]))
         viewer.camera.zoom = zoom_factor + 10 ** -8
 
-        viewer.layers.pop()
-
         circle_mask[circle_mask != 0] = 0
         circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
 
         eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
         eroded_labels = circle_mask - eroded_contours
 
-        annotation_widget.viewer.value.add_labels(eroded_labels)
+        annotation_widget.viewer.value.layers[-1].data = eroded_labels
 
         annotation_widget.viewer.value.layers[-1].color = {1: "green"}
         annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
@@ -478,7 +470,7 @@ def Annotation():
             if "mask" not in l.name:
                 layer = l
 
-        @Viewer.layers.mouse_double_click_callbacks.append
+        @layer.mouse_double_click_callbacks.append
         def label_clicking(layer, event):
             ind = labels[int(event.position[0]), int(event.position[1])] - 1
             indexes.remove(ind)
