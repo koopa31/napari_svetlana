@@ -91,23 +91,34 @@ def Annotation():
 
             mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
                                     "label": props[indexes[counter]].label})
-            progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
-            counter += 1
 
-            # focus on the next object to annotate
-            viewer.camera.zoom = zoom_factor
-            viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                    int(props[indexes[counter]].centroid[1]))
-            viewer.camera.zoom = zoom_factor + 10 ** -8
-
-            # deletion of the old contours and drawing of the new one
             if case == "2D" or case == "multi2D":
+                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
+                counter += 1
+
+                # focus on the next object to annotate
+                viewer.camera.zoom = zoom_factor
+                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                        int(props[indexes[counter]].centroid[1]))
+                viewer.camera.zoom = zoom_factor + 10 ** -8
+                # deletion of the old contours and drawing of the new one
                 circle_mask[circle_mask != 0] = 0
                 circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
                 eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                 eroded_labels = circle_mask - eroded_contours
                 annotation_widget.viewer.value.layers[-1].data = eroded_labels
             else:
+                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
+                                 props[indexes[counter]].coords[:, 2]] = 1
+                counter += 1
+
+                # focus on the next object to annotate
+                viewer.camera.zoom = zoom_factor
+                viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
+                                        int(props[indexes[counter]].centroid[1]),
+                                        int(props[indexes[counter]].centroid[2]))
+                viewer.camera.zoom = zoom_factor + 10 ** -8
+                # deletion of the old contours and drawing of the new one
                 circle_mask[circle_mask != 0] = 0
                 circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                             props[indexes[counter]].coords[:, 2]] = 1
@@ -147,22 +158,33 @@ def Annotation():
 
             mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
                                     "label": props[indexes[counter]].label})
-            progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 2
-            counter += 1
-            # focus on the next object to annotate
-            viewer.camera.zoom = zoom_factor
-            viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]))
-            viewer.camera.zoom = zoom_factor + 10 ** -8
-
-            # deletion of the old contours and drawing of the new one
-
             if case == "2D" or case == "multi2D":
+                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 2
+                counter += 1
+
+                # focus on the next object to annotate
+                viewer.camera.zoom = zoom_factor
+                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                        int(props[indexes[counter]].centroid[1]))
+                viewer.camera.zoom = zoom_factor + 10 ** -8
+                # deletion of the old contours and drawing of the new one
                 circle_mask[circle_mask != 0] = 0
                 circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
                 eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                 eroded_labels = circle_mask - eroded_contours
                 annotation_widget.viewer.value.layers[-1].data = eroded_labels
             else:
+                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
+                                 props[indexes[counter]].coords[:, 2]] = 2
+                counter += 1
+
+                # focus on the next object to annotate
+                viewer.camera.zoom = zoom_factor
+                viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
+                                        int(props[indexes[counter]].centroid[1]),
+                                        int(props[indexes[counter]].centroid[2]))
+                viewer.camera.zoom = zoom_factor + 10 ** -8
+                # deletion of the old contours and drawing of the new one
                 circle_mask[circle_mask != 0] = 0
                 circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                             props[indexes[counter]].coords[:, 2]] = 1
@@ -199,22 +221,33 @@ def Annotation():
 
                 mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
                                         "label": props[indexes[counter]].label})
-                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 3
-                counter += 1
-                # focus on the next object to annotate
-                viewer.camera.zoom = zoom_factor
-                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]))
-                viewer.camera.zoom = zoom_factor + 10 ** -8
-
-                # deletion of the old contours and drawing of the new one
-
                 if case == "2D" or case == "multi2D":
+                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 3
+                    counter += 1
+
+                    # focus on the next object to annotate
+                    viewer.camera.zoom = zoom_factor
+                    viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                            int(props[indexes[counter]].centroid[1]))
+                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
                     eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                     eroded_labels = circle_mask - eroded_contours
                     annotation_widget.viewer.value.layers[-1].data = eroded_labels
                 else:
+                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
+                                     props[indexes[counter]].coords[:, 2]] = 3
+                    counter += 1
+
+                    # focus on the next object to annotate
+                    viewer.camera.zoom = zoom_factor
+                    viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
+                                            int(props[indexes[counter]].centroid[1]),
+                                            int(props[indexes[counter]].centroid[2]))
+                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                 props[indexes[counter]].coords[:, 2]] = 1
@@ -251,22 +284,33 @@ def Annotation():
 
                 mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
                                         "label": props[indexes[counter]].label})
-                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 4
-                counter += 1
-                # focus on the next object to annotate
-                viewer.camera.zoom = zoom_factor
-                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]))
-                viewer.camera.zoom = zoom_factor + 10 ** -8
-
-                # deletion of the old contours and drawing of the new one
-
                 if case == "2D" or case == "multi2D":
+                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 4
+                    counter += 1
+
+                    # focus on the next object to annotate
+                    viewer.camera.zoom = zoom_factor
+                    viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                            int(props[indexes[counter]].centroid[1]))
+                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
                     eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                     eroded_labels = circle_mask - eroded_contours
                     annotation_widget.viewer.value.layers[-1].data = eroded_labels
                 else:
+                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
+                                     props[indexes[counter]].coords[:, 2]] = 4
+                    counter += 1
+
+                    # focus on the next object to annotate
+                    viewer.camera.zoom = zoom_factor
+                    viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
+                                            int(props[indexes[counter]].centroid[1]),
+                                            int(props[indexes[counter]].centroid[2]))
+                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                 props[indexes[counter]].coords[:, 2]] = 1
@@ -303,22 +347,33 @@ def Annotation():
 
                 mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
                                         "label": props[indexes[counter]].label})
-                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 5
-                counter += 1
-                # focus on the next object to annotate
-                viewer.camera.zoom = zoom_factor
-                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]))
-                viewer.camera.zoom = zoom_factor + 10 ** -8
-
-                # deletion of the old contours and drawing of the new one
-
                 if case == "2D" or case == "multi2D":
+                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 5
+                    counter += 1
+
+                    # focus on the next object to annotate
+                    viewer.camera.zoom = zoom_factor
+                    viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                            int(props[indexes[counter]].centroid[1]))
+                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
                     eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                     eroded_labels = circle_mask - eroded_contours
                     annotation_widget.viewer.value.layers[-1].data = eroded_labels
                 else:
+                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
+                                     props[indexes[counter]].coords[:, 2]] = 5
+                    counter += 1
+
+                    # focus on the next object to annotate
+                    viewer.camera.zoom = zoom_factor
+                    viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
+                                            int(props[indexes[counter]].centroid[1]),
+                                            int(props[indexes[counter]].centroid[2]))
+                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                 props[indexes[counter]].coords[:, 2]] = 1
@@ -355,22 +410,33 @@ def Annotation():
 
                 mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
                                         "label": props[indexes[counter]].label})
-                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 6
-                counter += 1
-                # focus on the next object to annotate
-                viewer.camera.zoom = zoom_factor
-                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]))
-                viewer.camera.zoom = zoom_factor + 10 ** -8
-
-                # deletion of the old contours and drawing of the new one
-
                 if case == "2D" or case == "multi2D":
+                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 6
+                    counter += 1
+
+                    # focus on the next object to annotate
+                    viewer.camera.zoom = zoom_factor
+                    viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                            int(props[indexes[counter]].centroid[1]))
+                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
                     eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                     eroded_labels = circle_mask - eroded_contours
                     annotation_widget.viewer.value.layers[-1].data = eroded_labels
                 else:
+                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
+                                     props[indexes[counter]].coords[:, 2]] = 6
+                    counter += 1
+
+                    # focus on the next object to annotate
+                    viewer.camera.zoom = zoom_factor
+                    viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
+                                            int(props[indexes[counter]].centroid[1]),
+                                            int(props[indexes[counter]].centroid[2]))
+                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                 props[indexes[counter]].coords[:, 2]] = 1
@@ -404,18 +470,25 @@ def Annotation():
         labels_list.pop()
         mini_props_list.pop()
         counter -= 1
-        progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 0
-        viewer.camera.zoom = zoom_factor
-        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]))
-        viewer.camera.zoom = zoom_factor + 10 ** -8
 
         if case == "2D" or case == "multi2D":
+            progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 0
+            viewer.camera.zoom = zoom_factor
+            viewer.camera.center = (
+            0, int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]))
+            viewer.camera.zoom = zoom_factor + 10 ** -8
             circle_mask[circle_mask != 0] = 0
             circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
             eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
             eroded_labels = circle_mask - eroded_contours
             annotation_widget.viewer.value.layers[-1].data = eroded_labels
         else:
+            progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
+                                   props[indexes[counter]].coords[:, 2]] = 0
+            viewer.camera.zoom = zoom_factor
+            viewer.camera.center = (int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]) ,
+                                    int(props[indexes[counter]].centroid[2]))
+            viewer.camera.zoom = zoom_factor + 10 ** -8
             circle_mask[circle_mask != 0] = 0
             circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                         props[indexes[counter]].coords[:, 2]] = 1
@@ -514,10 +587,18 @@ def Annotation():
                 ind = labels[int(event.position[0]), int(event.position[1])] - 1
             elif case == "multi2D":
                 ind = labels[int(event.position[1]), int(event.position[2])] - 1
-            indexes.remove(ind)
-            indexes.insert(counter, ind)
-            print('position', event.position)
-            show_info("Choose a label for that object")
+            elif case == "3D":
+                ind = labels[int(event.position[0]), int(event.position[1]), int(event.position[2])] - 1
+            else:
+                ind = labels[int(event.position[1]), int(event.position[2]), int(event.position[3])] - 1
+
+            try:
+                indexes.remove(ind)
+                indexes.insert(counter, ind)
+                print('position', event.position)
+                show_info("Choose a label for that object")
+            except ValueError:
+                show_info("please click on a valid object")
 
     def display_first_patch(x):
         # the first object to annotate is focused
