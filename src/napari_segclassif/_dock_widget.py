@@ -414,20 +414,30 @@ def Annotation():
                 global image_path
                 image_path = im.source.path
 
-        # contours_color = (0, np.iinfo(image.dtype).max, 0)
+        global case, zoom_factor
+
+        if len(image.shape) == 2:
+            image = np.stack((image,) * 3, axis=-1)
+
+        if image.shape[2] <= 3:
+            case = "2D"
+            zoom_factor = image.shape[1] / patch_size
+        elif len(image.shape) == 4:
+            case = "multi3D"
+            zoom_factor = image.shape[2] / patch_size
+        elif image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]:
+            case = "multi2D"
+            zoom_factor = image.shape[1] / patch_size
+        else:
+            case = "3D"
+            zoom_factor = image.shape[1] / patch_size
+
         global props
         props = regionprops(labels)
-        from collections import deque
+
+        # The regionprops are shuffled to be randomly labeled
         global indexes
         indexes = np.random.permutation(np.arange(0, len(props))).tolist()
-
-        for p in props:
-            p.annotation = None
-
-        #random.shuffle(props)
-
-        global zoom_factor
-        zoom_factor = image.shape[1] / patch_size
 
         global mini_props_list
         mini_props_list = []
@@ -450,7 +460,7 @@ def Annotation():
                                      'properties of the annotated objects in a binary file, loadable using torch.load'),
         generate_im_labs_button=dict(widget_type='PushButton', text='Save masks of labels', tooltip='Save one '
                                      'per attributed label'),
-        show_labs=dict(widget_type='CheckBox', text='Show labelized objects', tooltip='Show labelized objects'),
+        show_labs=dict(widget_type='CheckBox', text='Show labeled objects', tooltip='Show labeled objects'),
     )
     def annotation_widget(  # label_logo,
             viewer: Viewer,
@@ -472,19 +482,30 @@ def Annotation():
 
         @layer.mouse_double_click_callbacks.append
         def label_clicking(layer, event):
-            ind = labels[int(event.position[0]), int(event.position[1])] - 1
+            if case == "2D":
+                ind = labels[int(event.position[0]), int(event.position[1])] - 1
+            elif case == "multi2D":
+                ind = labels[int(event.position[1]), int(event.position[2])] - 1
             indexes.remove(ind)
             indexes.insert(counter, ind)
             print('position', event.position)
             show_info("Choose a label for that object")
 
     def display_first_patch(x):
-
         # the first object to annotate is focused
         current_index = indexes[counter]
         props = x[0]
         zoom_factor = x[1]
-        annotation_widget.viewer.value.camera.center = (0, props[current_index].centroid[0], props[current_index].centroid[1])
+
+        if case == "2D" or case == "multi2D":
+            annotation_widget.viewer.value.camera.center = (0, props[current_index].centroid[0],
+                                                            props[current_index].centroid[1])
+        else:
+            annotation_widget.viewer.value.dims.ndisplay = 3
+            annotation_widget.viewer.value.camera.center = (props[current_index].centroid[0],
+                                                            props[current_index].centroid[1],
+                                                            props[current_index].centroid[2])
+
         annotation_widget.viewer.value.camera.zoom = zoom_factor
 
         global circle_mask, circle_layer_name, image_layer_name, progression_mask
@@ -495,7 +516,6 @@ def Annotation():
                 progression_mask = np.zeros_like(circle_mask)
             else:
                 image_layer_name = layer.name
-
 
         # Contour of object to annotate
         circle_mask[props[current_index].coords[:, 0], props[current_index].coords[:, 1]] = 1
