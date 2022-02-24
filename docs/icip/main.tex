@@ -47,11 +47,11 @@ We develop and present a Napari plugin called SVETLANA (SuperVised sEgmenTation 
 While many open-source software now make it possible to automatically segment complex 2D and 3D objects such as cells in biology, the subsequent analysis of the results is not yet accessible to non specialists. 
 This plugin allows end-users to train and run efficient neural network classifiers such as residual networks. 
 The resulting network can be used as a post-processing tool to improve the segmentation, or as a classifier for various tasks (e.g. separating different cells populations).
-We showcase its practicality through various real cell biology problems in 2D, 3D and multi-spectral imaging.
+We showcase its practicality through various real cell biology problems in 2D, 3D and multi-channel imaging.
 \end{abstract}
 %
 \begin{keywords}
-Software, Segmentation, Classification, Convolutional Neural Networks, Bio-medical imaging, Image analysis
+Software, Segmentation, Classification, Convolutional Neural Networks, Bio-medical imaging, Image analysis, Microscopy
 \end{keywords}
 %
 \section{Introduction}
@@ -69,7 +69,7 @@ While these excellent segmentation tools have solved an important problem, a dif
 \subsection{Our contribution}
 
 The goal of this work is to continue filling the gap between methodological advances and end-users, by providing a convenient software for the classification of segmentation results. 
-We resort to the newborn Napari environment \cite{perkel2021python} which allows visualizing and analyzing complex multi-dimensional images (e.g. 2D, 3D, 3D+t, hyperspectral) in Python.
+We resort to the newborn Napari environment \cite{perkel2021python} which allows visualizing and analyzing complex multi-dimensional images (e.g. 2D, 3D, 3D+t, multi-channel) in Python.
 Our software takes the form of a Napari plugin called SVETLANA. A screenshot of the plugin is displayed in Fig. \ref{fig:interface}.
 
 \begin{figure}[htp!]
@@ -183,11 +183,11 @@ An example is Deep Image Prior \cite{lempitsky2018deep}.
 There, it was shown that a large collection of linear inverse problems could be solved by using a single image as an input without any training. 
 One way to interpret this is that the training phase could act as Occam razor's principle and favor the 'simplest' answer given the observations.
 The network architecture plays a critical there and we observed experimentally that simple networks with few weights were often preferable to more complicated ones.
-In all forthcoming experiments, we used the simple 2-layers neural net depicted in Fig. \ref{fig:CNN2D}. It contains 3017 parameters.
+In all forthcoming experiments, we used the simple 2-layer neural net depicted in Fig. \ref{fig:CNN2D}. It contains 3017 parameters.
 \begin{figure}[h!]{}
  \centering
- \includegraphics[width=0.8\linewidth]{Figures/myfirstcnn.pdf}
-  \caption{A minimalist 2-layers convolutional neural network. \label{fig:CNN2D}}
+ \includegraphics[width=0.7\linewidth]{Figures/myfirstcnn.pdf}
+  \caption{A minimalist 2-layer convolutional neural network. \label{fig:CNN2D}}
 \end{figure}
 
 
@@ -242,7 +242,7 @@ This plugin allows to load the trained network and to launch the prediction by c
 
 In all experiments, we use the minimalist CNN from Fig. \ref{fig:CNN2D}. 
 For the data augmentation, we simply flipped the patches in the 4 arbitrary positions.
-All calculations were performed on an GPU Nvidia RTX5000 with 16Go memory.
+All calculations were performed on an Nvidia RTX5000 with 16Go memory.
 
 \subsection{Experiment 1: artificial texture classification}
 
@@ -252,14 +252,8 @@ After a training 500 epochs (about 20 seconds), we get a misclassification rate 
 
 \begin{figure}[h!]
   \begin{center}
-    \subfloat[Original image]{
-      \includegraphics[width=0.3\linewidth]{Figures/textures.png}
-      \label{textures}
-    } \quad 
-    \subfloat[Classification]{
-      \includegraphics[width=0.3\linewidth]{Figures/textures_res.png}
-      \label{textures res}
-    }
+    \subfloat[Original image]{\includegraphics[width=0.45\linewidth]{Figures/textures.png}} \quad 
+    \subfloat[Classification]{\includegraphics[width=0.45\linewidth]{Figures/textures_res.png}}
      \end{center}
 \caption{A first result on texture classification. \label{fig:textures}}
 \end{figure}
@@ -270,102 +264,63 @@ After a training 500 epochs (about 20 seconds), we get a misclassification rate 
 The two images on the left of Fig. \ref{fig:infected} depict two different channels of human embryonic kidney (HEK) cells. 
 Some of them are infected with an adenovirus. 
 The first channel (left) displays a Hoechst staining of the nuclei.
-In the second channel, the sites of viral proliferation have been marked using the ANCHOR system \cite{mariame2018real}.
+In the second channel, the sites of viral proliferation have been marked using the ANCHOR technology \cite{mariame2018real}.
 The cells containing bright nuclear spots in the second channel are more likely to be infected.
-We annotated 100 cells over 245 (2 minutes) to train the 2-layer model and got a rate of 95.5\% of well-classified cells.
+We annotated 100 cells over 245 (2 minutes) to train the 2-layer model and obtained 95.5\% of well-classified cells.
 
 \begin{figure}[h!]
   \begin{center}
     \subfloat[Hoechst staining]{
-      \includegraphics[scale=0.07]{Figures/viro_canal0.png}
+      \includegraphics[width=0.3\linewidth]{Figures/viro_canal0.png}
       \label{textures}
     }
     \subfloat[ANCHOR channel]{
-      \includegraphics[scale=0.07]{Figures/viro_canal1.png}
+      \includegraphics[width=0.3\linewidth]{Figures/viro_canal1.png}
       \label{textures res}
     }
    \subfloat[classification result]{
-      \includegraphics[scale=0.091]{Figures/resultat_viro.png}
+      \includegraphics[width=0.3\linewidth]{Figures/resultat_viro.png}
       \label{textures res}
       }
      \end{center}
-\caption{Result of the infected cells classification. \label{fig:infected}}
+\caption{Result of the infected cells classification. The image was acquired and provided to us by \href{https://neovirtech.com/}{Neovirtech}. \label{fig:infected}}
 \end{figure}
 
 
-\subsection{Third experiment: ABS}
+\subsection{Experiment 3: Osteoclast classification}
 
+In this experiment, we wish to better understand and quantify osteoclastogenesis in cell culture.
+To this end, we quantify the density of activated osteoclasts, which allows detecting skeletal abnormalities such as osteoporosis.
 
 \begin{figure}[h!]
   \begin{center}
-    \subfloat[ABS image]{
-      \includegraphics[scale=0.0445]{Figures/Image_ABS.png}
-      \label{ABS image}
-                         }
-    \subfloat[Zoomed crop in the image showing the cells variety]{
-      \includegraphics[scale=0.425]{Figures/crop_ABS.png}
-      \label{Zoomed crop}
-                         }
-     \end{center}
-\caption{ABS image to segment and classify}
+    \subfloat[Bright-field image]{\includegraphics[width=0.45\linewidth]{Figures/crop_ABS.png}}
+    \subfloat[Classification result]{\includegraphics[width=0.45\linewidth]{Figures/crop_mask.png}}\\
+    \subfloat[Label 1]{\includegraphics[width=0.22\linewidth]{Figures/good1.png}} \ 
+    \subfloat[Label 1]{\includegraphics[width=0.22\linewidth]{Figures/good2.png}} \ 
+    \subfloat[Label 2]{\includegraphics[width=0.22\linewidth]{Figures/bad1.png}} \ 
+    \subfloat[Label 2]{\includegraphics[width=0.22\linewidth]{Figures/bad2.png}} \ 
+  \end{center}
+  \caption{Left: $750\times 750$ crop of a $8000\times 8000$ image. Right: classification result with a training on 600 cells (out of 16671).
+The images and the problem was brought to us by \href{https://www.atlantic-bone-screen.com/language/en/osteoclasts-2/}{Atlantic Bone Screen (ABS).}}
 \end{figure}
-
-
-
-\begin{figure}[h!]
-  \begin{center}
-    \subfloat[Good cell]{
-      \includegraphics[scale=0.4]{Figures/good1.png}
-      \label{Good cell1}
-                         }
-    \subfloat[Good cell]{
-      \includegraphics[scale=0.4]{Figures/good2.png}
-      \label{Good cell2}
-                         }
-   \subfloat[Bad cell]{
-      \includegraphics[scale=0.4]{Figures/bad1.png}
-      \label{Bad cell1}
-                         }
-    \subfloat[Bad cell]{
-      \includegraphics[scale=0.4]{Figures/bad2.png}
-      \label{Bad cell2}
-                         }
-     \end{center}
-\caption{ABS image to segment and classify}
-\end{figure}
-
-
-\begin{figure}[h!]
-  \begin{center}
-    \subfloat[Overview of the classification result]{
-      \includegraphics[scale=0.0445]{Figures/res_ABS.png}
-      \label{overview}
-                         }
-    \subfloat[Zoomed crop of the classification result]{
-      \includegraphics[scale=0.425]{Figures/crop_mask.png}
-      \label{crop classif res}
-                         }
-     \end{center}
-\caption{Classification result}
-\end{figure}
-
-
-
-4591 kept over 16671 after classification.
-
 
 \section{Conclusion}
 \label{sec:conclusion}
 
-We showcased through various applications that SVETLANA is already a handful tool for analyzing segmentation results. 
-It is yet at an early stage of development. By publishing this paper, we wished to have a first document that could be cited in the case that the plugin was used successfully. We plan to progressively add new features suggested by users or our own experience, to make this tools as helpful as possible to the community. 
-\begin{itemize}
-  \item Add the ability to label multiple images. 
-  \item Add the ability to directly label or correcting the labels by clicking on the connected components. 
-  \item Add the ability to predict on multiple images. 
-%  \item Add new neural network architectures. 
-  \item Add a layer with already annotated features.
-\end{itemize}
+We presented a new software called SVETLANA for the classification of segmentation results within the Napari environment. 
+We showed through various applications that SVETLANA is a handful tool for the analysis and classification of cell populations. 
+This software is yet at an early stage of development and additional features will be added with user feedback.
+It is accessible on \href{https://bitbucket.org/koopa31/napari_svetlana/src/main/}{BitBucket} installed with \begin{verbatim}pip install napari_svetlana\end{verbatim}. 
+This paper is a way to advertise this work, which we hope will prove valuable to the bio-medical (and beyond) community. 
+
+% \begin{itemize}
+%   \item Add the ability to label multiple images. 
+% %  \item Add the ability to directly label or correcting the labels by clicking on the connected components. 
+%   \item Add the ability to predict on multiple images. 
+% %  \item Add new neural network architectures. 
+% %  \item Add a layer with already annotated features.
+% \end{itemize}
 
 % To start a new column (but not a new page) and help balance the last-page
 % column length use \vfill\pagebreak.
