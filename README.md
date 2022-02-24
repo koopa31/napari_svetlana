@@ -1,4 +1,4 @@
-# napari_segclassif
+# napari_svetlana
 
 [![License](https://img.shields.io/pypi/l/napari_segclassif.svg?color=green)](https://github.com/koopa31/napari_segclassif/raw/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/napari_segclassif.svg?color=green)](https://pypi.org/project/napari_segclassif)
@@ -23,9 +23,9 @@ https://napari.org/plugins/stable/index.html
 
 ## Installation
 
-You can install `napari_segclassif` via [pip]:
+You can install `napari_svetlana` via [pip]:
 
-    pip install napari_segclassif
+    pip install napari_svetlana
 
 
 
@@ -38,7 +38,7 @@ the coverage at least stays the same before you submit a pull request.
 ## License
 
 Distributed under the terms of the [BSD-3] license,
-"napari_segclassif" is free and open source software
+"napari_svetlana" is free and open source software
 
 ## Issues
 

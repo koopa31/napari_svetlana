@@ -1,4 +1,4 @@
-site_name: napari_segclassif
+site_name: napari_svetlana
 site_description: The aim of this plugin is to classify the output of a segmentation algorithm in order to remove outliers
 site_author: Cazorla
 

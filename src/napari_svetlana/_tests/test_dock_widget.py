@@ -1,4 +1,4 @@
-from napari_segclassif import ExampleQWidget, example_magic_widget
+from napari_svetlana import ExampleQWidget, example_magic_widget
 import numpy as np
 
 # make_napari_viewer is a pytest fixture that returns a napari viewer object

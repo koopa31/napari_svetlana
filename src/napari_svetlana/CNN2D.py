@@ -40,8 +40,3 @@ class CNN2D(Module):
         x = torch.squeeze(x)
         x = self.fc(x)
         return x
-
-
-model = CNN2D(2, 4)
-dic = {"model": model}
-torch.save(dic, "CNN2D.pt")

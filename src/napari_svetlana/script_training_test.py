@@ -11,7 +11,7 @@ import numpy as np
 from skimage.io import imread, imsave
 
 from CustomDataset import CustomDataset
-from napari_segclassif.PredictionDataset import PredictionDataset
+from napari_svetlana.PredictionDataset import PredictionDataset
 import matplotlib.pyplot as plt
 
 
