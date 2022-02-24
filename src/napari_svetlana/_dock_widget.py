@@ -38,7 +38,7 @@ from joblib import Parallel, delayed
 from superqt import ensure_main_thread
 from qtpy.QtWidgets import QFileDialog
 
-from line_profiler_pycharm import profile
+#from line_profiler_pycharm import profile
 from .CNN3D import CNN3D
 from .CNN2D import CNN2D
 
