@@ -97,10 +97,11 @@ def Annotation():
                 counter += 1
 
                 # focus on the next object to annotate
-                viewer.camera.zoom = zoom_factor
-                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                        int(props[indexes[counter]].centroid[1]))
-                viewer.camera.zoom = zoom_factor + 10 ** -8
+                if double_click is False:
+                    viewer.camera.zoom = zoom_factor
+                    viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                            int(props[indexes[counter]].centroid[1]))
+                    viewer.camera.zoom = zoom_factor + 10 ** -8
                 # deletion of the old contours and drawing of the new one
                 circle_mask[circle_mask != 0] = 0
                 circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
@@ -113,11 +114,12 @@ def Annotation():
                 counter += 1
 
                 # focus on the next object to annotate
-                viewer.camera.zoom = zoom_factor
-                viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
-                                        int(props[indexes[counter]].centroid[1]),
-                                        int(props[indexes[counter]].centroid[2]))
-                viewer.camera.zoom = zoom_factor + 10 ** -8
+                if double_click is False:
+                    viewer.camera.zoom = zoom_factor
+                    viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
+                                            int(props[indexes[counter]].centroid[1]),
+                                            int(props[indexes[counter]].centroid[2]))
+                    viewer.camera.zoom = zoom_factor + 10 ** -8
                 # deletion of the old contours and drawing of the new one
                 circle_mask[circle_mask != 0] = 0
                 circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
@@ -163,10 +165,11 @@ def Annotation():
                 counter += 1
 
                 # focus on the next object to annotate
-                viewer.camera.zoom = zoom_factor
-                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                        int(props[indexes[counter]].centroid[1]))
-                viewer.camera.zoom = zoom_factor + 10 ** -8
+                if double_click is False:
+                    viewer.camera.zoom = zoom_factor
+                    viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                            int(props[indexes[counter]].centroid[1]))
+                    viewer.camera.zoom = zoom_factor + 10 ** -8
                 # deletion of the old contours and drawing of the new one
                 circle_mask[circle_mask != 0] = 0
                 circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
@@ -179,11 +182,11 @@ def Annotation():
                 counter += 1
 
                 # focus on the next object to annotate
-                viewer.camera.zoom = zoom_factor
-                viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
-                                        int(props[indexes[counter]].centroid[1]),
-                                        int(props[indexes[counter]].centroid[2]))
-                viewer.camera.zoom = zoom_factor + 10 ** -8
+                if double_click is False:
+                    viewer.camera.zoom = zoom_factor
+                    viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                            int(props[indexes[counter]].centroid[1]))
+                    viewer.camera.zoom = zoom_factor + 10 ** -8
                 # deletion of the old contours and drawing of the new one
                 circle_mask[circle_mask != 0] = 0
                 circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
@@ -226,10 +229,11 @@ def Annotation():
                     counter += 1
 
                     # focus on the next object to annotate
-                    viewer.camera.zoom = zoom_factor
-                    viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                            int(props[indexes[counter]].centroid[1]))
-                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    if double_click is False:
+                        viewer.camera.zoom = zoom_factor
+                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                                int(props[indexes[counter]].centroid[1]))
+                        viewer.camera.zoom = zoom_factor + 10 ** -8
                     # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
@@ -242,11 +246,11 @@ def Annotation():
                     counter += 1
 
                     # focus on the next object to annotate
-                    viewer.camera.zoom = zoom_factor
-                    viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
-                                            int(props[indexes[counter]].centroid[1]),
-                                            int(props[indexes[counter]].centroid[2]))
-                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    if double_click is False:
+                        viewer.camera.zoom = zoom_factor
+                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                                int(props[indexes[counter]].centroid[1]))
+                        viewer.camera.zoom = zoom_factor + 10 ** -8
                     # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
@@ -289,10 +293,11 @@ def Annotation():
                     counter += 1
 
                     # focus on the next object to annotate
-                    viewer.camera.zoom = zoom_factor
-                    viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                            int(props[indexes[counter]].centroid[1]))
-                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    if double_click is False:
+                        viewer.camera.zoom = zoom_factor
+                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                                int(props[indexes[counter]].centroid[1]))
+                        viewer.camera.zoom = zoom_factor + 10 ** -8
                     # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
@@ -305,11 +310,11 @@ def Annotation():
                     counter += 1
 
                     # focus on the next object to annotate
-                    viewer.camera.zoom = zoom_factor
-                    viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
-                                            int(props[indexes[counter]].centroid[1]),
-                                            int(props[indexes[counter]].centroid[2]))
-                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    if double_click is False:
+                        viewer.camera.zoom = zoom_factor
+                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                                int(props[indexes[counter]].centroid[1]))
+                        viewer.camera.zoom = zoom_factor + 10 ** -8
                     # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
@@ -352,10 +357,11 @@ def Annotation():
                     counter += 1
 
                     # focus on the next object to annotate
-                    viewer.camera.zoom = zoom_factor
-                    viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                            int(props[indexes[counter]].centroid[1]))
-                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    if double_click is False:
+                        viewer.camera.zoom = zoom_factor
+                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                                int(props[indexes[counter]].centroid[1]))
+                        viewer.camera.zoom = zoom_factor + 10 ** -8
                     # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
@@ -368,11 +374,11 @@ def Annotation():
                     counter += 1
 
                     # focus on the next object to annotate
-                    viewer.camera.zoom = zoom_factor
-                    viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
-                                            int(props[indexes[counter]].centroid[1]),
-                                            int(props[indexes[counter]].centroid[2]))
-                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    if double_click is False:
+                        viewer.camera.zoom = zoom_factor
+                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                                int(props[indexes[counter]].centroid[1]))
+                        viewer.camera.zoom = zoom_factor + 10 ** -8
                     # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
@@ -415,10 +421,11 @@ def Annotation():
                     counter += 1
 
                     # focus on the next object to annotate
-                    viewer.camera.zoom = zoom_factor
-                    viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                            int(props[indexes[counter]].centroid[1]))
-                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    if double_click is False:
+                        viewer.camera.zoom = zoom_factor
+                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                                int(props[indexes[counter]].centroid[1]))
+                        viewer.camera.zoom = zoom_factor + 10 ** -8
                     # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
@@ -431,11 +438,11 @@ def Annotation():
                     counter += 1
 
                     # focus on the next object to annotate
-                    viewer.camera.zoom = zoom_factor
-                    viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
-                                            int(props[indexes[counter]].centroid[1]),
-                                            int(props[indexes[counter]].centroid[2]))
-                    viewer.camera.zoom = zoom_factor + 10 ** -8
+                    if double_click is False:
+                        viewer.camera.zoom = zoom_factor
+                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                                int(props[indexes[counter]].centroid[1]))
+                        viewer.camera.zoom = zoom_factor + 10 ** -8
                     # deletion of the old contours and drawing of the new one
                     circle_mask[circle_mask != 0] = 0
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
@@ -473,10 +480,11 @@ def Annotation():
 
         if case == "2D" or case == "multi2D":
             progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 0
-            viewer.camera.zoom = zoom_factor
-            viewer.camera.center = (
-            0, int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]))
-            viewer.camera.zoom = zoom_factor + 10 ** -8
+            if double_click is False:
+                viewer.camera.zoom = zoom_factor
+                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                        int(props[indexes[counter]].centroid[1]))
+                viewer.camera.zoom = zoom_factor + 10 ** -8
             circle_mask[circle_mask != 0] = 0
             circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
             eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
@@ -485,10 +493,11 @@ def Annotation():
         else:
             progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                    props[indexes[counter]].coords[:, 2]] = 0
-            viewer.camera.zoom = zoom_factor
-            viewer.camera.center = (int(props[indexes[counter]].centroid[0]), int(props[indexes[counter]].centroid[1]) ,
-                                    int(props[indexes[counter]].centroid[2]))
-            viewer.camera.zoom = zoom_factor + 10 ** -8
+            if double_click is False:
+                viewer.camera.zoom = zoom_factor
+                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                        int(props[indexes[counter]].centroid[1]))
+                viewer.camera.zoom = zoom_factor + 10 ** -8
             circle_mask[circle_mask != 0] = 0
             circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                         props[indexes[counter]].coords[:, 2]] = 1
@@ -562,6 +571,7 @@ def Annotation():
         generate_im_labs_button=dict(widget_type='PushButton', text='Save masks of labels', tooltip='Save one '
                                      'per attributed label'),
         show_labs=dict(widget_type='CheckBox', text='Show labeled objects', tooltip='Show labeled objects'),
+        click_annotate=dict(widget_type='CheckBox', text='Click to annotate', tooltip='Click to annotate'),
     )
     def annotation_widget(  # label_logo,
             viewer: Viewer,
@@ -573,32 +583,45 @@ def Annotation():
             save_regionprops_button,
             generate_im_labs_button,
             show_labs,
+            click_annotate
 
     ) -> None:
         # Import when users activate plugin
-        global layer
+        global layer, double_click
+        # By default, we do not annotate clicking
+        double_click = False
         for l in viewer.layers:
             if "mask" not in l.name:
                 layer = l
 
         @layer.mouse_double_click_callbacks.append
         def label_clicking(layer, event):
-            if case == "2D":
-                ind = labels[int(event.position[0]), int(event.position[1])] - 1
-            elif case == "multi2D":
-                ind = labels[int(event.position[1]), int(event.position[2])] - 1
-            elif case == "3D":
-                ind = labels[int(event.position[0]), int(event.position[1]), int(event.position[2])] - 1
-            else:
-                ind = labels[int(event.position[1]), int(event.position[2]), int(event.position[3])] - 1
+            if double_click is True:
+                if case == "2D":
+                    ind = labels[int(event.position[0]), int(event.position[1])] - 1
+                elif case == "multi2D":
+                    ind = labels[int(event.position[1]), int(event.position[2])] - 1
+                elif case == "3D":
+                    ind = labels[int(event.position[0]), int(event.position[1]), int(event.position[2])] - 1
+                else:
+                    ind = labels[int(event.position[1]), int(event.position[2]), int(event.position[3])] - 1
 
-            try:
-                indexes.remove(ind)
-                indexes.insert(counter, ind)
-                print('position', event.position)
-                show_info("Choose a label for that object")
-            except ValueError:
-                show_info("please click on a valid object")
+                try:
+                    indexes.remove(ind)
+                    indexes.insert(counter, ind)
+                    print('position', event.position)
+                    show_info("Choose a label for that object")
+                except ValueError:
+                    show_info("please click on a valid object")
+
+    @annotation_widget.click_annotate.changed.connect
+    def click_to_annotate(e: Any):
+        global double_click
+        if e is True:
+            double_click = True
+        else:
+            double_click = False
+        return double_click
 
     def display_first_patch(x):
         # the first object to annotate is focused
