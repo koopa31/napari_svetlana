@@ -1,5 +1,5 @@
 """
-SegClassif dock widget module
+Svetlana dock widget module
 """
 import functools
 import os
