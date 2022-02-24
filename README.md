@@ -4,7 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/napari_svetlana.svg?color=green)](https://pypi.org/project/napari_svetlana)
 [![Python Version](https://img.shields.io/pypi/pyversions/napari_svetlana.svg?color=green)](https://python.org)
 [![tests](https://bitbucket.org/koopa31/napari_svetlana/workflows/tests/badge.svg)](https://bitbucket.org/koopa31/napari_svetlana/actions)
-[![codecov](https://codecov.io/gh/koopa31/napari_segclassif/branch/main/graph/badge.svg)](https://codecov.io/gh/koopa31/napari_svetlana)
+[![codecov](https://codecov.io/gh/koopa31/napari_svetlana/branch/main/graph/badge.svg)](https://codecov.io/gh/koopa31/napari_svetlana)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari_svetlana)](https://napari-hub.org/plugins/napari_svetlana)
 
 The aim of this plugin is to classify the output of a segmentation algorithm in order to remove outliers
