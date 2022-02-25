@@ -8,6 +8,7 @@ import random
 from typing import Any
 
 import cv2
+import dask.dataframe
 import matplotlib.pyplot as plt
 from napari_plugin_engine import napari_hook_implementation
 from napari.utils.notifications import show_info, notification_manager
@@ -126,7 +127,6 @@ def Annotation():
                             props[indexes[counter]].coords[:, 2]] = 1
                 annotation_widget.viewer.value.layers[-1].data = circle_mask
 
-            annotation_widget.viewer.value.layers[-1].color = {1: "green"}
             annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
                 image_layer_name]
 
@@ -193,7 +193,6 @@ def Annotation():
                             props[indexes[counter]].coords[:, 2]] = 1
                 annotation_widget.viewer.value.layers[-1].data = circle_mask
 
-            annotation_widget.viewer.value.layers[-1].color = {1: "green"}
             annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
                 image_layer_name]
 
@@ -257,7 +256,6 @@ def Annotation():
                                 props[indexes[counter]].coords[:, 2]] = 1
                     annotation_widget.viewer.value.layers[-1].data = circle_mask
 
-                annotation_widget.viewer.value.layers[-1].color = {1: "green"}
                 annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
                     image_layer_name]
 
@@ -321,7 +319,6 @@ def Annotation():
                                 props[indexes[counter]].coords[:, 2]] = 1
                     annotation_widget.viewer.value.layers[-1].data = circle_mask
 
-                annotation_widget.viewer.value.layers[-1].color = {1: "green"}
                 annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
                     image_layer_name]
 
@@ -385,7 +382,6 @@ def Annotation():
                                 props[indexes[counter]].coords[:, 2]] = 1
                     annotation_widget.viewer.value.layers[-1].data = circle_mask
 
-                annotation_widget.viewer.value.layers[-1].color = {1: "green"}
                 annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
                     image_layer_name]
 
@@ -449,7 +445,6 @@ def Annotation():
                                 props[indexes[counter]].coords[:, 2]] = 1
                     annotation_widget.viewer.value.layers[-1].data = circle_mask
 
-                annotation_widget.viewer.value.layers[-1].color = {1: "green"}
                 annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
                     image_layer_name]
 
@@ -503,7 +498,6 @@ def Annotation():
                         props[indexes[counter]].coords[:, 2]] = 1
             annotation_widget.viewer.value.layers[-1].data = circle_mask
 
-        annotation_widget.viewer.value.layers[-1].color = {1: "green"}
         annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
             image_layer_name]
 
