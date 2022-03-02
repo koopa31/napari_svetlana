@@ -108,7 +108,18 @@ def Annotation():
                 circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
                 eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                 eroded_labels = circle_mask - eroded_contours
-                annotation_widget.viewer.value.layers[-1].data = eroded_labels
+
+                # Pyramidal representation of the contours to enhance the display speed
+
+                annotation_widget.viewer.value.layers[-1].data_raw[0][annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
+                annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
+
+                for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
+                    annotation_widget.viewer.value.layers[-1].data_raw[i] = \
+                        cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
+                        annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
+                        annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
+
             else:
                 progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                  props[indexes[counter]].coords[:, 2]] = 1
@@ -126,7 +137,19 @@ def Annotation():
                 circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                             props[indexes[counter]].coords[:, 2]] = 1
                 annotation_widget.viewer.value.layers[-1].data = circle_mask
+                """annotation_widget.viewer.value.layers[-1].data_raw[0][
+                    annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
+                annotation_widget.viewer.value.layers[-1].data_raw[0][props[indexes[counter]].coords[:, 0],
+                                                                      props[indexes[counter]].coords[:, 1],
+                                                                      props[indexes[counter]].coords[:, 2]] = 1
 
+                for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
+                    annotation_widget.viewer.value.layers[-1].data_raw[i] = \
+                        cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
+                            annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
+                            annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i,
+                            annotation_widget.viewer.value.layers[-1].data_raw[0].shape[2] // 2 ** i))
+                """
             annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
                 image_layer_name]
 
@@ -175,7 +198,19 @@ def Annotation():
                 circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
                 eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                 eroded_labels = circle_mask - eroded_contours
-                annotation_widget.viewer.value.layers[-1].data = eroded_labels
+
+                # Pyramidal representation of the contours to enhance the display speed
+
+                annotation_widget.viewer.value.layers[-1].data_raw[0][
+                    annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
+                annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
+
+                for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
+                    annotation_widget.viewer.value.layers[-1].data_raw[i] = \
+                        cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
+                            annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
+                            annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
+
             else:
                 progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                  props[indexes[counter]].coords[:, 2]] = 2
@@ -238,7 +273,19 @@ def Annotation():
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
                     eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                     eroded_labels = circle_mask - eroded_contours
-                    annotation_widget.viewer.value.layers[-1].data = eroded_labels
+
+                    # Pyramidal representation of the contours to enhance the display speed
+
+                    annotation_widget.viewer.value.layers[-1].data_raw[0][
+                        annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
+                    annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
+
+                    for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
+                        annotation_widget.viewer.value.layers[-1].data_raw[i] = \
+                            cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
+                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
+                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
+
                 else:
                     progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                      props[indexes[counter]].coords[:, 2]] = 3
@@ -301,7 +348,19 @@ def Annotation():
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
                     eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                     eroded_labels = circle_mask - eroded_contours
-                    annotation_widget.viewer.value.layers[-1].data = eroded_labels
+
+                    # Pyramidal representation of the contours to enhance the display speed
+
+                    annotation_widget.viewer.value.layers[-1].data_raw[0][
+                        annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
+                    annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
+
+                    for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
+                        annotation_widget.viewer.value.layers[-1].data_raw[i] = \
+                            cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
+                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
+                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
+
                 else:
                     progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                      props[indexes[counter]].coords[:, 2]] = 4
@@ -364,7 +423,19 @@ def Annotation():
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
                     eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                     eroded_labels = circle_mask - eroded_contours
-                    annotation_widget.viewer.value.layers[-1].data = eroded_labels
+
+                    # Pyramidal representation of the contours to enhance the display speed
+
+                    annotation_widget.viewer.value.layers[-1].data_raw[0][
+                        annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
+                    annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
+
+                    for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
+                        annotation_widget.viewer.value.layers[-1].data_raw[i] = \
+                            cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
+                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
+                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
+
                 else:
                     progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                      props[indexes[counter]].coords[:, 2]] = 5
@@ -427,7 +498,19 @@ def Annotation():
                     circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
                     eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
                     eroded_labels = circle_mask - eroded_contours
-                    annotation_widget.viewer.value.layers[-1].data = eroded_labels
+
+                    # Pyramidal representation of the contours to enhance the display speed
+
+                    annotation_widget.viewer.value.layers[-1].data_raw[0][
+                        annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
+                    annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
+
+                    for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
+                        annotation_widget.viewer.value.layers[-1].data_raw[i] = \
+                            cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
+                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
+                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
+
                 else:
                     progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                      props[indexes[counter]].coords[:, 2]] = 6
@@ -484,7 +567,18 @@ def Annotation():
             circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
             eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
             eroded_labels = circle_mask - eroded_contours
-            annotation_widget.viewer.value.layers[-1].data = eroded_labels
+
+            # Pyramidal representation of the contours to enhance the display speed
+            annotation_widget.viewer.value.layers[-1].data_raw[0][
+                annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
+            annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
+
+            for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
+                annotation_widget.viewer.value.layers[-1].data_raw[i] = \
+                    cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
+                        annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
+                        annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
+
         else:
             progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                    props[indexes[counter]].coords[:, 2]] = 0
@@ -648,22 +742,46 @@ def Annotation():
             circle_mask[props[current_index].coords[:, 0], props[current_index].coords[:, 1]] = 1
             eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
             eroded_labels = circle_mask - eroded_contours
-            annotation_widget.viewer.value.add_labels(eroded_labels)
+            # Pyramidal representation of the contours to enhance the display speed
+            pyramid = [eroded_labels]
+            for i in range(1, 6):
+                pyramid.append(cv2.resize(eroded_labels, (eroded_labels.shape[0] // 2 ** i,
+                                                          eroded_labels.shape[1] // 2 ** i)))
+            annotation_widget.viewer.value.add_labels(pyramid)
         else:
             circle_mask[props[current_index].coords[:, 0], props[current_index].coords[:, 1],
                         props[current_index].coords[:, 2]] = 1
             annotation_widget.viewer.value.add_labels(circle_mask)
+            """
+            pyramid = [circle_mask]
+            for i in range(1, 6):
+                pyramid.append(cv2.resize(circle_mask, (circle_mask.shape[0] // 2**i,
+                                                        circle_mask.shape[1] // 2**i,
+                                                        circle_mask.shape[2] // 2**i)))
+
+            annotation_widget.viewer.value.add_labels(pyramid)"""
 
         annotation_widget.viewer.value.layers[-1].color = {1: "green"}
         annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[image_layer_name]
 
     @annotation_widget.show_labs.changed.connect
     def show_labs(e: Any):
+        # CREATION OF PYRAMIDAL MASK TO ACCELERATE DISPLAY
+        if case == "2D" or case == "multi2D":
+            pyramid = [progression_mask]
+            for i in range(1, 6):
+                pyramid.append(cv2.resize(progression_mask, (progression_mask.shape[0] // 2 ** i,
+                                                          progression_mask.shape[1] // 2 ** i)))
 
-        if e is True:
-            annotation_widget.viewer.value.add_labels(progression_mask, name="progression_mask")
+            if e is True:
+                annotation_widget.viewer.value.add_labels(pyramid, name="progression_mask")
+            else:
+                annotation_widget.viewer.value.layers.pop()
         else:
-            annotation_widget.viewer.value.layers.pop()
+            if e is True:
+                annotation_widget.viewer.value.add_labels(progression_mask, name="progression_mask")
+            else:
+                annotation_widget.viewer.value.layers.pop()
 
     @annotation_widget.save_button.changed.connect
     def save_annotations(e: Any):
