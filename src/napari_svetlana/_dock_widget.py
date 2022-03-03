@@ -68,7 +68,7 @@ def read_logging(log_file, logwindow):
                 yield line
 
 
-labels_number = [('2', 2), ('3', 3), ('4', 4), ('5', 5), ('6', 6)]
+labels_number = [('2', 2), ('3', 3), ('4', 4), ('5', 5), ('6', 6), ('7', 7), ('8', 8), ('9', 9)]
 networks_list = ["ResNet18", "ResNet34", "ResNet50", "ResNet101", "ResNet152", "AlexNet", "DenseNet121",
                  "DenseNet161", "DenseNet169", "DenseNet201"]
 losses_list = ["CrossEntropy", "L1Smooth", "BCE", "Distance", "L1", "MSE"]
@@ -77,477 +77,92 @@ counter = 0
 labels_list = []
 
 
-# logo = os.path.join(__file__, 'logo/logo_small.png')
-
-
 def Annotation():
     from napari.qt.threading import thread_worker
 
-    @Viewer.bind_key('1')
-    def set_label_1(viewer):
-        global counter
+    def on_pressed(key):
+        def set_label(viewer):
+            global counter
+            print("key is ", key)
+            if (int(annotation_widget.labels_nb.value) < key) is False:
+                if counter < len(props) - 1:
+                    labels_list.append(key)
 
-        if counter < len(props) - 1:
-            labels_list.append(1)
+                    mini_props_list.append(
+                        {"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                         "label": props[indexes[counter]].label})
+                    if case == "2D" or case == "multi2D":
+                        progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 6
+                        counter += 1
 
-            mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
-                                    "label": props[indexes[counter]].label})
+                        # focus on the next object to annotate
+                        if double_click is False:
+                            viewer.camera.zoom = zoom_factor
+                            viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                                    int(props[indexes[counter]].centroid[1]))
+                            viewer.camera.zoom = zoom_factor + 10 ** -8
+                        # deletion of the old contours and drawing of the new one
+                        circle_mask[circle_mask != 0] = 0
+                        circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
+                        eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
+                        eroded_labels = circle_mask - eroded_contours
 
-            if case == "2D" or case == "multi2D":
-                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
-                counter += 1
+                        # Pyramidal representation of the contours to enhance the display speed
 
-                # focus on the next object to annotate
-                if double_click is False:
-                    viewer.camera.zoom = zoom_factor
-                    viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                            int(props[indexes[counter]].centroid[1]))
-                    viewer.camera.zoom = zoom_factor + 10 ** -8
-                # deletion of the old contours and drawing of the new one
-                circle_mask[circle_mask != 0] = 0
-                circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
-                eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
-                eroded_labels = circle_mask - eroded_contours
+                        annotation_widget.viewer.value.layers[-1].data_raw[0][
+                            annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
+                        annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
 
-                # Pyramidal representation of the contours to enhance the display speed
+                        for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
+                            annotation_widget.viewer.value.layers[-1].data_raw[i] = \
+                                cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
+                                    annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
+                                    annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
 
-                annotation_widget.viewer.value.layers[-1].data_raw[0][annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
-                annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
+                    else:
+                        progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
+                                         props[indexes[counter]].coords[:, 2]] = key
+                        counter += 1
 
-                for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
-                    annotation_widget.viewer.value.layers[-1].data_raw[i] = \
-                        cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
-                        annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
-                        annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
+                        # focus on the next object to annotate
+                        if double_click is False:
+                            viewer.camera.zoom = zoom_factor
+                            viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                                    int(props[indexes[counter]].centroid[1]))
+                            viewer.camera.zoom = zoom_factor + 10 ** -8
+                        # deletion of the old contours and drawing of the new one
+                        circle_mask[circle_mask != 0] = 0
+                        circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
+                                    props[indexes[counter]].coords[:, 2]] = 1
+                        annotation_widget.viewer.value.layers[-1].data = circle_mask
 
-            else:
-                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
-                                 props[indexes[counter]].coords[:, 2]] = 1
-                counter += 1
+                    annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
+                        image_layer_name]
 
-                # focus on the next object to annotate
-                if double_click is False:
-                    viewer.camera.zoom = zoom_factor
-                    viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
-                                            int(props[indexes[counter]].centroid[1]),
-                                            int(props[indexes[counter]].centroid[2]))
-                    viewer.camera.zoom = zoom_factor + 10 ** -8
-                # deletion of the old contours and drawing of the new one
-                circle_mask[circle_mask != 0] = 0
-                circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
-                            props[indexes[counter]].coords[:, 2]] = 1
-                annotation_widget.viewer.value.layers[-1].data = circle_mask
-                """annotation_widget.viewer.value.layers[-1].data_raw[0][
-                    annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
-                annotation_widget.viewer.value.layers[-1].data_raw[0][props[indexes[counter]].coords[:, 0],
-                                                                      props[indexes[counter]].coords[:, 1],
-                                                                      props[indexes[counter]].coords[:, 2]] = 1
-
-                for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
-                    annotation_widget.viewer.value.layers[-1].data_raw[i] = \
-                        cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
-                            annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
-                            annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i,
-                            annotation_widget.viewer.value.layers[-1].data_raw[0].shape[2] // 2 ** i))
-                """
-            annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
-                image_layer_name]
-
-            print("label 1", labels_list)
-            viewer.status = str(counter) + " images processed over " + str(len(props))
-        elif counter == len(props) - 1:
-            labels_list.append(1)
-            mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
-                                    "label": props[indexes[counter]].label})
-            progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
-            counter += 1
-            from skimage.io import imread
-            viewer.layers.clear()
-            viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
-                                    "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
-            print("annotation over", labels_list)
-            viewer.status = str(counter) + " images processed over " + str(len(props))
-            show_info("Annotation over, press 1 to save the result")
-        else:
-            # Saving of the annotation result in a binary file
-            path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
-            res_dict = {"image_path": image_path, "labels_path": labels_path, "regionprops": mini_props_list,
-                        "labels_list": labels_list, "patch_size": annotation_widget.patch_size.value}
-            torch.save(res_dict, path)
-
-    @Viewer.bind_key('2')
-    def set_label_2(viewer):
-        global counter
-        if counter < len(props) - 1:
-            labels_list.append(2)
-
-            mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
-                                    "label": props[indexes[counter]].label})
-            if case == "2D" or case == "multi2D":
-                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 2
-                counter += 1
-
-                # focus on the next object to annotate
-                if double_click is False:
-                    viewer.camera.zoom = zoom_factor
-                    viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                            int(props[indexes[counter]].centroid[1]))
-                    viewer.camera.zoom = zoom_factor + 10 ** -8
-                # deletion of the old contours and drawing of the new one
-                circle_mask[circle_mask != 0] = 0
-                circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
-                eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
-                eroded_labels = circle_mask - eroded_contours
-
-                # Pyramidal representation of the contours to enhance the display speed
-
-                annotation_widget.viewer.value.layers[-1].data_raw[0][
-                    annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
-                annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
-
-                for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
-                    annotation_widget.viewer.value.layers[-1].data_raw[i] = \
-                        cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
-                            annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
-                            annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
-
-            else:
-                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
-                                 props[indexes[counter]].coords[:, 2]] = 2
-                counter += 1
-
-                # focus on the next object to annotate
-                if double_click is False:
-                    viewer.camera.zoom = zoom_factor
-                    viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                            int(props[indexes[counter]].centroid[1]))
-                    viewer.camera.zoom = zoom_factor + 10 ** -8
-                # deletion of the old contours and drawing of the new one
-                circle_mask[circle_mask != 0] = 0
-                circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
-                            props[indexes[counter]].coords[:, 2]] = 1
-                annotation_widget.viewer.value.layers[-1].data = circle_mask
-
-            annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
-                image_layer_name]
-
-            print("label 1", labels_list)
-            viewer.status = str(counter) + " images processed over " + str(len(props))
-        elif counter == len(props) - 1:
-            labels_list.append(2)
-            mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
-                                    "label": props[indexes[counter]].label})
-            progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 2
-            counter += 1
-            from skimage.io import imread
-            viewer.layers.clear()
-            viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
-                                    "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
-            print("annotation over", labels_list)
-            viewer.status = str(counter) + " images processed over " + str(len(props))
-            show_info("Annotation over, press 1 to save the result")
-        else:
-            pass
-
-    @Viewer.bind_key('3')
-    def set_label_3(viewer):
-        global counter
-        if (int(annotation_widget.labels_nb.value) < 3) is False:
-            if counter < len(props) - 1:
-                labels_list.append(3)
-
-                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
-                                        "label": props[indexes[counter]].label})
-                if case == "2D" or case == "multi2D":
-                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 3
+                    print("label 1", labels_list)
+                    viewer.status = str(counter) + " images processed over " + str(len(props))
+                elif counter == len(props) - 1:
+                    labels_list.append(6)
+                    mini_props_list.append(
+                        {"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                         "label": props[indexes[counter]].label})
+                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = key
                     counter += 1
-
-                    # focus on the next object to annotate
-                    if double_click is False:
-                        viewer.camera.zoom = zoom_factor
-                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                                int(props[indexes[counter]].centroid[1]))
-                        viewer.camera.zoom = zoom_factor + 10 ** -8
-                    # deletion of the old contours and drawing of the new one
-                    circle_mask[circle_mask != 0] = 0
-                    circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
-                    eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
-                    eroded_labels = circle_mask - eroded_contours
-
-                    # Pyramidal representation of the contours to enhance the display speed
-
-                    annotation_widget.viewer.value.layers[-1].data_raw[0][
-                        annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
-                    annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
-
-                    for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
-                        annotation_widget.viewer.value.layers[-1].data_raw[i] = \
-                            cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
-                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
-                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
-
+                    from skimage.io import imread
+                    viewer.layers.clear()
+                    viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
+                                            "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
+                    print("annotation over", labels_list)
+                    viewer.status = str(counter) + " images processed over " + str(len(props))
+                    show_info("Annotation over, press 1 to save the result")
                 else:
-                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
-                                     props[indexes[counter]].coords[:, 2]] = 3
-                    counter += 1
+                    # Saving of the annotation result in a binary file
+                    path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
+                    res_dict = {"image_path": image_path, "labels_path": labels_path, "regionprops": mini_props_list,
+                                "labels_list": labels_list, "patch_size": annotation_widget.patch_size.value}
+                    torch.save(res_dict, path)
 
-                    # focus on the next object to annotate
-                    if double_click is False:
-                        viewer.camera.zoom = zoom_factor
-                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                                int(props[indexes[counter]].centroid[1]))
-                        viewer.camera.zoom = zoom_factor + 10 ** -8
-                    # deletion of the old contours and drawing of the new one
-                    circle_mask[circle_mask != 0] = 0
-                    circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
-                                props[indexes[counter]].coords[:, 2]] = 1
-                    annotation_widget.viewer.value.layers[-1].data = circle_mask
-
-                annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
-                    image_layer_name]
-
-                print("label 1", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(props))
-            elif counter == len(props) - 1:
-                labels_list.append(3)
-                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
-                                        "label": props[indexes[counter]].label})
-                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 3
-                counter += 1
-                from skimage.io import imread
-                viewer.layers.clear()
-                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
-                                        "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
-                print("annotation over", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(props))
-                show_info("Annotation over, press 1 to save the result")
-            else:
-                pass
-
-    @Viewer.bind_key('4')
-    def set_label_4(viewer):
-        global counter
-        if (int(annotation_widget.labels_nb.value) < 4) is False:
-            if counter < len(props) - 1:
-                labels_list.append(4)
-
-                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
-                                        "label": props[indexes[counter]].label})
-                if case == "2D" or case == "multi2D":
-                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 4
-                    counter += 1
-
-                    # focus on the next object to annotate
-                    if double_click is False:
-                        viewer.camera.zoom = zoom_factor
-                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                                int(props[indexes[counter]].centroid[1]))
-                        viewer.camera.zoom = zoom_factor + 10 ** -8
-                    # deletion of the old contours and drawing of the new one
-                    circle_mask[circle_mask != 0] = 0
-                    circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
-                    eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
-                    eroded_labels = circle_mask - eroded_contours
-
-                    # Pyramidal representation of the contours to enhance the display speed
-
-                    annotation_widget.viewer.value.layers[-1].data_raw[0][
-                        annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
-                    annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
-
-                    for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
-                        annotation_widget.viewer.value.layers[-1].data_raw[i] = \
-                            cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
-                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
-                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
-
-                else:
-                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
-                                     props[indexes[counter]].coords[:, 2]] = 4
-                    counter += 1
-
-                    # focus on the next object to annotate
-                    if double_click is False:
-                        viewer.camera.zoom = zoom_factor
-                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                                int(props[indexes[counter]].centroid[1]))
-                        viewer.camera.zoom = zoom_factor + 10 ** -8
-                    # deletion of the old contours and drawing of the new one
-                    circle_mask[circle_mask != 0] = 0
-                    circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
-                                props[indexes[counter]].coords[:, 2]] = 1
-                    annotation_widget.viewer.value.layers[-1].data = circle_mask
-
-                annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
-                    image_layer_name]
-
-                print("label 1", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(props))
-            elif counter == len(props) - 1:
-                labels_list.append(4)
-                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
-                                        "label": props[indexes[counter]].label})
-                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 4
-                counter += 1
-                from skimage.io import imread
-                viewer.layers.clear()
-                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
-                                        "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
-                print("annotation over", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(props))
-                show_info("Annotation over, press 1 to save the result")
-            else:
-                pass
-
-    @Viewer.bind_key('5')
-    def set_label_5(viewer):
-        global counter
-        if (int(annotation_widget.labels_nb.value) < 5) is False:
-            if counter < len(props) - 1:
-                labels_list.append(5)
-
-                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
-                                        "label": props[indexes[counter]].label})
-                if case == "2D" or case == "multi2D":
-                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 5
-                    counter += 1
-
-                    # focus on the next object to annotate
-                    if double_click is False:
-                        viewer.camera.zoom = zoom_factor
-                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                                int(props[indexes[counter]].centroid[1]))
-                        viewer.camera.zoom = zoom_factor + 10 ** -8
-                    # deletion of the old contours and drawing of the new one
-                    circle_mask[circle_mask != 0] = 0
-                    circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
-                    eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
-                    eroded_labels = circle_mask - eroded_contours
-
-                    # Pyramidal representation of the contours to enhance the display speed
-
-                    annotation_widget.viewer.value.layers[-1].data_raw[0][
-                        annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
-                    annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
-
-                    for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
-                        annotation_widget.viewer.value.layers[-1].data_raw[i] = \
-                            cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
-                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
-                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
-
-                else:
-                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
-                                     props[indexes[counter]].coords[:, 2]] = 5
-                    counter += 1
-
-                    # focus on the next object to annotate
-                    if double_click is False:
-                        viewer.camera.zoom = zoom_factor
-                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                                int(props[indexes[counter]].centroid[1]))
-                        viewer.camera.zoom = zoom_factor + 10 ** -8
-                    # deletion of the old contours and drawing of the new one
-                    circle_mask[circle_mask != 0] = 0
-                    circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
-                                props[indexes[counter]].coords[:, 2]] = 1
-                    annotation_widget.viewer.value.layers[-1].data = circle_mask
-
-                annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
-                    image_layer_name]
-
-                print("label 1", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(props))
-            elif counter == len(props) - 1:
-                labels_list.append(5)
-                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
-                                        "label": props[indexes[counter]].label})
-                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 5
-                counter += 1
-                from skimage.io import imread
-                viewer.layers.clear()
-                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
-                                        "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
-                print("annotation over", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(props))
-                show_info("Annotation over, press 1 to save the result")
-            else:
-                pass
-
-    @Viewer.bind_key('6')
-    def set_label_6(viewer):
-        global counter
-        if (int(annotation_widget.labels_nb.value) < 6) is False:
-            if counter < len(props) - 1:
-                labels_list.append(6)
-
-                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
-                                        "label": props[indexes[counter]].label})
-                if case == "2D" or case == "multi2D":
-                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 6
-                    counter += 1
-
-                    # focus on the next object to annotate
-                    if double_click is False:
-                        viewer.camera.zoom = zoom_factor
-                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                                int(props[indexes[counter]].centroid[1]))
-                        viewer.camera.zoom = zoom_factor + 10 ** -8
-                    # deletion of the old contours and drawing of the new one
-                    circle_mask[circle_mask != 0] = 0
-                    circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
-                    eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
-                    eroded_labels = circle_mask - eroded_contours
-
-                    # Pyramidal representation of the contours to enhance the display speed
-
-                    annotation_widget.viewer.value.layers[-1].data_raw[0][
-                        annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
-                    annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
-
-                    for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
-                        annotation_widget.viewer.value.layers[-1].data_raw[i] = \
-                            cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
-                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
-                                annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
-
-                else:
-                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
-                                     props[indexes[counter]].coords[:, 2]] = 6
-                    counter += 1
-
-                    # focus on the next object to annotate
-                    if double_click is False:
-                        viewer.camera.zoom = zoom_factor
-                        viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                                int(props[indexes[counter]].centroid[1]))
-                        viewer.camera.zoom = zoom_factor + 10 ** -8
-                    # deletion of the old contours and drawing of the new one
-                    circle_mask[circle_mask != 0] = 0
-                    circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
-                                props[indexes[counter]].coords[:, 2]] = 1
-                    annotation_widget.viewer.value.layers[-1].data = circle_mask
-
-                annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
-                    image_layer_name]
-
-                print("label 1", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(props))
-            elif counter == len(props) - 1:
-                labels_list.append(6)
-                mini_props_list.append({"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
-                                        "label": props[indexes[counter]].label})
-                progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 6
-                counter += 1
-                from skimage.io import imread
-                viewer.layers.clear()
-                viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
-                                        "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
-                print("annotation over", labels_list)
-                viewer.status = str(counter) + " images processed over " + str(len(props))
-                show_info("Annotation over, press 1 to save the result")
-            else:
-                pass
+        return set_label
 
     @Viewer.bind_key('r')
     def remove_label(viewer):
@@ -681,6 +296,10 @@ def Annotation():
         for l in viewer.layers:
             if "mask" not in l.name:
                 layer = l
+
+        # We generate the functions to add a label when a key i pressed
+        for i in range(1, 10):
+            viewer.bind_key(str(i), on_pressed(i), overwrite=True)
 
         @layer.mouse_double_click_callbacks.append
         def label_clicking(layer, event):
