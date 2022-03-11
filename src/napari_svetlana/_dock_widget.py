@@ -1165,13 +1165,22 @@ def Prediction():
             edge_im = imagette_contours.copy().astype(np.uint8)
             edge_im[eroded_labels == 0] = 0
         if e is True:
+            pyramidal_edge_im = [edge_im]
+            for i in range(1, 6):
+                pyramidal_edge_im.append(cv2.resize(edge_im, (edge_im.shape[0] // 2 ** i,
+                                                              edge_im.shape[1] // 2 ** i)))
             prediction_widget.viewer.value.layers.pop()
-            prediction_widget.viewer.value.add_labels(edge_im)
+            prediction_widget.viewer.value.add_labels(pyramidal_edge_im)
             if len(np.unique(prediction_widget.viewer.value.layers[1].data)) == 3:
                 prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
         else:
+            pyramidal_imagette_contours = [imagette_contours.astype(np.uint8)]
+            for i in range(1, 6):
+                pyramidal_imagette_contours.append(cv2.resize(imagette_contours.astype(np.uint8), (imagette_contours.shape[0] // 2 ** i,
+                                                                                  imagette_contours.shape[
+                                                                                      1] // 2 ** i)))
             prediction_widget.viewer.value.layers.pop()
-            prediction_widget.viewer.value.add_labels(imagette_contours.astype(np.uint8))
+            prediction_widget.viewer.value.add_labels(pyramidal_imagette_contours)
             if len(np.unique(prediction_widget.viewer.value.layers[1].data)) == 3:
                 prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
 
