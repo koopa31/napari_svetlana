@@ -127,8 +127,14 @@ def Annotation():
                         # focus on the next object to annotate
                         if double_click is False:
                             viewer.camera.zoom = zoom_factor
-                            viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                                    int(props[indexes[counter]].centroid[1]))
+                            viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
+                                                    int(props[indexes[counter]].centroid[1]),
+                                                    int(props[indexes[counter]].centroid[2]))
+                            annotation_widget.viewer.value.dims.current_step = (int(props[indexes[counter]].centroid[0]),
+                                                                                annotation_widget.viewer.value.dims.current_step[
+                                                                                    1],
+                                                                                annotation_widget.viewer.value.dims.current_step[
+                                                                                    2])
                             viewer.camera.zoom = zoom_factor + 10 ** -8
                         # deletion of the old contours and drawing of the new one
                         circle_mask[circle_mask != 0] = 0
@@ -199,8 +205,14 @@ def Annotation():
                                    props[indexes[counter]].coords[:, 2]] = 0
             if double_click is False:
                 viewer.camera.zoom = zoom_factor
-                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                        int(props[indexes[counter]].centroid[1]))
+                viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
+                                        int(props[indexes[counter]].centroid[1]),
+                                        int(props[indexes[counter]].centroid[2]))
+                annotation_widget.viewer.value.dims.current_step = (int(props[indexes[counter]].centroid[0]),
+                                                                    annotation_widget.viewer.value.dims.current_step[
+                                                                        1],
+                                                                    annotation_widget.viewer.value.dims.current_step[
+                                                                        2])
                 viewer.camera.zoom = zoom_factor + 10 ** -8
             circle_mask[circle_mask != 0] = 0
             circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
@@ -340,10 +352,13 @@ def Annotation():
             annotation_widget.viewer.value.camera.center = (0, props[current_index].centroid[0],
                                                             props[current_index].centroid[1])
         else:
-            annotation_widget.viewer.value.dims.ndisplay = 3
+            #annotation_widget.viewer.value.dims.ndisplay = 3
             annotation_widget.viewer.value.camera.center = (props[current_index].centroid[0],
                                                             props[current_index].centroid[1],
                                                             props[current_index].centroid[2])
+            annotation_widget.viewer.value.dims.current_step = (int(props[current_index].centroid[0]),
+                                                                annotation_widget.viewer.value.dims.current_step[1],
+                                                                annotation_widget.viewer.value.dims.current_step[2])
 
         annotation_widget.viewer.value.camera.zoom = zoom_factor
 
@@ -636,40 +651,44 @@ def Training():
                     model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
                     model.features[0] = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
 
-            elif image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]:
-                case = "multi_2D"
-                model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
-                set_parameter_requires_grad(model, True)
-                image = np.transpose(image, (1, 2, 0))
-
-                if "resnet" in nn_dict[nn_type]:
-                    # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1" as we have
-                    # "labels_number" labels
-                    num_ftrs = model.fc.in_features
-                    model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                    model.conv1 = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3),
-                                            bias=False)
-                elif "densenet" in nn_dict[nn_type]:
-                    num_ftrs = model.classifier.in_features
-                    model.classifier = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                    model.features.conv0 = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2),
-                                                     padding=(3, 3), bias=False)
-                elif nn_dict[nn_type] == "alexnet":
-                    num_ftrs = model.classifier[6].in_features
-                    model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                    model.features[0] = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2),
-                                                  padding=(3, 3), bias=False)
-
             elif len(image.shape) == 4:
-                case = "multi_3D"
+                case = "multi3D"
                 image = np.transpose(image, (1, 2, 3, 0))
                 mask = np.transpose(mask, (1, 2, 0))
                 model = CNN3D(max(labels_list), image.shape[0] + 1)
 
-            # 3D case
             else:
-                case = "3D"
-                model = CNN3D(max(labels_list), 2)
+                from .CustomDialog import CustomDialog
+                diag = CustomDialog()
+                diag.exec()
+                case = diag.get_case()
+
+                if case == "multi2D":
+                    model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
+                    set_parameter_requires_grad(model, True)
+                    image = np.transpose(image, (1, 2, 0))
+
+                    if "resnet" in nn_dict[nn_type]:
+                        # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1" as we have
+                        # "labels_number" labels
+                        num_ftrs = model.fc.in_features
+                        model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                        model.conv1 = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2),
+                                                padding=(3, 3),
+                                                bias=False)
+                    elif "densenet" in nn_dict[nn_type]:
+                        num_ftrs = model.classifier.in_features
+                        model.classifier = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                        model.features.conv0 = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2),
+                                                         padding=(3, 3), bias=False)
+                    elif nn_dict[nn_type] == "alexnet":
+                        num_ftrs = model.classifier[6].in_features
+                        model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                        model.features[0] = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2),
+                                                      padding=(3, 3), bias=False)
+
+                elif case == "3D":
+                    model = CNN3D(max(labels_list), 2)
 
         else:
             if image.shape[2] <= 3:
@@ -680,7 +699,7 @@ def Training():
                 case = "multi_2D"
 
             elif len(image.shape) == 4:
-                case = "multi_3D"
+                case = "multi3D"
 
             # 3D case
             else:
@@ -980,8 +999,18 @@ def Prediction():
         except:
             max = np.finfo(image.dtype).max
 
-        if image.shape[2] <= 3 or (image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]):
-            if image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]:
+        if image.shape[2] <= 3:
+            case = "2D"
+        elif len(image.shape) == 4:
+            case = "multi3D"
+        else:
+            from .CustomDialog import CustomDialog
+            diag = CustomDialog()
+            diag.exec()
+            case = diag.get_case()
+
+        if case == "2D" or case == "multi2D":
+            if case == "multi2D":
                 image = np.transpose(image, (1, 2, 0))
 
             imagette_contours = np.zeros((image.shape[0], image.shape[1]))
@@ -992,7 +1021,7 @@ def Prediction():
 
             data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, max)
 
-        elif len(image.shape) == 4:
+        elif case == "multi3D":
             image = np.transpose(image, (1, 2, 3, 0))
             labels = np.transpose(labels, (1, 2, 0))
             imagette_contours = np.zeros((image.shape[3], image.shape[1], image.shape[2]))
