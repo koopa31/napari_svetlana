@@ -328,6 +328,7 @@ def Annotation():
                 try:
                     indexes.remove(ind)
                     indexes.insert(counter, ind)
+                    indexes.insert(counter, ind)
                     print('position', event.position)
                     show_info("Choose a label for that object")
                 except ValueError:
@@ -822,6 +823,9 @@ def Training():
                     bs = 2 ** (np.floor(np.log(bs) / np.log(2)))
                 else:
                     bs = 2 ** (np.floor(np.log(batch_size) / np.log(2)))
+                # We make sure bs can't be equal to zero but at least to 1
+                if bs == 0:
+                    bs += 1
                 training_loader = DataLoader(dataset=train_data, batch_size=int(bs), shuffle=True)
 
         """
