@@ -70,7 +70,7 @@ def read_logging(log_file, logwindow):
 
 labels_number = [('2', 2), ('3', 3), ('4', 4), ('5', 5), ('6', 6), ('7', 7), ('8', 8), ('9', 9)]
 networks_list = ["ResNet18", "ResNet34", "ResNet50", "ResNet101", "ResNet152", "AlexNet", "DenseNet121",
-                 "DenseNet161", "DenseNet169", "DenseNet201"]
+                 "DenseNet161", "DenseNet169", "DenseNet201", "CustomCNN2D"]
 losses_list = ["CrossEntropy", "L1Smooth", "BCE", "Distance", "L1", "MSE"]
 
 counter = 0
@@ -92,7 +92,7 @@ def Annotation():
                         {"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
                          "label": props[indexes[counter]].label})
                     if case == "2D" or case == "multi2D":
-                        progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 6
+                        progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = key
                         counter += 1
 
                         # focus on the next object to annotate
@@ -327,7 +327,6 @@ def Annotation():
 
                 try:
                     indexes.remove(ind)
-                    indexes.insert(counter, ind)
                     indexes.insert(counter, ind)
                     print('position', event.position)
                     show_info("Choose a label for that object")
@@ -626,31 +625,36 @@ def Training():
 
         nn_dict = {"ResNet18": "resnet18", "ResNet34": "resnet34", "ResNet50": "resnet50", "ResNet101": "resnet101",
                    "ResNet152": "resnet152", "AlexNet": "alexnet", "DenseNet121": "densenet121",
-                   "DenseNet161": "densenet161", "DenseNet169": "densenet169", "DenseNet201": "densenet201"}
+                   "DenseNet161": "densenet161", "DenseNet169": "densenet169", "DenseNet201": "densenet201",
+                   "CustomCNN2D": "CNN2D"}
         # Setting of network
 
         if model is None:
             # 2D case
             if image.shape[2] <= 3:
                 case = "2D"
-                model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
-                set_parameter_requires_grad(model, True)
+                if nn_dict[nn_type] != "CNN2D":
+                    model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
+                    set_parameter_requires_grad(model, True)
 
-                if "resnet" in nn_dict[nn_type]:
-                    # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1" as we have
-                    # "labels_number" labels
-                    num_ftrs = model.fc.in_features
-                    model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                    model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-                elif "densenet" in nn_dict[nn_type]:
-                    num_ftrs = model.classifier.in_features
-                    model.classifier = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                    model.features.conv0 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3),
-                                                     bias=False)
-                elif nn_dict[nn_type] == "alexnet":
-                    num_ftrs = model.classifier[6].in_features
-                    model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                    model.features[0] = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+                    if "resnet" in nn_dict[nn_type]:
+                        # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1" as we have
+                        # "labels_number" labels
+                        num_ftrs = model.fc.in_features
+                        model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                        model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+                    elif "densenet" in nn_dict[nn_type]:
+                        num_ftrs = model.classifier.in_features
+                        model.classifier = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                        model.features.conv0 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3),
+                                                         bias=False)
+                    elif nn_dict[nn_type] == "alexnet":
+                        num_ftrs = model.classifier[6].in_features
+                        model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                        model.features[0] = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+
+                else:
+                    model = CNN2D(max(labels_list), 4)
 
             elif len(image.shape) == 4:
                 case = "multi3D"
@@ -665,46 +669,34 @@ def Training():
                 case = diag.get_case()
 
                 if case == "multi2D":
-                    model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
-                    set_parameter_requires_grad(model, True)
-                    image = np.transpose(image, (1, 2, 0))
+                    if nn_dict[nn_type] != "CNN2D":
+                        model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
+                        set_parameter_requires_grad(model, True)
+                        image = np.transpose(image, (1, 2, 0))
 
-                    if "resnet" in nn_dict[nn_type]:
-                        # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1" as we have
-                        # "labels_number" labels
-                        num_ftrs = model.fc.in_features
-                        model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                        model.conv1 = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2),
-                                                padding=(3, 3),
-                                                bias=False)
-                    elif "densenet" in nn_dict[nn_type]:
-                        num_ftrs = model.classifier.in_features
-                        model.classifier = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                        model.features.conv0 = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2),
-                                                         padding=(3, 3), bias=False)
-                    elif nn_dict[nn_type] == "alexnet":
-                        num_ftrs = model.classifier[6].in_features
-                        model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                        model.features[0] = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2),
-                                                      padding=(3, 3), bias=False)
+                        if "resnet" in nn_dict[nn_type]:
+                            # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1" as we have
+                            # "labels_number" labels
+                            num_ftrs = model.fc.in_features
+                            model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                            model.conv1 = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2),
+                                                    padding=(3, 3),
+                                                    bias=False)
+                        elif "densenet" in nn_dict[nn_type]:
+                            num_ftrs = model.classifier.in_features
+                            model.classifier = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                            model.features.conv0 = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2),
+                                                             padding=(3, 3), bias=False)
+                        elif nn_dict[nn_type] == "alexnet":
+                            num_ftrs = model.classifier[6].in_features
+                            model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
+                            model.features[0] = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2),
+                                                          padding=(3, 3), bias=False)
+                    else:
+                        model = CNN2D(max(labels_list), 4)
 
                 elif case == "3D":
                     model = CNN3D(max(labels_list), 2)
-
-        else:
-            if image.shape[2] <= 3:
-                case = "2D"
-                model = CNN2D(max(labels_list), 4)
-
-            elif image.shape[0] < image.shape[1] and image.shape[0] < image.shape[2]:
-                case = "multi_2D"
-
-            elif len(image.shape) == 4:
-                case = "multi3D"
-
-            # 3D case
-            else:
-                case = "3D"
 
         torch_type = torch.cuda.FloatTensor
 
