@@ -78,10 +78,24 @@ labels_list = []
 
 
 def Annotation():
+    """
+    Annotation plugin code
+    @return:
+    """
     from napari.qt.threading import thread_worker
 
     def on_pressed(key):
+        """
+        When a key between 1 and 9 is pressed, it calls the function which sets the label
+        @param key: int between 1 and 9
+        @return:
+        """
         def set_label(viewer):
+            """
+            Attributes a label to an object you want to annotate
+            @param viewer: Napari viewer instance
+            @return:
+            """
             global counter
             print("key is ", key)
             if (int(annotation_widget.labels_nb.value) < key) is False:
@@ -172,6 +186,11 @@ def Annotation():
 
     @Viewer.bind_key('r')
     def remove_label(viewer):
+        """
+        Cancels the last attributed label when r is pressed and goes back to previous object to be re-labelled
+        @param viewer: Napari viewer instance
+        @return:
+        """
         global counter
         labels_list.pop()
         mini_props_list.pop()
@@ -227,6 +246,12 @@ def Annotation():
 
     @thread_worker
     def generate_patches(viewer, patch_size):
+        """
+        Computes the correct zoom factor to focus on objects to annotate
+        @param viewer: Napari vewer instance
+        @param patch_size: the estimated optimal patch size
+        @return: the zoom factor and the regionprops computed from the labels mask
+        """
         for im in viewer:
             if "mask" in im.name:
                 global labels
@@ -315,6 +340,13 @@ def Annotation():
 
         @layer.mouse_double_click_callbacks.append
         def label_clicking(layer, event):
+            """
+            When click to annotate option is activated, retrieves the coordinate of the clicked object to give him a
+            label
+            @param layer:
+            @param event: Qt click event
+            @return:
+            """
             if double_click is True:
                 if case == "2D":
                     ind = labels[int(event.position[0]), int(event.position[1])] - 1
@@ -335,6 +367,11 @@ def Annotation():
 
     @annotation_widget.click_annotate.changed.connect
     def click_to_annotate(e: Any):
+        """
+        Activates click to annotate option
+        @param e: boolean value of the checkbox
+        @return:
+        """
         global double_click
         if e is True:
             double_click = True
@@ -343,6 +380,11 @@ def Annotation():
         return double_click
 
     def display_first_patch(x):
+        """
+        Once generate patches is done, it focuses on the first object of the list to be labelled
+        @param x: list containing the output of generate pacthes function (props, zoom factor)
+        @return:
+        """
         # the first object to annotate is focused
         current_index = indexes[counter]
         props = x[0]
@@ -400,6 +442,11 @@ def Annotation():
 
     @annotation_widget.show_labs.changed.connect
     def show_labs(e: Any):
+        """
+        Shows the mask of the labelled objects
+        @param e: boolean value of the checkbox
+        @return:
+        """
         # CREATION OF PYRAMIDAL MASK TO ACCELERATE DISPLAY
         if case == "2D" or case == "multi2D":
             pyramid = [progression_mask]
@@ -419,6 +466,11 @@ def Annotation():
 
     @annotation_widget.save_button.changed.connect
     def save_annotations(e: Any):
+        """
+        Saves the information needed for the training in a binary file using Pytorch
+        @param e: indicates if the button has been clicked
+        @return:
+        """
         path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
         res_dict = {"image_path": image_path, "labels_path": labels_path, "regionprops": mini_props_list,
                     "labels_list": labels_list, "patch_size": annotation_widget.patch_size.value}
@@ -426,6 +478,11 @@ def Annotation():
 
     @annotation_widget.extract_pacthes_button.changed.connect
     def _extract_patches(e: Any):
+        """
+        Function triggered by the button to start the annotation
+        @param e:
+        @return:
+        """
         patch_worker = generate_patches(annotation_widget.viewer.value.layers, int(annotation_widget.patch_size.value))
         patch_worker.returned.connect(display_first_patch)
         patch_worker.start()
@@ -433,6 +490,11 @@ def Annotation():
 
     @annotation_widget.estimate_size_button.changed.connect
     def estimate_patch_size():
+        """
+        Function triggered by the button to estimate the optimal squared visualization window size around the object
+        to annotate
+        @return:
+        """
         for im in annotation_widget.viewer.value.layers:
             if "mask" in im.name:
                 labels = im.data
@@ -457,6 +519,10 @@ def Annotation():
 
     @annotation_widget.save_regionprops_button.changed.connect
     def save_regionprops():
+        """
+        Saves the properties of the labelled connected components in a binary file using Pytorch
+        @return:
+        """
 
         path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
         props_list = []
@@ -475,6 +541,10 @@ def Annotation():
 
     @annotation_widget.generate_im_labs_button.changed.connect
     def generate_im_labels():
+        """
+        Saves a mask for each class
+        @return:
+        """
         im_labs_list = []
         # We create as many images as labels
         for i in range(0, max(labels_list)):
@@ -494,6 +564,10 @@ def Annotation():
 
 
 def Training():
+    """
+    Training plugin code
+    @return:
+    """
     from napari.qt.threading import thread_worker
 
     def set_parameter_requires_grad(model, feature_extracting):
@@ -504,6 +578,13 @@ def Training():
     def get_image_patch(image, labels, region_props, labels_list, torch_type, case):
         """
         This function aims at contructing the tensors of the images and their labels
+        @param image: Raw image
+        @param labels: Segmentation mask
+        @param region_props: regionprops of the connected components analysis
+        @param labels_list: List of the labels
+        @param torch_type: type of the tensors
+        @param case: indicates if the image is 2D, 3D or multichannel
+        @return:
         """
 
         labels_tensor = torch.from_numpy(labels_list).type(torch_type)
@@ -590,6 +671,27 @@ def Training():
 
     def train(viewer, image, mask, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
               v_flip, prob, batch_size, saving_ep, training_name, model=None):
+        """
+        Training of the classification neural network
+        @param viewer: Napari viewer instance
+        @param image: raw image
+        @param mask: segmentation mask
+        @param region_props: regionprops of the connected components analysis
+        @param labels_list: list of the labels
+        @param nn_type: dictionary containing the list of the available neural networks
+        @param loss_func:Type of loss function
+        @param lr: learning rate (float)
+        @param epochs_nb: epochs number (int)
+        @param rot: boolean to do rotation for data augmentation
+        @param h_flip: boolean to do horizontal flip for data augmentation
+        @param v_flip: boolean to do vertical flip for data augmentation
+        @param prob: probability of data augmentation (float)
+        @param batch_size: batch size for the stochastic gradient
+        @param saving_ep: each how many epochs th network shall be saved
+        @param training_name: name of the file containing the weights
+        @param model: custom model loaded by the user (optional)
+        @return:
+        """
 
         global transform
         if rot is True and h_flip is False and v_flip is False:
@@ -904,6 +1006,12 @@ def Training():
 
     @training_widget.load_data_button.changed.connect
     def _load_data(e: Any):
+        """
+        Function triggered by the load data button which aims at loading the needed information from the annotation,
+        in order to train the NN
+        @param e:
+        @return:
+        """
         training_widget.viewer.value.layers.clear()
         path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
 
@@ -933,6 +1041,10 @@ def Training():
 
     @training_widget.load_custom_model_button.changed.connect
     def load_custom_model():
+        """
+        Function triggered by load custom model button to load a pretrained model of the user
+        @return:
+        """
         path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
         checkpoint = torch.load(path)
         global model
@@ -941,6 +1053,11 @@ def Training():
 
     @training_widget.launch_training_button.changed.connect
     def _launch_training(e: Any):
+        """
+        Function that calls the training function when launch training button is clicked
+        @param e:
+        @return:
+        """
         if "model" in globals():
             training_worker = thread_worker(train, progress={"total": int(training_widget.epochs.value)}) \
                 (training_widget.viewer, image, mask, region_props, labels_list, training_widget.nn.value,
@@ -967,9 +1084,22 @@ def Training():
 
 
 def Prediction():
+    """
+    Prediction plugin code
+    @return:
+    """
     from napari.qt.threading import thread_worker
 
     def draw_predicted_contour(compteur, prop, imagette_contours, i, list_pred):
+        """
+        Draw the mask of an object with the colour associated to its predicted class (for 2D images)
+        @param compteur: counts the number of objects that belongs to class 1 (int)
+        @param prop: region_property of this object
+        @param imagette_contours: image of the contours
+        @param i: index of the object in the list (int)
+        @param list_pred: list of the labels of the classified objects
+        @return:
+        """
 
         imagette_contours[prop.coords[:, 0], prop.coords[:, 1]] = list_pred[i].item()
         if list_pred[i] == 1:
@@ -977,6 +1107,15 @@ def Prediction():
         return compteur
 
     def draw_3d_prediction(compteur, prop, imagette_contours, i, list_pred):
+        """
+         Draw the mask of an object with the colour associated to its predicted class (for 3D images)
+         @param compteur: counts the number of objects that belongs to class 1 (int)
+         @param prop: region_property of this object
+         @param imagette_contours: image of the contours
+         @param i: index of the object in the list (int)
+         @param list_pred: list of the labels of the classified objects
+         @return:
+         """
 
         imagette_contours[prop.coords[:, 0], prop.coords[:, 1], prop.coords[:, 2]] = list_pred[i].item()
         if list_pred[i] == 1:
@@ -984,6 +1123,15 @@ def Prediction():
         return compteur
 
     def predict(image, labels, props, patch_size, batch_size):
+        """
+        Prediction of the class of each patch extracted from the great mask
+        @param image: raw image
+        @param labels: segmentation mask
+        @param props: region_properties of the connected component analysis
+        @param patch_size: size of the patches to be classified (int)
+        @param batch_size: batch size for the NN (int)
+        @return:
+        """
 
         import time
         start = time.time()
@@ -1098,6 +1246,11 @@ def Prediction():
 
     @prediction_widget.load_data_button.changed.connect
     def _load_data(e: Any):
+        """
+        Function triggered by the load data button to load the weights of the neural network
+        @param e:
+        @return:
+        """
         # Removal of the remaining images of the previous widgets
         prediction_widget.viewer.value.layers.clear()
         path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
@@ -1129,6 +1282,11 @@ def Prediction():
         return
 
     def display_result(image):
+        """
+        Displays the classified mask once the neural network prediction is over
+        @param image: classified mask to display as an overlay
+        @return:
+        """
         prediction_widget.viewer.value.add_labels(image)
         # Chose of the colours
         prediction_widget.viewer.value.layers[1].name = "Classified labels"
@@ -1137,6 +1295,11 @@ def Prediction():
 
     @prediction_widget.launch_prediction_button.changed.connect
     def _launch_prediction(e: Any):
+        """
+        Calls the prediciton when the button is triggered
+        @param e:
+        @return:
+        """
         global props
         props = regionprops(mask)
         prediction_worker = thread_worker(predict, progress={
@@ -1150,6 +1313,11 @@ def Prediction():
 
     @prediction_widget.bound.changed.connect
     def show_boundaries(e: Any):
+        """
+        Only show the edges of the predicted mask instead of an overlay (only for 2D)
+        @param e:
+        @return:
+        """
 
         if "edge_im" not in globals():
             # computation of the cells segmentation edges
@@ -1182,6 +1350,10 @@ def Prediction():
 
     @prediction_widget.save_regionprops_button.changed.connect
     def save_regionprops():
+        """
+        Saves the properties of the labelled connected components in a binary file using Pytorch
+        @return:
+        """
 
         path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
         props_list = []
@@ -1198,6 +1370,10 @@ def Prediction():
 
     @prediction_widget.generate_im_labs_button.changed.connect
     def generate_im_labels():
+        """
+        Saves a mask for each class
+        @return:
+        """
         im_labs_list = []
         # We create as many images as labels
         for i in range(0, max(list_pred)):
