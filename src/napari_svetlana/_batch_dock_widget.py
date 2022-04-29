@@ -336,7 +336,8 @@ def Annotation():
 
     ) -> None:
         # Create a black image just so layer variable exists
-        viewer.add_image(np.zeros((1000, 1000)))
+        if len(viewer.layers) == 0:
+            viewer.add_image(np.zeros((1000, 1000)))
         # Import when users activate plugin
         global layer, double_click
         # By default, we do not annotate clicking
@@ -397,6 +398,7 @@ def Annotation():
         annotation_widget.viewer.value.layers.clear()
         annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[0])))
         annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[0])))
+        annotation_widget.viewer.value.layers[1].name = "mask"
 
         print('merci')
 
