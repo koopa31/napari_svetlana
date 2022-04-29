@@ -297,6 +297,12 @@ def Annotation():
     @magicgui(
         auto_call=True,
         layout='vertical',
+        load_images=dict(widget_type='PushButton', text='LOAD IMAGES',
+                                    tooltip='Load images'),
+        previous=dict(widget_type='PushButton', text='Previous image',
+                                    tooltip='Previous image'),
+        next=dict(widget_type='PushButton', text='Next image',
+                                    tooltip='Next image'),
         patch_size=dict(widget_type='LineEdit', label='patch size', value=200, tooltip='extracted patch size'),
         labels_nb=dict(widget_type='ComboBox', label='labels number', choices=labels_number, value=2,
                        tooltip='Number of possible labels'),
@@ -315,6 +321,9 @@ def Annotation():
     )
     def annotation_widget(  # label_logo,
             viewer: Viewer,
+            load_images,
+            previous,
+            next,
             estimate_size_button,
             patch_size,
             extract_pacthes_button,
