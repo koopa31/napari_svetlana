@@ -74,6 +74,8 @@ networks_list = ["ResNet18", "ResNet34", "ResNet50", "ResNet101", "ResNet152", "
 losses_list = ["CrossEntropy", "L1Smooth", "BCE", "Distance", "L1", "MSE"]
 
 counter = 0
+# counter of images to be annotated
+image_counter = 0
 labels_list = []
 
 
@@ -386,6 +388,7 @@ def Annotation():
         """
         # Gets the folder url and the two subfolder containing the images and the masks
         path = QFileDialog.getExistingDirectory(None, 'Open Folder', options=QFileDialog.DontUseNativeDialog)
+        global images_folder, masks_folder
         images_folder = os.path.join(path, "Images")
         masks_folder = os.path.join(path, "Masks")
 
@@ -396,11 +399,25 @@ def Annotation():
 
         # Deletion of remaining image and displaying of the first uimage of the list
         annotation_widget.viewer.value.layers.clear()
-        annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[0])))
-        annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[0])))
+        annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
+        annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
         annotation_widget.viewer.value.layers[1].name = "mask"
 
         print('merci')
+
+    @annotation_widget.next_button.changed.connect
+    def next_image(e: Any):
+        """
+        Loads the next image to annotate
+        @param e:
+        @return:
+        """
+        global image_counter
+        image_counter += 1
+        annotation_widget.viewer.value.layers.clear()
+        annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
+        annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
+        annotation_widget.viewer.value.layers[1].name = "mask"
 
     @annotation_widget.click_annotate.changed.connect
     def click_to_annotate(e: Any):
