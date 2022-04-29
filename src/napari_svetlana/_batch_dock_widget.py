@@ -77,6 +77,10 @@ counter = 0
 # counter of images to be annotated
 image_counter = 0
 labels_list = []
+global_labels_list = []
+global_im_path_list = []
+global_lab_path_list = []
+global_mini_props_list = []
 
 
 def Annotation():
@@ -179,9 +183,15 @@ def Annotation():
                     show_info("Annotation over, press 1 to save the result")
                 else:
                     # Saving of the annotation result in a binary file
+                    global_labels_list.append(labels_list)
+                    global_im_path_list.append(image_path_list[image_counter])
+                    global_lab_path_list.append(mask_path_list[image_counter])
+                    global_mini_props_list.append(mini_props_list)
+
                     path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
-                    res_dict = {"image_path": image_path, "labels_path": labels_path, "regionprops": mini_props_list,
-                                "labels_list": labels_list, "patch_size": annotation_widget.patch_size.value}
+                    res_dict = {"image_path": global_im_path_list, "labels_path": global_lab_path_list,
+                                "regionprops": global_mini_props_list, "labels_list": global_labels_list,
+                                "patch_size": annotation_widget.patch_size.value}
                     torch.save(res_dict, path)
 
         return set_label
@@ -412,12 +422,22 @@ def Annotation():
         @param e:
         @return:
         """
-        global image_counter
+        global image_counter, counter, labels_list
+        # result on previous image is saved
+        global_labels_list.append(labels_list)
+        global_im_path_list.append(image_path_list[image_counter])
+        global_lab_path_list.append(mask_path_list[image_counter])
+        global_mini_props_list.append(mini_props_list)
+
         image_counter += 1
         annotation_widget.viewer.value.layers.clear()
         annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
         annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
         annotation_widget.viewer.value.layers[1].name = "mask"
+
+        # Reinitialization of counter for next image
+        counter = 0
+        labels_list = []
 
     @annotation_widget.click_annotate.changed.connect
     def click_to_annotate(e: Any):
@@ -528,9 +548,15 @@ def Annotation():
         @param e: indicates if the button has been clicked
         @return:
         """
+        global_labels_list.append(labels_list)
+        global_im_path_list.append(image_path_list[image_counter])
+        global_lab_path_list.append(mask_path_list[image_counter])
+        global_mini_props_list.append(mini_props_list)
+
         path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
-        res_dict = {"image_path": image_path, "labels_path": labels_path, "regionprops": mini_props_list,
-                    "labels_list": labels_list, "patch_size": annotation_widget.patch_size.value}
+        res_dict = {"image_path": global_im_path_list, "labels_path": global_lab_path_list,
+                    "regionprops": global_mini_props_list, "labels_list": global_labels_list,
+                    "patch_size": annotation_widget.patch_size.value}
         torch.save(res_dict, path)
 
     @annotation_widget.extract_pacthes_button.changed.connect
