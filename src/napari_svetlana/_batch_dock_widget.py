@@ -412,6 +412,9 @@ def Annotation():
         global double_click
         if e is True:
             double_click = True
+            # select the image so the user can click on it
+            annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
+                image_layer_name]
         else:
             double_click = False
         return double_click
