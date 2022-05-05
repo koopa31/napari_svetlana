@@ -417,8 +417,6 @@ def Annotation():
         global old_zoom
         old_zoom = annotation_widget.viewer.value.camera.zoom
 
-        print('merci')
-
     @annotation_widget.next_button.changed.connect
     def next_image(e: Any):
         """
