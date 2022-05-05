@@ -282,7 +282,7 @@ def Annotation():
 
         if image.shape[2] <= 3:
             case = "2D"
-            zoom_factor = image.shape[1] / patch_size
+            zoom_factor = old_zoom * (max(image.shape[0], image.shape[1]) / patch_size)
         elif len(image.shape) == 4:
             case = "multi3D"
             zoom_factor = image.shape[2] / patch_size
@@ -412,6 +412,10 @@ def Annotation():
         annotation_widget.viewer.value.add_image(imread(image_path_list[image_counter]))
         annotation_widget.viewer.value.add_labels(imread(mask_path_list[image_counter]))
         annotation_widget.viewer.value.layers[1].name = "mask"
+
+        # original zoom factor to correct when annotating
+        global old_zoom
+        old_zoom = annotation_widget.viewer.value.camera.zoom
 
         print('merci')
 
