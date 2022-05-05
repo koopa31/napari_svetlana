@@ -666,12 +666,12 @@ def Training():
             for param in model.parameters():
                 param.requires_grad = False
 
-    def get_image_patch(image, labels, region_props, labels_list, torch_type, case):
+    def get_image_patch(image_list, mask_list, region_props_list, labels_list, torch_type, case):
         """
         This function aims at contructing the tensors of the images and their labels
         @param image: Raw image
         @param labels: Segmentation mask
-        @param region_props: regionprops of the connected components analysis
+        @param region_props_list: regionprops of the connected components analysis
         @param labels_list: List of the labels
         @param torch_type: type of the tensors
         @param case: indicates if the image is 2D, 3D or multichannel
@@ -683,91 +683,95 @@ def Training():
 
         img_patch_list = []
         try:
-            max_type_val = np.iinfo(image.dtype).max
+            max_type_val = np.iinfo(image_list[0].dtype).max
         except ValueError:
-            max_type_val = np.finfo(image.dtype).max
+            max_type_val = np.finfo(image_list[0].dtype).max
 
-        for i, position in enumerate(region_props):
-            if case == "2D" or case == "multi_2D":
-                xmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
-                xmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
-                ymin = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) - (patch_size // 2)
-                ymax = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) + (patch_size // 2)
+        for i in range(0, len(image_list)):
+            region_props = region_props_list[i]
+            image = image_list[i]
+            labels = mask_list[i]
+            for i, position in enumerate(region_props):
+                if case == "2D" or case == "multi_2D":
+                    xmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
+                    xmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
+                    ymin = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) - (patch_size // 2)
+                    ymax = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) + (patch_size // 2)
 
-                imagette = image[xmin:xmax, ymin:ymax].copy()
-                imagette_mask = labels[xmin:xmax, ymin:ymax].copy()
+                    imagette = image[xmin:xmax, ymin:ymax].copy()
+                    imagette_mask = labels[xmin:xmax, ymin:ymax].copy()
 
-                imagette_mask[imagette_mask != region_props[i]["label"]] = 0
-                imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
+                    imagette_mask[imagette_mask != region_props[i]["label"]] = 0
+                    imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
 
-                concat_image = np.zeros((imagette.shape[0], imagette.shape[1], image.shape[2] + 1))
-                concat_image[:, :, :-1] = imagette
-                concat_image[:, :, -1] = imagette_mask
-                # Normalization of the image
-                concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
+                    concat_image = np.zeros((imagette.shape[0], imagette.shape[1], image.shape[2] + 1))
+                    concat_image[:, :, :-1] = imagette
+                    concat_image[:, :, -1] = imagette_mask
+                    # Normalization of the image
+                    concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
 
-                img_patch_list.append(concat_image)
-            elif case == "multi_3D":
-                xmin = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) - (patch_size // 2)
-                xmax = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) + (patch_size // 2)
-                ymin = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) - (patch_size // 2)
-                ymax = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) + (patch_size // 2)
-                zmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
-                zmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
+                    img_patch_list.append(concat_image)
+                elif case == "multi_3D":
+                    xmin = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) - (patch_size // 2)
+                    xmax = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) + (patch_size // 2)
+                    ymin = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) - (patch_size // 2)
+                    ymax = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) + (patch_size // 2)
+                    zmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
+                    zmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
 
-                imagette = image[:, xmin:xmax, ymin:ymax, zmin:zmax].copy()
+                    imagette = image[:, xmin:xmax, ymin:ymax, zmin:zmax].copy()
 
-                imagette_mask = labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
+                    imagette_mask = labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
 
-                imagette_mask[imagette_mask != region_props[i]["label"]] = 0
-                imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
+                    imagette_mask[imagette_mask != region_props[i]["label"]] = 0
+                    imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
 
-                concat_image = np.zeros((imagette.shape[0] + 1, imagette.shape[1], imagette.shape[2],
-                                         imagette.shape[3])).astype(image.dtype)
+                    concat_image = np.zeros((imagette.shape[0] + 1, imagette.shape[1], imagette.shape[2],
+                                             imagette.shape[3])).astype(image.dtype)
 
-                concat_image[:-1, :, :, :] = imagette
-                concat_image[-1, :, :, :] = imagette_mask
+                    concat_image[:-1, :, :, :] = imagette
+                    concat_image[-1, :, :, :] = imagette_mask
 
-                concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
+                    concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
 
-                img_patch_list.append(concat_image)
+                    img_patch_list.append(concat_image)
 
-            else:
-                xmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
-                xmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
-                ymin = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) - (patch_size // 2)
-                ymax = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) + (patch_size // 2)
-                zmin = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) - (patch_size // 2)
-                zmax = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) + (patch_size // 2)
+                else:
+                    xmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
+                    xmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
+                    ymin = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) - (patch_size // 2)
+                    ymax = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) + (patch_size // 2)
+                    zmin = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) - (patch_size // 2)
+                    zmax = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) + (patch_size // 2)
 
-                imagette = image[xmin:xmax, ymin:ymax, zmin:zmax].copy()
+                    imagette = image[xmin:xmax, ymin:ymax, zmin:zmax].copy()
 
-                imagette_mask = labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
+                    imagette_mask = labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
 
-                imagette_mask[imagette_mask != region_props[i]["label"]] = 0
-                imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
+                    imagette_mask[imagette_mask != region_props[i]["label"]] = 0
+                    imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
 
-                concat_image = np.zeros((2, imagette.shape[0], imagette.shape[1], imagette.shape[2])).astype(
-                    image.dtype)
+                    concat_image = np.zeros((2, imagette.shape[0], imagette.shape[1], imagette.shape[2])).astype(
+                        image.dtype)
 
-                concat_image[0, :, :, :] = imagette
-                concat_image[1, :, :, :] = imagette_mask
+                    concat_image[0, :, :, :] = imagette
+                    concat_image[1, :, :, :] = imagette_mask
 
-                concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
+                    concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
 
-                img_patch_list.append(concat_image)
+                    img_patch_list.append(concat_image)
 
         train_data = CustomDataset(data_list=img_patch_list, labels_tensor=labels_tensor, transform=transform)
         return train_data
 
-    def train(viewer, image, mask, region_props, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
+    def train(viewer, image, mask, region_props_list, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
               v_flip, prob, batch_size, saving_ep, training_name, model=None):
         """
         Training of the classification neural network
         @param viewer: Napari viewer instance
         @param image: raw image
         @param mask: segmentation mask
-        @param region_props: regionprops of the connected components analysis
+        @param region_props_list: regionprops of the connected components analysis
         @param labels_list: list of the labels
         @param nn_type: dictionary containing the list of the available neural networks
         @param loss_func:Type of loss function
@@ -821,6 +825,12 @@ def Training():
                    "DenseNet161": "densenet161", "DenseNet169": "densenet169", "DenseNet201": "densenet201",
                    "CustomCNN2D": "CNN2D"}
         # Setting of network
+
+        # Concatenation of all the labels lists and conversion to numpy array
+        l = []
+        for p in labels_list:
+            l += p
+        labels_list = np.array(l)
 
         if model is None:
             # 2D case
@@ -913,32 +923,39 @@ def Training():
         torch.backends.cudnn.benchmark = True
 
         # Parameters
-        labels_list = np.array(labels_list)
-
         # Generators
-        if len(mask.shape) == 2:
-            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
-            pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+        pad_image_list = []
+        pad_labels_list = []
+        for i in range(0, len(image_path_list)):
 
-        elif len(image.shape) == 4:
-            pad_image = np.pad(image, ((0, 0),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
-            pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+            image = imread(image_path_list[i])
+            mask = imread(labels_path_list[i])
+            if len(mask.shape) == 2:
+                # Turn image into 3 channel if it is grayscale
+                if len(image.shape) == 2:
+                    image = np.stack((image,) * 3, axis=-1)
+                pad_image_list.append(np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                            (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant"))
+                pad_labels_list.append(np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                            (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
 
-        else:
-            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
-            pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
-        train_data = get_image_patch(pad_image, pad_labels, region_props, labels_list, torch_type, case)
+            elif len(image.shape) == 4:
+                pad_image_list.append(np.pad(image, ((0, 0),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
+                pad_labels_list.append(np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
+
+            else:
+                pad_image_list.append(np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
+                pad_labels_list.append(np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
+        train_data = get_image_patch(pad_image_list, pad_labels_list, region_props_list, labels_list, torch_type, case)
         training_loader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True)
 
         # Optimizer
@@ -960,7 +977,7 @@ def Training():
         # Loop over epochs
         iterations_number = epochs_nb
         # folder where to save the training
-        save_folder = os.path.split(image_path)[0]
+        save_folder = os.path.split(image_path_list[0])[0]
         found = False
         while found is False:
             try:
@@ -986,7 +1003,7 @@ def Training():
                                 if (epoch + 1) % saving_ep == 0:
                                     d = {"model": model, "optimizer_state_dict": optimizer,
                                          "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
-                                         "image_path": image_path, "labels_path": labels_path, "patch_size": patch_size}
+                                         "image_path": image_path_list[0], "labels_path": labels_path_list[0], "patch_size": patch_size}
                                     if training_name == "":
                                         model_path = os.path.join(save_folder, "training" + str(epoch + 1))
                                     else:
@@ -1108,23 +1125,23 @@ def Training():
 
         b = torch.load(path)
 
-        global image_path
-        global labels_path
-        global region_props
+        global image_path_list
+        global labels_path_list
+        global region_props_list
         global labels_list
         global patch_size
         global image
         global mask
-        image_path = b["image_path"]
-        labels_path = b["labels_path"]
-        region_props = b["regionprops"]
+        image_path_list = b["image_path"]
+        labels_path_list = b["labels_path"]
+        region_props_list = b["regionprops"]
         labels_list = b["labels_list"]
         patch_size = int(b["patch_size"])
 
-        image = imread(image_path)
+        image = imread(image_path_list[0])
         if len(image.shape) == 2:
             image = np.stack((image,) * 3, axis=-1)
-        mask = imread(labels_path)
+        mask = imread(labels_path_list[0])
         training_widget.viewer.value.add_image(image)
         training_widget.viewer.value.add_labels(mask)
 
@@ -1151,7 +1168,7 @@ def Training():
         """
         if "model" in globals():
             training_worker = thread_worker(train, progress={"total": int(training_widget.epochs.value)}) \
-                (training_widget.viewer, image, mask, region_props, labels_list, training_widget.nn.value,
+                (training_widget.viewer, image, mask, region_props_list, labels_list, training_widget.nn.value,
                  training_widget.loss.value, float(training_widget.lr.value),
                  int(training_widget.epochs.value), training_widget.rotations.value,
                  training_widget.h_flip.value, training_widget.v_flip.value,
@@ -1160,7 +1177,7 @@ def Training():
         else:
 
             training_worker = thread_worker(train, progress={"total": int(training_widget.epochs.value)})(
-                training_widget.viewer, image, mask, region_props, labels_list,
+                training_widget.viewer, image, mask, region_props_list, labels_list,
                 training_widget.nn.value,
                 training_widget.loss.value, float(training_widget.lr.value),
                 int(training_widget.epochs.value), training_widget.rotations.value,
