@@ -1333,7 +1333,8 @@ def Prediction():
         auto_call=True,
         layout='vertical',
         batch_size=dict(widget_type='LineEdit', label='Batch size', value=100, tooltip='Batch size'),
-        load_data_button=dict(widget_type='PushButton', text='Load data', tooltip='Load the image and the labels'),
+        load_network_button=dict(widget_type='PushButton', text='Load network', tooltip='Load weights of the NN'),
+        load_data_button=dict(widget_type='PushButton', text='Load data', tooltip='Load images to process'),
         launch_prediction_button=dict(widget_type='PushButton', text='Launch prediction', tooltip='Launch prediction'),
         bound=dict(widget_type='CheckBox', text='Show boundaries only', tooltip='Show boundaries only'),
         generate_im_labs_button=dict(widget_type='PushButton', text='Save masks of labels', tooltip='Save one '
@@ -1343,6 +1344,7 @@ def Prediction():
     )
     def prediction_widget(  # label_logo,
             viewer: Viewer,
+            load_network_button,
             load_data_button,
             batch_size,
             launch_prediction_button,
@@ -1354,8 +1356,8 @@ def Prediction():
         # Import when users activate plugin
         return
 
-    @prediction_widget.load_data_button.changed.connect
-    def _load_data(e: Any):
+    @prediction_widget.load_network_button.changed.connect
+    def load_network(e: Any):
         """
         Function triggered by the load data button to load the weights of the neural network
         @param e:
@@ -1370,22 +1372,37 @@ def Prediction():
         """
         b = torch.load(path)
 
-        global image
-        global mask
         global model
         global patch_size
-        global labels_path
 
-        image_path = b["image_path"]
-        labels_path = b["labels_path"]
         model = b["model"].to("cuda")
         patch_size = b["patch_size"]
         model.eval()
+        show_info("NN loaded successfully")
 
-        image = imread(image_path)
+    @prediction_widget.load_data_button.changed.connect
+    def _load_data(e: Any):
+        """
+        Function triggered by the load data button to load the weights of the neural network
+        @param e:
+        @return:
+        """
+
+        path = QFileDialog.getExistingDirectory(None, 'Open Folder', options=QFileDialog.DontUseNativeDialog)
+        global images_folder, masks_folder
+        images_folder = os.path.join(path, "Images")
+        masks_folder = os.path.join(path, "Masks")
+
+        global image_path_list, mask_path_list
+        image_path_list = sorted([os.path.join(images_folder, f) for f in os.listdir(images_folder)])
+        mask_path_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder)])
+
+        global image, mask
+
+        image = imread(image_path_list[0])
         if len(image.shape) == 2:
             image = np.stack((image,) * 3, axis=-1)
-        mask = imread(labels_path)
+        mask = imread(mask_path_list[0])
         prediction_widget.viewer.value.add_image(image)
         prediction_widget.viewer.value.add_labels(mask)
 
