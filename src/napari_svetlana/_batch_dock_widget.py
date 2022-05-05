@@ -404,13 +404,13 @@ def Annotation():
 
         # Gets the list of images and masks
         global image_path_list, mask_path_list
-        image_path_list = sorted([f for f in os.listdir(images_folder)])
-        mask_path_list = sorted([f for f in os.listdir(masks_folder)])
+        image_path_list = sorted([os.path.join(images_folder, f) for f in os.listdir(images_folder)])
+        mask_path_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder)])
 
         # Deletion of remaining image and displaying of the first uimage of the list
         annotation_widget.viewer.value.layers.clear()
-        annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
-        annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
+        annotation_widget.viewer.value.add_image(imread(image_path_list[image_counter]))
+        annotation_widget.viewer.value.add_labels(imread(mask_path_list[image_counter]))
         annotation_widget.viewer.value.layers[1].name = "mask"
 
         print('merci')
@@ -584,11 +584,13 @@ def Annotation():
         to annotate
         @return:
         """
-        for im in annotation_widget.viewer.value.layers:
-            if "mask" in im.name:
-                labels = im.data
 
-        props = regionprops(labels)
+        # Regionprops over all the masks so the size si computed using the biggest object of the whole dataset
+        props = []
+        for p in mask_path_list:
+            labels = imread(p)
+            props += regionprops(labels)
+
         x = sorted(props, key=lambda r: r.area, reverse=True)
 
         # Cas 2D/3D
