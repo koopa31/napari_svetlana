@@ -571,6 +571,12 @@ def Annotation():
         patch_worker.start()
         print('patch extraction done')
 
+        # Disabling the estimate size and patch size in the gui so it is not change while annotating
+        annotation_widget.estimate_size_button.enabled = False
+        annotation_widget.patch_size.enabled = False
+        # We make the labels mask invisible so it does not bother not annotate
+        annotation_widget.viewer.value.layers[1].visible = False
+
     @annotation_widget.estimate_size_button.changed.connect
     def estimate_patch_size():
         """
