@@ -1327,7 +1327,116 @@ def Prediction():
         show_info(str(np.sum(compteur)) + " objects remaining over " + str(len(props)))
         print(str(np.sum(compteur)) + " objects remaining over " + str(len(props)))
 
+        # Save the result automatically
+        res_name = "prediction_" + os.path.split(image_path_list[int(prediction_widget.image_index_button.value)])[1]
+        imsave(os.path.join(res_folder, res_name), imagette_contours.astype(np.uint8))
+
         return imagette_contours.astype(np.uint8)
+
+    def predict_batch(image_path_list, mask_path_list, patch_size, batch_size):
+        """
+        Prediction of the class of each patch extracted from the great mask
+        @param image: raw image
+        @param labels: segmentation mask
+        @param patch_size: size of the patches to be classified (int)
+        @param batch_size: batch size for the NN (int)
+        @return:
+        """
+
+        for ind in range(0, len(image_path_list)):
+            image = imread(image_path_list[ind])
+            labels = imread(mask_path_list[ind])
+            props = regionprops(labels)
+
+            import time
+            start = time.time()
+            compteur = 0
+            global imagette_contours
+
+            try:
+                max = np.iinfo(image.dtype).max
+            except:
+                max = np.finfo(image.dtype).max
+
+            if len(image.shape) == 2:
+                image = np.stack((image,) * 3, axis=-1)
+
+            if image.shape[2] <= 3:
+                case = "2D"
+            elif len(image.shape) == 4:
+                case = "multi3D"
+            else:
+                from .CustomDialog import CustomDialog
+                diag = CustomDialog()
+                diag.exec()
+                case = diag.get_case()
+
+            if case == "2D" or case == "multi2D":
+                if case == "multi2D":
+                    image = np.transpose(image, (1, 2, 0))
+
+                imagette_contours = np.zeros((image.shape[0], image.shape[1]))
+                pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
+                pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                             (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+
+                data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, max)
+
+            elif case == "multi3D":
+                image = np.transpose(image, (1, 2, 3, 0))
+                labels = np.transpose(labels, (1, 2, 0))
+                imagette_contours = np.zeros((image.shape[3], image.shape[1], image.shape[2]))
+                pad_image = np.pad(image, ((0, 0),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+                pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                             (patch_size // 2 + 1, patch_size // 2 + 1),
+                                             (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+
+                data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, max)
+
+            else:
+                imagette_contours = np.zeros((image.shape[0], image.shape[1], image.shape[2]))
+                pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+                pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                             (patch_size // 2 + 1, patch_size // 2 + 1),
+                                             (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+
+                data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, max)
+            prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
+
+            global list_pred
+            list_pred = []
+            for i, local_batch in enumerate(prediction_loader):
+                out = model(local_batch)
+                _, index = torch.max(out, 1)
+                list_pred += index
+                yield i + 1
+
+            show_info("Prediction of patches done, please wait while the result image is being generated...")
+            if len(labels.shape) == 2:
+                compteur = Parallel(n_jobs=-1, require="sharedmem")(
+                    delayed(draw_predicted_contour)(compteur, prop, imagette_contours, i, list_pred)
+                    for i, prop in enumerate(props))
+            else:
+                compteur = Parallel(n_jobs=-1, require="sharedmem")(
+                    delayed(draw_3d_prediction)(compteur, prop, imagette_contours, i, list_pred)
+                    for i, prop in enumerate(props))
+
+            stop = time.time()
+            print("temps de traitement", stop - start)
+            show_info(str(np.sum(compteur)) + " objects remaining over " + str(len(props)))
+            print(str(np.sum(compteur)) + " objects remaining over " + str(len(props)))
+
+            # Save the result automatically
+            res_name = "prediction_" + os.path.split(image_path_list[ind])[1]
+            imsave(os.path.join(res_folder, res_name), imagette_contours.astype(np.uint8))
+
+            show_info("prediction of image " + os.path.split(image_path_list[ind])[1] + " done")
 
     @magicgui(
         auto_call=True,
@@ -1335,7 +1444,13 @@ def Prediction():
         batch_size=dict(widget_type='LineEdit', label='Batch size', value=100, tooltip='Batch size'),
         load_network_button=dict(widget_type='PushButton', text='Load network', tooltip='Load weights of the NN'),
         load_data_button=dict(widget_type='PushButton', text='Load data', tooltip='Load images to process'),
-        launch_prediction_button=dict(widget_type='PushButton', text='Launch prediction', tooltip='Launch prediction'),
+        image_index_button=dict(widget_type='LineEdit', label='Image index', value=0, tooltip='Image index in the batch'),
+        previous_button=dict(widget_type='PushButton', text='Previous image',
+                             tooltip='Previous image'),
+        next_button=dict(widget_type='PushButton', text='Next image',
+                         tooltip='Next image'),
+        launch_prediction_button=dict(widget_type='PushButton', text='Predict this image', tooltip='Predict the current image'),
+        launch_batch_prediction_button=dict(widget_type='PushButton', text='Predict whole batch', tooltip='Predict the whole batch and save the result'),
         bound=dict(widget_type='CheckBox', text='Show boundaries only', tooltip='Show boundaries only'),
         generate_im_labs_button=dict(widget_type='PushButton', text='Save masks of labels', tooltip='Save one '
                                                                                                     'per attributed label'),
@@ -1346,8 +1461,12 @@ def Prediction():
             viewer: Viewer,
             load_network_button,
             load_data_button,
+            image_index_button,
+            previous_button,
+            next_button,
             batch_size,
             launch_prediction_button,
+            launch_batch_prediction_button,
             bound,
             save_regionprops_button,
             generate_im_labs_button,
@@ -1389,6 +1508,13 @@ def Prediction():
         """
 
         path = QFileDialog.getExistingDirectory(None, 'Open Folder', options=QFileDialog.DontUseNativeDialog)
+
+        # Result folder
+        global res_folder
+        res_folder = os.path.join(path, "Predictions")
+        if os.path.isdir(res_folder) is False:
+            os.mkdir(res_folder)
+
         global images_folder, masks_folder
         images_folder = os.path.join(path, "Images")
         masks_folder = os.path.join(path, "Masks")
@@ -1407,6 +1533,32 @@ def Prediction():
         prediction_widget.viewer.value.add_labels(mask)
 
         return
+
+    @prediction_widget.image_index_button.changed.connect
+    def set_image_index(e: Any):
+        if int(e) > len(image_path_list) - 1:
+            prediction_widget.image_index_button.value = len(image_path_list) - 1
+        elif int(e) < 0:
+            prediction_widget.image_index_button.value = 0
+
+        global image, mask
+        image = imread(image_path_list[int(prediction_widget.image_index_button.value)])
+        if len(image.shape) == 2:
+            image = np.stack((image,) * 3, axis=-1)
+        mask = imread(mask_path_list[int(prediction_widget.image_index_button.value)])
+        prediction_widget.viewer.value.layers.clear()
+        prediction_widget.viewer.value.add_image(image)
+        prediction_widget.viewer.value.add_labels(mask)
+
+    @prediction_widget.previous_button.changed.connect
+    def load_previous_image(e: Any):
+        if int(prediction_widget.image_index_button.value) > 0:
+            prediction_widget.image_index_button.value = int(prediction_widget.image_index_button.value) - 1
+
+    @prediction_widget.next_button.changed.connect
+    def load_previous_image(e: Any):
+        if int(prediction_widget.image_index_button.value) < len(image_path_list) - 1:
+            prediction_widget.image_index_button.value = int(prediction_widget.image_index_button.value) + 1
 
     def display_result(image):
         """
@@ -1437,6 +1589,21 @@ def Prediction():
 
         prediction_worker.start()
         show_info('Prediction started')
+
+    @prediction_widget.launch_batch_prediction_button.changed.connect
+    def _launch_batch_prediction(e: Any):
+        """
+        Calls the prediciton when the button is triggered
+        @param e:
+        @return:
+        """
+
+        prediction_worker = thread_worker(predict_batch, progress={
+            "total": int(np.ceil(2500 / int(prediction_widget.batch_size.value)))}) \
+            (image_path_list, mask_path_list, patch_size, int(prediction_widget.batch_size.value))
+
+        prediction_worker.start()
+        show_info("Prediction started")
 
     @prediction_widget.bound.changed.connect
     def show_boundaries(e: Any):
