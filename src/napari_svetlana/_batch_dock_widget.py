@@ -1598,8 +1598,14 @@ def Prediction():
         @return:
         """
 
+        # estimation of total number of patches to compute through the batch
+        props = []
+        for m in mask_path_list:
+            mask = imread(m)
+            props += regionprops(mask)
+
         prediction_worker = thread_worker(predict_batch, progress={
-            "total": int(np.ceil(2500 / int(prediction_widget.batch_size.value)))}) \
+            "total": int(np.ceil(len(props) / int(prediction_widget.batch_size.value)))}) \
             (image_path_list, mask_path_list, patch_size, int(prediction_widget.batch_size.value))
 
         prediction_worker.start()
