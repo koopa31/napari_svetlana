@@ -76,6 +76,7 @@ losses_list = ["CrossEntropy", "L1Smooth", "BCE", "Distance", "L1", "MSE"]
 counter = 0
 # counter of images to be annotated
 image_counter = 0
+total_counter = 0
 labels_list = []
 global_labels_list = []
 global_im_path_list = []
@@ -102,7 +103,7 @@ def Annotation():
             @param viewer: Napari viewer instance
             @return:
             """
-            global counter
+            global counter, total_counter
             print("key is ", key)
             if (int(annotation_widget.labels_nb.value) < key) is False:
                 if counter < len(props) - 1:
@@ -114,6 +115,7 @@ def Annotation():
                     if case == "2D" or case == "multi2D":
                         progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = key
                         counter += 1
+                        total_counter += 1
 
                         # focus on the next object to annotate
                         if double_click is False:
@@ -143,6 +145,7 @@ def Annotation():
                         progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                          props[indexes[counter]].coords[:, 2]] = key
                         counter += 1
+                        total_counter += 1
 
                         # focus on the next object to annotate
                         if double_click is False:
@@ -166,20 +169,23 @@ def Annotation():
                         image_layer_name]
 
                     print("label 1", labels_list)
-                    viewer.status = str(counter) + " images processed over " + str(len(props))
+                    viewer.status = str(counter) + " images processed over " + str(len(props)) + " (" + \
+                                    str(total_counter) + " over the whole batch)"
                 elif counter == len(props) - 1:
-                    labels_list.append(6)
+                    labels_list.append(key)
                     mini_props_list.append(
                         {"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
                          "label": props[indexes[counter]].label})
                     progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = key
                     counter += 1
+                    total_counter += 1
                     from skimage.io import imread
                     viewer.layers.clear()
                     viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
                                             "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
                     print("annotation over", labels_list)
-                    viewer.status = str(counter) + " images processed over " + str(len(props))
+                    viewer.status = str(counter) + " images processed over " + str(len(props)) + " (" + \
+                                    str(total_counter) + " over the whole batch)"
                     show_info("Annotation over, press 1 to save the result")
                 else:
                     # Saving of the annotation result in a binary file
@@ -203,10 +209,11 @@ def Annotation():
         @param viewer: Napari viewer instance
         @return:
         """
-        global counter
+        global counter, total_counter
         labels_list.pop()
         mini_props_list.pop()
         counter -= 1
+        total_counter -= 1
 
         if case == "2D" or case == "multi2D":
             progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 0
@@ -254,7 +261,8 @@ def Annotation():
             image_layer_name]
 
         print("retour en arriere", labels_list)
-        viewer.status = str(counter) + " images processed over " + str(len(props))
+        viewer.status = str(counter) + " images processed over " + str(len(props)) + " (" + \
+                        str(total_counter) + " over the whole batch)"
 
     @thread_worker
     def generate_patches(viewer, patch_size):
