@@ -1205,6 +1205,27 @@ def Prediction():
     """
     from napari.qt.threading import thread_worker
 
+    def on_pressed(key):
+        """
+        When a key between 1 and 9 is pressed, it calls the function which sets the label
+        @param key: int between 1 and 9
+        @return:
+        """
+        def set_label(viewer):
+            """
+            Sets a new label when correcting the predicted mask
+            @param viewer: Napari viewer instance
+            @return:
+            """
+            if double_click is True:
+                imagette_contours[mask == lab] = int(key)
+                viewer.layers.pop()
+                display_result(imagette_contours.astype(np.uint8))
+
+                prediction_widget.viewer.value.layers.selection.active = prediction_widget.viewer.value.layers[
+                    "image"]
+        return set_label
+
     def draw_predicted_contour(compteur, prop, imagette_contours, i, list_pred):
         """
         Draw the mask of an object with the colour associated to its predicted class (for 2D images)
@@ -1461,6 +1482,7 @@ def Prediction():
                                                                                                     'per attributed label'),
         save_regionprops_button=dict(widget_type='PushButton', text='Save objects statistics', tooltip='Save the '
                                                                                                        'properties of the annotated objects in a binary file, loadable using torch.load'),
+        click_annotate=dict(widget_type='CheckBox', text='Click to change label', tooltip='Click to change label'),
     )
     def prediction_widget(  # label_logo,
             viewer: Viewer,
@@ -1475,10 +1497,58 @@ def Prediction():
             bound,
             save_regionprops_button,
             generate_im_labs_button,
+            click_annotate
 
     ) -> None:
         # Import when users activate plugin
-        return
+        # We generate the functions to add a label when a key i pressed
+        for i in range(0, 10):
+            viewer.bind_key(str(i), on_pressed(i), overwrite=True)
+
+        if len(viewer.layers) > 0:
+            global layer, double_click
+            # By default, we do not annotate clicking
+            double_click = True
+
+            layer = [x for x in prediction_widget.viewer.value.layers if x.name == "image"][0]
+
+            @layer.mouse_double_click_callbacks.append
+            def label_clicking(layer, event):
+                """
+                When click to annotate option is activated, retrieves the coordinate of the clicked object to give him a
+                label
+                @param layer:
+                @param event: Qt click event
+                @return:
+                """
+                global lab
+                if double_click is True:
+                    if case == "2D":
+                        lab = mask[int(event.position[0]), int(event.position[1])]
+                    elif case == "multi2D":
+                        lab = mask[int(event.position[1]), int(event.position[2])]
+                    elif case == "3D":
+                        lab = mask[int(event.position[0]), int(event.position[1]), int(event.position[2])]
+                    else:
+                        lab = mask[int(event.position[1]), int(event.position[2]), int(event.position[3])]
+                    show_info("Choose a label for that object")
+
+    @prediction_widget.click_annotate.changed.connect
+    def click_to_annotate(e: Any):
+        """
+        Activates click to annotate option
+        @param e: boolean value of the checkbox
+        @return:
+        """
+        global double_click
+        if e is True:
+            double_click = True
+            # select the image so the user can click on it
+            prediction_widget.viewer.value.layers.selection.active = prediction_widget.viewer.value.layers[
+                "image"]
+        else:
+            double_click = False
+        return double_click
 
     @prediction_widget.load_network_button.changed.connect
     def load_network(e: Any):
@@ -1536,6 +1606,20 @@ def Prediction():
         mask = imread(mask_path_list[0])
         prediction_widget.viewer.value.add_image(image)
         prediction_widget.viewer.value.add_labels(mask)
+
+        # Set the format of the image for the prediction (useful pour the click to change label)
+        global case, zoom_factor
+
+        if image.shape[2] <= 3:
+            case = "2D"
+        elif len(image.shape) == 4:
+            case = "multi3D"
+        else:
+            from .CustomDialog import CustomDialog
+            diag = CustomDialog()
+            diag.exec()
+            case = diag.get_case()
+            print(case)
 
         return
 
