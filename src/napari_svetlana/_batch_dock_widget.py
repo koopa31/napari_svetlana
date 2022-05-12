@@ -83,6 +83,8 @@ global_im_path_list = []
 global_lab_path_list = []
 global_mini_props_list = []
 
+previous_done = False
+
 
 def Annotation():
     """
@@ -321,6 +323,8 @@ def Annotation():
                                     tooltip='Load images'),
         next_button=dict(widget_type='PushButton', text='Next image',
                                     tooltip='Next image'),
+        previous_button=dict(widget_type='PushButton', text='Previous image',
+                             tooltip='Previous image'),
         patch_size=dict(widget_type='LineEdit', label='patch size', value=200, tooltip='extracted patch size'),
         labels_nb=dict(widget_type='ComboBox', label='labels number', choices=labels_number, value=2,
                        tooltip='Number of possible labels'),
@@ -341,6 +345,7 @@ def Annotation():
             viewer: Viewer,
             load_images_button,
             next_button,
+            previous_button,
             estimate_size_button,
             patch_size,
             extract_pacthes_button,
@@ -429,12 +434,22 @@ def Annotation():
         @param e:
         @return:
         """
-        global image_counter, counter, labels_list
-        # result on previous image is saved
-        global_labels_list.append(labels_list)
-        global_im_path_list.append(image_path_list[image_counter])
-        global_lab_path_list.append(mask_path_list[image_counter])
-        global_mini_props_list.append(mini_props_list)
+        global image_counter, counter, labels_list, mini_props_list
+
+        if (len(global_labels_list) != 0 and image_counter == len(global_labels_list) - 1) or len(global_labels_list) == 0:
+            # result on previous image is saved
+            global_labels_list.append(labels_list)
+            global_im_path_list.append(image_path_list[image_counter])
+            global_lab_path_list.append(mask_path_list[image_counter])
+            global_mini_props_list.append(mini_props_list)
+            # Reinitialization of counter for next image
+            counter = 0
+            labels_list = []
+            mini_props_list = []
+        else:
+            counter = len(global_labels_list[image_counter + 1])
+            labels_list = global_labels_list[image_counter + 1]
+            mini_props_list = global_mini_props_list[image_counter + 1]
 
         image_counter += 1
         annotation_widget.viewer.value.layers.clear()
@@ -442,9 +457,33 @@ def Annotation():
         annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
         annotation_widget.viewer.value.layers[1].name = "mask"
 
+    @annotation_widget.previous_button.changed.connect
+    def previous_image(e: Any):
+        """
+        Loads the next image to annotate
+        @param e:
+        @return:
+        """
+        global image_counter, counter, labels_list, mini_props_list
+        # result on previous image is saved
+        global_labels_list.append(labels_list)
+        global_im_path_list.append(image_path_list[image_counter])
+        global_lab_path_list.append(mask_path_list[image_counter])
+        global_mini_props_list.append(mini_props_list)
+
+        image_counter -= 1
+        annotation_widget.viewer.value.layers.clear()
+        annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
+        annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
+        annotation_widget.viewer.value.layers[1].name = "mask"
+
         # Reinitialization of counter for next image
-        counter = 0
-        labels_list = []
+        counter = len(global_labels_list[image_counter])
+        labels_list = global_labels_list[image_counter]
+        mini_props_list = global_mini_props_list[image_counter]
+
+        global previous_done
+        previous_done = True
 
     @annotation_widget.click_annotate.changed.connect
     def click_to_annotate(e: Any):
@@ -555,10 +594,11 @@ def Annotation():
         @param e: indicates if the button has been clicked
         @return:
         """
-        global_labels_list.append(labels_list)
-        global_im_path_list.append(image_path_list[image_counter])
-        global_lab_path_list.append(mask_path_list[image_counter])
-        global_mini_props_list.append(mini_props_list)
+        if previous_done is False:
+            global_labels_list.append(labels_list)
+            global_im_path_list.append(image_path_list[image_counter])
+            global_lab_path_list.append(mask_path_list[image_counter])
+            global_mini_props_list.append(mini_props_list)
 
         path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
         res_dict = {"image_path": global_im_path_list, "labels_path": global_lab_path_list,
