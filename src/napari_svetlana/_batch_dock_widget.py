@@ -758,7 +758,7 @@ def Training():
                     concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
 
                     img_patch_list.append(concat_image)
-                elif case == "multi_3D":
+                elif case == "multi3D":
                     xmin = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) - (patch_size // 2)
                     xmax = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) + (patch_size // 2)
                     ymin = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) - (patch_size // 2)
@@ -766,9 +766,9 @@ def Training():
                     zmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
                     zmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
 
-                    imagette = image[:, xmin:xmax, ymin:ymax, zmin:zmax].copy()
+                    imagette = image[:, zmin:zmax, xmin:xmax, ymin:ymax].copy()
 
-                    imagette_mask = labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
+                    imagette_mask = labels[zmin:zmax, xmin:xmax, ymin:ymax].copy()
 
                     imagette_mask[imagette_mask != region_props[i]["label"]] = 0
                     imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
@@ -910,7 +910,7 @@ def Training():
                 case = "multi3D"
                 image = np.transpose(image, (1, 2, 3, 0))
                 mask = np.transpose(mask, (1, 2, 0))
-                model = CNN3D(max(labels_list), image.shape[0] + 1)
+                model = CNN3D(max(labels_list), image.shape[3] + 1)
 
             else:
                 from .CustomDialog import CustomDialog
