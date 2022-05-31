@@ -311,9 +311,6 @@ def Annotation():
         global indexes
         indexes = np.random.permutation(np.arange(0, len(props))).tolist()
 
-        global mini_props_list
-        mini_props_list = []
-
         return props, zoom_factor
 
     @magicgui(
@@ -325,6 +322,8 @@ def Annotation():
                          tooltip='Next image'),
         previous_button=dict(widget_type='PushButton', text='Previous image',
                              tooltip='Previous image'),
+        image_index_button=dict(widget_type='LineEdit', label='Image index', value=0,
+                                tooltip='Image index in the batch'),
         patch_size=dict(widget_type='LineEdit', label='patch size', value=200, tooltip='extracted patch size'),
         labels_nb=dict(widget_type='ComboBox', label='labels number', choices=labels_number, value=2,
                        tooltip='Number of possible labels'),
@@ -344,8 +343,9 @@ def Annotation():
     def annotation_widget(  # label_logo,
             viewer: Viewer,
             load_images_button,
-            next_button,
             previous_button,
+            image_index_button,
+            next_button,
             estimate_size_button,
             patch_size,
             extract_pacthes_button,
@@ -414,7 +414,8 @@ def Annotation():
 
         # Gets the list of images and masks
         global image_path_list, mask_path_list, global_im_path_list, global_lab_path_list, global_labels_list, \
-            global_mini_props_list
+            global_mini_props_list, mini_props_list
+        mini_props_list = []
 
         image_path_list = sorted([os.path.join(images_folder, f) for f in os.listdir(images_folder)])
         mask_path_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder)])
@@ -444,19 +445,22 @@ def Annotation():
         """
         global image_counter, counter, labels_list, mini_props_list
 
-        # result on previous image is saved
-        global_labels_list[image_counter] += labels_list
-        global_mini_props_list[image_counter] += mini_props_list
-        # Reinitialization of counter for next image
-        counter = len(global_labels_list[image_counter + 1])
-        labels_list = []
-        mini_props_list = []
+        if image_counter < len(global_im_path_list) - 1:
+            # result on previous image is saved
+            global_labels_list[image_counter] += labels_list
+            global_mini_props_list[image_counter] += mini_props_list
+            # Reinitialization of counter for next image
+            counter = len(global_labels_list[image_counter + 1])
+            labels_list = []
+            mini_props_list = []
 
-        image_counter += 1
-        annotation_widget.viewer.value.layers.clear()
-        annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
-        annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
-        annotation_widget.viewer.value.layers[1].name = "mask"
+            image_counter += 1
+            annotation_widget.viewer.value.layers.clear()
+            annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
+            annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
+            annotation_widget.viewer.value.layers[1].name = "mask"
+        else:
+            show_info("No more images")
 
     @annotation_widget.previous_button.changed.connect
     def previous_image(e: Any):
@@ -466,20 +470,23 @@ def Annotation():
         @return:
         """
         global image_counter, counter, labels_list, mini_props_list
-        # result on previous image is saved
-        global_labels_list[image_counter] += labels_list
-        global_mini_props_list[image_counter] += mini_props_list
+        if image_counter > 0:
+            # result on previous image is saved
+            global_labels_list[image_counter] += labels_list
+            global_mini_props_list[image_counter] += mini_props_list
 
-        image_counter -= 1
-        annotation_widget.viewer.value.layers.clear()
-        annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
-        annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
-        annotation_widget.viewer.value.layers[1].name = "mask"
+            image_counter -= 1
+            annotation_widget.viewer.value.layers.clear()
+            annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
+            annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
+            annotation_widget.viewer.value.layers[1].name = "mask"
 
-        # Reinitialization of counter for next image
-        counter = len(global_labels_list[image_counter])
-        labels_list = []
-        mini_props_list = []
+            # Reinitialization of counter for next image
+            counter = len(global_labels_list[image_counter])
+            labels_list = []
+            mini_props_list = []
+        else:
+            show_info("No previous image")
 
     @annotation_widget.click_annotate.changed.connect
     def click_to_annotate(e: Any):
