@@ -39,7 +39,7 @@ from joblib import Parallel, delayed
 from superqt import ensure_main_thread
 from qtpy.QtWidgets import QFileDialog
 
-#from line_profiler_pycharm import profile
+# from line_profiler_pycharm import profile
 from .CNN3D import CNN3D
 from .CNN2D import CNN2D
 
@@ -83,8 +83,6 @@ global_im_path_list = []
 global_lab_path_list = []
 global_mini_props_list = []
 
-previous_done = False
-
 
 def Annotation():
     """
@@ -99,6 +97,7 @@ def Annotation():
         @param key: int between 1 and 9
         @return:
         """
+
         def set_label(viewer):
             """
             Attributes a label to an object you want to annotate
@@ -115,7 +114,8 @@ def Annotation():
                         {"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
                          "label": props[indexes[counter]].label})
                     if case == "2D" or case == "multi2D":
-                        progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = key
+                        progression_mask[
+                            props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = key
                         counter += 1
                         total_counter += 1
 
@@ -242,7 +242,7 @@ def Annotation():
 
         else:
             progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
-                                   props[indexes[counter]].coords[:, 2]] = 0
+                             props[indexes[counter]].coords[:, 2]] = 0
             if double_click is False:
                 viewer.camera.zoom = zoom_factor
                 viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
@@ -320,9 +320,9 @@ def Annotation():
         auto_call=True,
         layout='vertical',
         load_images_button=dict(widget_type='PushButton', text='LOAD IMAGES',
-                                    tooltip='Load images'),
+                                tooltip='Load images'),
         next_button=dict(widget_type='PushButton', text='Next image',
-                                    tooltip='Next image'),
+                         tooltip='Next image'),
         previous_button=dict(widget_type='PushButton', text='Previous image',
                              tooltip='Previous image'),
         patch_size=dict(widget_type='LineEdit', label='patch size', value=200, tooltip='extracted patch size'),
@@ -335,9 +335,9 @@ def Annotation():
         save_button=dict(widget_type='PushButton', text='Save annotation', tooltip='Save annotation'),
 
         save_regionprops_button=dict(widget_type='PushButton', text='Save objects statistics', tooltip='Save the '
-                                     'properties of the annotated objects in a binary file, loadable using torch.load'),
+                                                                                                       'properties of the annotated objects in a binary file, loadable using torch.load'),
         generate_im_labs_button=dict(widget_type='PushButton', text='Save masks of labels', tooltip='Save one '
-                                     'per attributed label'),
+                                                                                                    'per attributed label'),
         show_labs=dict(widget_type='CheckBox', text='Show labeled objects', tooltip='Show labeled objects'),
         click_annotate=dict(widget_type='CheckBox', text='Click to annotate', tooltip='Click to annotate'),
     )
@@ -413,9 +413,17 @@ def Annotation():
         masks_folder = os.path.join(path, "Masks")
 
         # Gets the list of images and masks
-        global image_path_list, mask_path_list
+        global image_path_list, mask_path_list, global_im_path_list, global_lab_path_list, global_labels_list, \
+            global_mini_props_list
+
         image_path_list = sorted([os.path.join(images_folder, f) for f in os.listdir(images_folder)])
         mask_path_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder)])
+        global_im_path_list = image_path_list.copy()
+        global_lab_path_list = mask_path_list.copy()
+
+        for i in range(0, len(image_path_list)):
+            global_labels_list.append([])
+            global_mini_props_list.append([])
 
         # Deletion of remaining image and displaying of the first uimage of the list
         annotation_widget.viewer.value.layers.clear()
@@ -436,20 +444,13 @@ def Annotation():
         """
         global image_counter, counter, labels_list, mini_props_list
 
-        if (len(global_labels_list) != 0 and image_counter == len(global_labels_list) - 1) or len(global_labels_list) == 0:
-            # result on previous image is saved
-            global_labels_list.append(labels_list)
-            global_im_path_list.append(image_path_list[image_counter])
-            global_lab_path_list.append(mask_path_list[image_counter])
-            global_mini_props_list.append(mini_props_list)
-            # Reinitialization of counter for next image
-            counter = 0
-            labels_list = []
-            mini_props_list = []
-        else:
-            counter = len(global_labels_list[image_counter + 1])
-            labels_list = global_labels_list[image_counter + 1]
-            mini_props_list = global_mini_props_list[image_counter + 1]
+        # result on previous image is saved
+        global_labels_list[image_counter] += labels_list
+        global_mini_props_list[image_counter] += mini_props_list
+        # Reinitialization of counter for next image
+        counter = len(global_labels_list[image_counter + 1])
+        labels_list = []
+        mini_props_list = []
 
         image_counter += 1
         annotation_widget.viewer.value.layers.clear()
@@ -466,10 +467,8 @@ def Annotation():
         """
         global image_counter, counter, labels_list, mini_props_list
         # result on previous image is saved
-        global_labels_list.append(labels_list)
-        global_im_path_list.append(image_path_list[image_counter])
-        global_lab_path_list.append(mask_path_list[image_counter])
-        global_mini_props_list.append(mini_props_list)
+        global_labels_list[image_counter] += labels_list
+        global_mini_props_list[image_counter] += mini_props_list
 
         image_counter -= 1
         annotation_widget.viewer.value.layers.clear()
@@ -479,11 +478,8 @@ def Annotation():
 
         # Reinitialization of counter for next image
         counter = len(global_labels_list[image_counter])
-        labels_list = global_labels_list[image_counter]
-        mini_props_list = global_mini_props_list[image_counter]
-
-        global previous_done
-        previous_done = True
+        labels_list = []
+        mini_props_list = []
 
     @annotation_widget.click_annotate.changed.connect
     def click_to_annotate(e: Any):
@@ -517,7 +513,7 @@ def Annotation():
             annotation_widget.viewer.value.camera.center = (0, props[current_index].centroid[0],
                                                             props[current_index].centroid[1])
         else:
-            #annotation_widget.viewer.value.dims.ndisplay = 3
+            # annotation_widget.viewer.value.dims.ndisplay = 3
             annotation_widget.viewer.value.camera.center = (props[current_index].centroid[0],
                                                             props[current_index].centroid[1],
                                                             props[current_index].centroid[2])
@@ -575,7 +571,7 @@ def Annotation():
             pyramid = [progression_mask]
             for i in range(1, 6):
                 pyramid.append(cv2.resize(progression_mask, (progression_mask.shape[0] // 2 ** i,
-                                                          progression_mask.shape[1] // 2 ** i)))
+                                                             progression_mask.shape[1] // 2 ** i)))
 
             if e is True:
                 annotation_widget.viewer.value.add_labels(pyramid, name="progression_mask")
@@ -594,11 +590,9 @@ def Annotation():
         @param e: indicates if the button has been clicked
         @return:
         """
-        if previous_done is False:
-            global_labels_list.append(labels_list)
-            global_im_path_list.append(image_path_list[image_counter])
-            global_lab_path_list.append(mask_path_list[image_counter])
-            global_mini_props_list.append(mini_props_list)
+
+        global_labels_list[image_counter] += labels_list
+        global_mini_props_list[image_counter] += mini_props_list
 
         path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
         res_dict = {"image_path": global_im_path_list, "labels_path": global_lab_path_list,
@@ -901,7 +895,8 @@ def Training():
                     elif nn_dict[nn_type] == "alexnet":
                         num_ftrs = model.classifier[6].in_features
                         model.classifier[6] = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
-                        model.features[0] = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+                        model.features[0] = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3),
+                                                      bias=False)
 
                 else:
                     model = CNN2D(max(labels_list), 4)
@@ -982,26 +977,27 @@ def Training():
                 if len(image.shape) == 2:
                     image = np.stack((image,) * 3, axis=-1)
                 pad_image_list.append(np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                            (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant"))
+                                                     (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)),
+                                             mode="constant"))
                 pad_labels_list.append(np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                            (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
+                                                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
 
             elif len(image.shape) == 4:
                 pad_image_list.append(np.pad(image, ((0, 0),
-                                           (patch_size // 2 + 1, patch_size // 2 + 1),
-                                           (patch_size // 2 + 1, patch_size // 2 + 1),
-                                           (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
+                                                     (patch_size // 2 + 1, patch_size // 2 + 1),
+                                                     (patch_size // 2 + 1, patch_size // 2 + 1),
+                                                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
                 pad_labels_list.append(np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                           (patch_size // 2 + 1, patch_size // 2 + 1),
-                                           (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
+                                                     (patch_size // 2 + 1, patch_size // 2 + 1),
+                                                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
 
             else:
                 pad_image_list.append(np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                           (patch_size // 2 + 1, patch_size // 2 + 1),
-                                           (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
+                                                     (patch_size // 2 + 1, patch_size // 2 + 1),
+                                                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
                 pad_labels_list.append(np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                           (patch_size // 2 + 1, patch_size // 2 + 1),
-                                           (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
+                                                     (patch_size // 2 + 1, patch_size // 2 + 1),
+                                                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
         train_data = get_image_patch(pad_image_list, pad_labels_list, region_props_list, labels_list, torch_type, case)
         training_loader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True)
 
@@ -1050,7 +1046,8 @@ def Training():
                                 if (epoch + 1) % saving_ep == 0:
                                     d = {"model": model, "optimizer_state_dict": optimizer,
                                          "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
-                                         "image_path": image_path_list[0], "labels_path": labels_path_list[0], "patch_size": patch_size}
+                                         "image_path": image_path_list[0], "labels_path": labels_path_list[0],
+                                         "patch_size": patch_size}
                                     if training_name == "":
                                         model_path = os.path.join(save_folder, "training" + str(epoch + 1))
                                     else:
@@ -1251,6 +1248,7 @@ def Prediction():
         @param key: int between 1 and 9
         @return:
         """
+
         def set_label(viewer):
             """
             Sets a new label when correcting the predicted mask
@@ -1264,6 +1262,7 @@ def Prediction():
 
                 prediction_widget.viewer.value.layers.selection.active = prediction_widget.viewer.value.layers[
                     "image"]
+
         return set_label
 
     def draw_predicted_contour(compteur, prop, imagette_contours, i, list_pred):
@@ -1510,13 +1509,16 @@ def Prediction():
         batch_size=dict(widget_type='LineEdit', label='Batch size', value=100, tooltip='Batch size'),
         load_network_button=dict(widget_type='PushButton', text='Load network', tooltip='Load weights of the NN'),
         load_data_button=dict(widget_type='PushButton', text='Load data', tooltip='Load images to process'),
-        image_index_button=dict(widget_type='LineEdit', label='Image index', value=0, tooltip='Image index in the batch'),
+        image_index_button=dict(widget_type='LineEdit', label='Image index', value=0,
+                                tooltip='Image index in the batch'),
         previous_button=dict(widget_type='PushButton', text='Previous image',
                              tooltip='Previous image'),
         next_button=dict(widget_type='PushButton', text='Next image',
                          tooltip='Next image'),
-        launch_prediction_button=dict(widget_type='PushButton', text='Predict this image', tooltip='Predict the current image'),
-        launch_batch_prediction_button=dict(widget_type='PushButton', text='Predict whole batch', tooltip='Predict the whole batch and save the result'),
+        launch_prediction_button=dict(widget_type='PushButton', text='Predict this image',
+                                      tooltip='Predict the current image'),
+        launch_batch_prediction_button=dict(widget_type='PushButton', text='Predict whole batch',
+                                            tooltip='Predict the whole batch and save the result'),
         bound=dict(widget_type='CheckBox', text='Show boundaries only', tooltip='Show boundaries only'),
         generate_im_labs_button=dict(widget_type='PushButton', text='Save masks of labels', tooltip='Save one '
                                                                                                     'per attributed label'),
@@ -1769,9 +1771,10 @@ def Prediction():
         else:
             pyramidal_imagette_contours = [imagette_contours.astype(np.uint8)]
             for i in range(1, 6):
-                pyramidal_imagette_contours.append(cv2.resize(imagette_contours.astype(np.uint8), (imagette_contours.shape[0] // 2 ** i,
-                                                                                  imagette_contours.shape[
-                                                                                      1] // 2 ** i)))
+                pyramidal_imagette_contours.append(
+                    cv2.resize(imagette_contours.astype(np.uint8), (imagette_contours.shape[0] // 2 ** i,
+                                                                    imagette_contours.shape[
+                                                                        1] // 2 ** i)))
             prediction_widget.viewer.value.layers.pop()
             prediction_widget.viewer.value.add_labels(pyramidal_imagette_contours)
             if len(np.unique(prediction_widget.viewer.value.layers[1].data)) == 3:
