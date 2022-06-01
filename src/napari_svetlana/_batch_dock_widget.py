@@ -322,7 +322,7 @@ def Annotation():
                          tooltip='Next image'),
         previous_button=dict(widget_type='PushButton', text='Previous image',
                              tooltip='Previous image'),
-        image_index_button=dict(widget_type='LineEdit', label='Image index', value=0,
+        image_index_button=dict(widget_type='LineEdit', label='Image index', value=1,
                                 tooltip='Image index in the batch'),
         patch_size=dict(widget_type='LineEdit', label='patch size', value=200, tooltip='extracted patch size'),
         labels_nb=dict(widget_type='ComboBox', label='labels number', choices=labels_number, value=2,
@@ -436,6 +436,25 @@ def Annotation():
         global old_zoom
         old_zoom = annotation_widget.viewer.value.camera.zoom
 
+    @annotation_widget.image_index_button.changed.connect
+    def set_image_index(e: Any):
+
+        global image_counter
+
+        if int(e) > len(global_im_path_list) - 1:
+            show_info("Too high index")
+            annotation_widget.image_index_button.value = len(global_im_path_list)
+        elif int(e) < 1:
+            show_info("Too low index")
+            annotation_widget.image_index_button.value = 1
+
+        image_counter = int(annotation_widget.image_index_button.value) - 1
+
+        annotation_widget.viewer.value.layers.clear()
+        annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
+        annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
+        annotation_widget.viewer.value.layers[1].name = "mask"
+
     @annotation_widget.next_button.changed.connect
     def next_image(e: Any):
         """
@@ -455,6 +474,9 @@ def Annotation():
             mini_props_list = []
 
             image_counter += 1
+            # Update of the image index
+            annotation_widget.image_index_button.value = image_counter + 1
+
             annotation_widget.viewer.value.layers.clear()
             annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
             annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
@@ -476,6 +498,9 @@ def Annotation():
             global_mini_props_list[image_counter] += mini_props_list
 
             image_counter -= 1
+            # Update of the image index
+            annotation_widget.image_index_button.value = image_counter + 1
+
             annotation_widget.viewer.value.layers.clear()
             annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
             annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
