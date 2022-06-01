@@ -886,6 +886,9 @@ def Training():
 
         # Concatenation of all the labels lists and conversion to numpy array
         l = []
+        # List where empty lists allow to remove the names of the images which have not been labelled
+        labels_list_to_clean = labels_list.copy()
+
         for p in labels_list:
             l += p
         labels_list = np.array(l)
@@ -985,37 +988,42 @@ def Training():
         # Generators
         pad_image_list = []
         pad_labels_list = []
+        region_props_list_to_clean = region_props_list.copy()
         for i in range(0, len(image_path_list)):
+            if len(labels_list_to_clean[i]) == 0:
+                region_props_list_to_clean.pop(i)
+            elif len(labels_list_to_clean[i]) != 0:
 
-            image = imread(image_path_list[i])
-            mask = imread(labels_path_list[i])
-            if len(mask.shape) == 2:
-                # Turn image into 3 channel if it is grayscale
-                if len(image.shape) == 2:
-                    image = np.stack((image,) * 3, axis=-1)
-                pad_image_list.append(np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                                     (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)),
-                                             mode="constant"))
-                pad_labels_list.append(np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
+                image = imread(image_path_list[i])
+                mask = imread(labels_path_list[i])
+                if len(mask.shape) == 2:
+                    # Turn image into 3 channel if it is grayscale
+                    if len(image.shape) == 2:
+                        image = np.stack((image,) * 3, axis=-1)
+                    pad_image_list.append(np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                                         (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)),
+                                                 mode="constant"))
+                    pad_labels_list.append(np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
 
-            elif len(image.shape) == 4:
-                pad_image_list.append(np.pad(image, ((0, 0),
-                                                     (patch_size // 2 + 1, patch_size // 2 + 1),
-                                                     (patch_size // 2 + 1, patch_size // 2 + 1),
-                                                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
-                pad_labels_list.append(np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                                     (patch_size // 2 + 1, patch_size // 2 + 1),
-                                                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
+                elif len(image.shape) == 4:
+                    pad_image_list.append(np.pad(image, ((0, 0),
+                                                         (patch_size // 2 + 1, patch_size // 2 + 1),
+                                                         (patch_size // 2 + 1, patch_size // 2 + 1),
+                                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
+                    pad_labels_list.append(np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                                         (patch_size // 2 + 1, patch_size // 2 + 1),
+                                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
 
-            else:
-                pad_image_list.append(np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                                     (patch_size // 2 + 1, patch_size // 2 + 1),
-                                                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
-                pad_labels_list.append(np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                                     (patch_size // 2 + 1, patch_size // 2 + 1),
-                                                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
-        train_data = get_image_patch(pad_image_list, pad_labels_list, region_props_list, labels_list, torch_type, case)
+                else:
+                    pad_image_list.append(np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                                         (patch_size // 2 + 1, patch_size // 2 + 1),
+                                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
+                    pad_labels_list.append(np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                                         (patch_size // 2 + 1, patch_size // 2 + 1),
+                                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
+        train_data = get_image_patch(pad_image_list, pad_labels_list, region_props_list_to_clean,
+                                     labels_list, torch_type, case)
         training_loader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True)
 
         # Optimizer
