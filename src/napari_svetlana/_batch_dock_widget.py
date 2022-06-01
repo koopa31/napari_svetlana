@@ -992,14 +992,14 @@ def Training():
         # Generators
         pad_image_list = []
         pad_labels_list = []
-        region_props_list_to_clean = region_props_list.copy()
+        region_props_list_to_clean = []
         for i in range(0, len(image_path_list)):
-            if len(labels_list_to_clean[i]) == 0:
-                region_props_list_to_clean.pop(i)
-            elif len(labels_list_to_clean[i]) != 0:
+            if len(labels_list_to_clean[i]) != 0:
 
                 image = imread(image_path_list[i])
                 mask = imread(labels_path_list[i])
+
+                region_props_list_to_clean.append(region_props_list[i])
                 if len(mask.shape) == 2:
                     # Turn image into 3 channel if it is grayscale
                     if len(image.shape) == 2:
@@ -1048,8 +1048,12 @@ def Training():
         # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
         # Loop over epochs
         iterations_number = epochs_nb
+
         # folder where to save the training
-        save_folder = os.path.split(image_path_list[0])[0]
+        save_folder = os.path.join(os.path.split(os.path.split(image_path_list[0])[0])[0], "Svetlana")
+        if os.path.isdir(save_folder) is False:
+            os.mkdir(save_folder)
+
         found = False
         while found is False:
             try:
@@ -1078,9 +1082,9 @@ def Training():
                                          "image_path": image_path_list[0], "labels_path": labels_path_list[0],
                                          "patch_size": patch_size}
                                     if training_name == "":
-                                        model_path = os.path.join(save_folder, "training" + str(epoch + 1))
+                                        model_path = os.path.join(save_folder, "training_" + str(epoch + 1))
                                     else:
-                                        model_path = os.path.join(save_folder, training_name + str(epoch + 1))
+                                        model_path = os.path.join(save_folder, training_name + "_" + str(epoch + 1))
                                     if model_path.endswith(".pt") or model_path.endswith(".pth"):
                                         torch.save(d, model_path)
                                     else:
