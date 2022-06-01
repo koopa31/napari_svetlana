@@ -77,7 +77,7 @@ counter = 0
 # counter of images to be annotated
 image_counter = 0
 total_counter = 0
-labels_list = []
+
 global_labels_list = []
 global_im_path_list = []
 global_lab_path_list = []
@@ -108,9 +108,9 @@ def Annotation():
             print("key is ", key)
             if (int(annotation_widget.labels_nb.value) < key) is False:
                 if counter < len(props) - 1:
-                    labels_list.append(key)
+                    global_labels_list[image_counter].append(key)
 
-                    mini_props_list.append(
+                    global_mini_props_list[image_counter].append(
                         {"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
                          "label": props[indexes[counter]].label})
                     if case == "2D" or case == "multi2D":
@@ -170,12 +170,12 @@ def Annotation():
                     annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
                         image_layer_name]
 
-                    print("label 1", labels_list)
+                    print("label 1", global_labels_list[image_counter])
                     viewer.status = str(counter) + " images processed over " + str(len(props)) + " (" + \
                                     str(total_counter) + " over the whole batch)"
                 elif counter == len(props) - 1:
-                    labels_list.append(key)
-                    mini_props_list.append(
+                    global_labels_list[image_counter].append(key)
+                    global_mini_props_list[image_counter].append(
                         {"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
                          "label": props[indexes[counter]].label})
                     progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = key
@@ -185,16 +185,12 @@ def Annotation():
                     viewer.layers.clear()
                     viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
                                             "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
-                    print("annotation over", labels_list)
+                    print("annotation over", global_labels_list[image_counter])
                     viewer.status = str(counter) + " images processed over " + str(len(props)) + " (" + \
                                     str(total_counter) + " over the whole batch)"
                     show_info("Annotation over, press 1 to save the result")
                 else:
                     # Saving of the annotation result in a binary file
-                    global_labels_list.append(labels_list)
-                    global_im_path_list.append(image_path_list[image_counter])
-                    global_lab_path_list.append(mask_path_list[image_counter])
-                    global_mini_props_list.append(mini_props_list)
 
                     path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
                     res_dict = {"image_path": global_im_path_list, "labels_path": global_lab_path_list,
@@ -212,8 +208,8 @@ def Annotation():
         @return:
         """
         global counter, total_counter
-        labels_list.pop()
-        mini_props_list.pop()
+        global_labels_list[image_counter].pop()
+        global_mini_props_list[image_counter].pop()
         counter -= 1
         total_counter -= 1
 
@@ -262,7 +258,7 @@ def Annotation():
         annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
             image_layer_name]
 
-        print("retour en arriere", labels_list)
+        print("retour en arriere", global_labels_list[image_counter])
         viewer.status = str(counter) + " images processed over " + str(len(props)) + " (" + \
                         str(total_counter) + " over the whole batch)"
 
@@ -415,7 +411,6 @@ def Annotation():
         # Gets the list of images and masks
         global image_path_list, mask_path_list, global_im_path_list, global_lab_path_list, global_labels_list, \
             global_mini_props_list, mini_props_list
-        mini_props_list = []
 
         image_path_list = sorted([os.path.join(images_folder, f) for f in os.listdir(images_folder)])
         mask_path_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder)])
@@ -439,7 +434,7 @@ def Annotation():
     @annotation_widget.image_index_button.changed.connect
     def set_image_index(e: Any):
 
-        global image_counter
+        global counter, image_counter
 
         if int(e) > len(global_im_path_list) - 1:
             show_info("Too high index")
@@ -449,6 +444,8 @@ def Annotation():
             annotation_widget.image_index_button.value = 1
 
         image_counter = int(annotation_widget.image_index_button.value) - 1
+
+        counter = len(global_labels_list[image_counter])
 
         annotation_widget.viewer.value.layers.clear()
         annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
@@ -465,13 +462,9 @@ def Annotation():
         global image_counter, counter, labels_list, mini_props_list
 
         if image_counter < len(global_im_path_list) - 1:
-            # result on previous image is saved
-            global_labels_list[image_counter] += labels_list
-            global_mini_props_list[image_counter] += mini_props_list
+
             # Reinitialization of counter for next image
             counter = len(global_labels_list[image_counter + 1])
-            labels_list = []
-            mini_props_list = []
 
             image_counter += 1
             # Update of the image index
@@ -493,10 +486,6 @@ def Annotation():
         """
         global image_counter, counter, labels_list, mini_props_list
         if image_counter > 0:
-            # result on previous image is saved
-            global_labels_list[image_counter] += labels_list
-            global_mini_props_list[image_counter] += mini_props_list
-
             image_counter -= 1
             # Update of the image index
             annotation_widget.image_index_button.value = image_counter + 1
@@ -508,8 +497,7 @@ def Annotation():
 
             # Reinitialization of counter for next image
             counter = len(global_labels_list[image_counter])
-            labels_list = []
-            mini_props_list = []
+
         else:
             show_info("No previous image")
 
@@ -622,9 +610,6 @@ def Annotation():
         @param e: indicates if the button has been clicked
         @return:
         """
-
-        global_labels_list[image_counter] += labels_list
-        global_mini_props_list[image_counter] += mini_props_list
 
         path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
         res_dict = {"image_path": global_im_path_list, "labels_path": global_lab_path_list,
