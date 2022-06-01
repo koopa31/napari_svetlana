@@ -403,10 +403,12 @@ def Annotation():
         @return:
         """
         # Gets the folder url and the two subfolder containing the images and the masks
-        path = QFileDialog.getExistingDirectory(None, 'Open Folder', options=QFileDialog.DontUseNativeDialog)
-        global images_folder, masks_folder
-        images_folder = os.path.join(path, "Images")
-        masks_folder = os.path.join(path, "Masks")
+        global images_folder, masks_folder, parent_path
+
+        parent_path = QFileDialog.getExistingDirectory(None, 'Open Folder', options=QFileDialog.DontUseNativeDialog)
+
+        images_folder = os.path.join(parent_path, "Images")
+        masks_folder = os.path.join(parent_path, "Masks")
 
         # Gets the list of images and masks
         global image_path_list, mask_path_list, global_im_path_list, global_lab_path_list, global_labels_list, \
@@ -611,11 +613,13 @@ def Annotation():
         @return:
         """
 
-        path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
         res_dict = {"image_path": global_im_path_list, "labels_path": global_lab_path_list,
                     "regionprops": global_mini_props_list, "labels_list": global_labels_list,
                     "patch_size": annotation_widget.patch_size.value}
-        torch.save(res_dict, path)
+        if os.path.isdir(os.path.join(parent_path, "Svetlana")) is False:
+            os.mkdir(os.path.join(parent_path, "Svetlana"))
+        torch.save(res_dict, os.path.join(parent_path, "Svetlana", "labels"))
+        show_info("Labels saved in folder called Svetlana")
 
     @annotation_widget.extract_pacthes_button.changed.connect
     def _extract_patches(e: Any):
