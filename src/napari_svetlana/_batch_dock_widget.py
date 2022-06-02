@@ -721,18 +721,26 @@ def Annotation():
         """
         im_labs_list = []
         # We create as many images as labels
-        for i in range(0, max(labels_list)):
+        for i in range(0, max(global_labels_list[image_counter])):
             im_labs_list.append(np.zeros_like(labels).astype(np.uint16))
 
+        props = props_to_be_saved[image_counter]["props"]
+        indexes = props_to_be_saved[image_counter]["indexes"]
+        counter = len(global_labels_list[image_counter])
+
         if len(labels.shape) == 3:
-            for i, prop in enumerate(props[:counter]):
-                im_labs_list[labels_list[i] - 1][prop.coords[:, 0], prop.coords[:, 1], prop.coords[:, 2]] = prop.label
+            for i in range(0, counter):
+                im_labs_list[global_labels_list[image_counter][i] - 1][props[indexes[i]].coords[:, 0],
+                                                                       props[indexes[i]].coords[:, 1],
+                                                 props[indexes[i]].coords[:, 2]] = props[indexes[i]].label
         else:
-            for i, prop in enumerate(props[:counter]):
-                im_labs_list[labels_list[i] - 1][prop.coords[:, 0], prop.coords[:, 1]] = prop.label
+            for i in range(0, counter):
+                im_labs_list[global_labels_list[image_counter][i] - 1][props[indexes[i]].coords[:, 0],
+                                                                       props[indexes[i]].coords[:, 1]] = \
+                    props[indexes[i]].label
 
         for i, im in enumerate(im_labs_list):
-            imsave(os.path.splitext(labels_path)[0] + "_label" + str(i + 1) + ".tif", im)
+            imsave(os.path.splitext(global_lab_path_list[image_counter])[0] + "_label" + str(i + 1) + ".tif", im)
 
     return annotation_widget
 
