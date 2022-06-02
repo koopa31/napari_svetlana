@@ -83,6 +83,9 @@ global_im_path_list = []
 global_lab_path_list = []
 global_mini_props_list = []
 
+# list of all regionprops to be exported in a specific binary file
+props_to_be_saved = []
+
 
 def Annotation():
     """
@@ -300,12 +303,22 @@ def Annotation():
             case = diag.get_case()
             print(case)
 
-        global props
+        global props, props_to_be_saved
         props = regionprops(labels)
 
         # The regionprops are shuffled to be randomly labeled
         global indexes
         indexes = np.random.permutation(np.arange(0, len(props))).tolist()
+
+        present = []
+        for prop in props_to_be_saved:
+            if prop["props"] == props:
+                present.append(True)
+            else:
+                present.append(False)
+
+        if True not in present:
+            props_to_be_saved.append({"props": props, "indexes": indexes})
 
         return props, zoom_factor
 
@@ -677,20 +690,28 @@ def Annotation():
         @return:
         """
 
-        path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
+        path = os.path.join(parent_path, "Svetlana", "regionprops")
         props_list = []
 
-        if props[:counter + 1][0].coords.shape[1] == 3:
-            for i, prop in enumerate(props[:counter]):
-                props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
-                                   "area": prop.area, "label": int(labels_list[i])})
-        else:
-            for i, prop in enumerate(props[:counter]):
-                props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
-                                   "eccentricity": prop.eccentricity, "area": prop.area,
-                                   "perimeter": prop.perimeter,
-                                   "label": int(labels_list[i])})
+        for j, p in enumerate(props_to_be_saved):
+            props = p["props"]
+            indexes = p["indexes"]
+            counter = len(global_labels_list[j])
+            props_list.append([])
+
+            if props[:counter + 1][0].coords.shape[1] == 3:
+                for i in range(0, counter):
+                    props_list[j].append({"position": props[indexes[i]].label, "coords": props[indexes[i]].coords,
+                                          "centroid": props[indexes[i]].centroid, "area": props[indexes[i]].area,
+                                          "label": int(global_labels_list[j][i])})
+            else:
+                for i in range(0, counter):
+                    props_list[j].append({"position": props[indexes[i]].label, "coords": props[indexes[i]].coords,
+                                          "centroid": props[indexes[i]].centroid,
+                                          "eccentricity": props[indexes[i]].eccentricity, "area": props[indexes[i]].area,
+                                          "perimeter": props[indexes[i]].perimeter, "label": int(global_labels_list[j][i])})
         torch.save(props_list, path)
+        show_info("ROI properties saved")
 
     @annotation_widget.generate_im_labs_button.changed.connect
     def generate_im_labels():
