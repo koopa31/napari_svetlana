@@ -1579,7 +1579,7 @@ def Prediction():
         batch_size=dict(widget_type='LineEdit', label='Batch size', value=100, tooltip='Batch size'),
         load_network_button=dict(widget_type='PushButton', text='Load network', tooltip='Load weights of the NN'),
         load_data_button=dict(widget_type='PushButton', text='Load data', tooltip='Load images to process'),
-        image_index_button=dict(widget_type='LineEdit', label='Image index', value=0,
+        image_index_button=dict(widget_type='LineEdit', label='Image index', value=1,
                                 tooltip='Image index in the batch'),
         previous_button=dict(widget_type='PushButton', text='Previous image',
                              tooltip='Previous image'),
@@ -1600,8 +1600,8 @@ def Prediction():
             viewer: Viewer,
             load_network_button,
             load_data_button,
-            image_index_button,
             previous_button,
+            image_index_button,
             next_button,
             batch_size,
             launch_prediction_button,
@@ -1737,29 +1737,33 @@ def Prediction():
 
     @prediction_widget.image_index_button.changed.connect
     def set_image_index(e: Any):
-        if int(e) > len(image_path_list) - 1:
-            prediction_widget.image_index_button.value = len(image_path_list) - 1
-        elif int(e) < 0:
-            prediction_widget.image_index_button.value = 0
+        if int(e) > len(image_path_list):
+            prediction_widget.image_index_button.value = len(image_path_list)
+        elif int(e) < 1:
+            prediction_widget.image_index_button.value = 1
 
         global image, mask
-        image = imread(image_path_list[int(prediction_widget.image_index_button.value)])
+        image = imread(image_path_list[int(prediction_widget.image_index_button.value) - 1])
         if len(image.shape) == 2:
             image = np.stack((image,) * 3, axis=-1)
-        mask = imread(mask_path_list[int(prediction_widget.image_index_button.value)])
+        mask = imread(mask_path_list[int(prediction_widget.image_index_button.value) - 1])
         prediction_widget.viewer.value.layers.clear()
         prediction_widget.viewer.value.add_image(image)
         prediction_widget.viewer.value.add_labels(mask)
 
     @prediction_widget.previous_button.changed.connect
     def load_previous_image(e: Any):
-        if int(prediction_widget.image_index_button.value) > 0:
+        if int(prediction_widget.image_index_button.value) > 1:
             prediction_widget.image_index_button.value = int(prediction_widget.image_index_button.value) - 1
+        else:
+            show_info("No previous image")
 
     @prediction_widget.next_button.changed.connect
-    def load_previous_image(e: Any):
-        if int(prediction_widget.image_index_button.value) < len(image_path_list) - 1:
+    def load_next_image(e: Any):
+        if int(prediction_widget.image_index_button.value) < len(image_path_list):
             prediction_widget.image_index_button.value = int(prediction_widget.image_index_button.value) + 1
+        else:
+            show_info("No more images")
 
     def display_result(image):
         """
