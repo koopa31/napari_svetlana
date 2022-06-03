@@ -1861,7 +1861,7 @@ def Prediction():
         @return:
         """
 
-        path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
+        path = os.path.join(os.path.split(images_folder)[0], "Svetlana", "prediction_regionprops")
         props_list = []
         if len(mask.shape) == 3:
             for i, prop in enumerate(props):
@@ -1893,7 +1893,8 @@ def Prediction():
                 im_labs_list[list_pred[i] - 1][prop.coords[:, 0], prop.coords[:, 1]] = prop.label
 
         for i, im in enumerate(im_labs_list):
-            imsave(os.path.splitext(labels_path)[0] + "_label" + str(i + 1) + ".tif", im)
+            imsave(os.path.splitext(mask_path_list[int(prediction_widget.image_index_button.value) - 1])[0] +
+                   "_label" + str(i + 1) + ".tif", im)
 
     return prediction_widget
 
