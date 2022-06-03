@@ -563,7 +563,15 @@ def Annotation():
             if "mask" in layer.name:
                 circle_layer_name = layer.name
                 circle_mask = np.zeros_like(layer.data)
-                progression_mask = np.zeros_like(circle_mask)
+                # Creation of progression mask if there are already annotation in previous image
+                if counter != 0:
+                    progression_mask = np.zeros_like(annotation_widget.viewer.value.layers["mask"].data)
+                    for ind, prop in enumerate(global_mini_props_list[image_counter]):
+                        progression_mask[prop["coords"][:, 0], prop["coords"][:, 1]] = \
+                        global_labels_list[image_counter][
+                            ind]
+                else:
+                    progression_mask = np.zeros_like(circle_mask)
             else:
                 image_layer_name = layer.name
 
