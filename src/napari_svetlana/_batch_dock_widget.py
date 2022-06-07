@@ -492,6 +492,8 @@ def Annotation():
         annotation_widget.viewer.value.layers[1].name = "mask"
         annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
         annotation_widget.viewer.value.layers[2].name = "previous prediction"
+        if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
+            annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
 
         # original zoom factor to correct when annotating
         global old_zoom
@@ -520,6 +522,8 @@ def Annotation():
         if "pred_path_list" in globals():
             annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
             annotation_widget.viewer.value.layers[2].name = "previous prediction"
+            if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
+                annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
 
 
     @annotation_widget.next_button.changed.connect
@@ -547,6 +551,8 @@ def Annotation():
             if "pred_path_list" in globals():
                 annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
                 annotation_widget.viewer.value.layers[2].name = "previous prediction"
+                if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
+                    annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
         else:
             show_info("No more images")
 
@@ -570,6 +576,8 @@ def Annotation():
             if "pred_path_list" in globals():
                 annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
                 annotation_widget.viewer.value.layers[2].name = "previous prediction"
+                if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
+                    annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
 
             # Reinitialization of counter for next image
             counter = len(global_labels_list[image_counter])
