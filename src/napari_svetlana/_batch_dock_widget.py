@@ -456,7 +456,7 @@ def Annotation():
 
         global images_folder, masks_folder, parent_path, image_path_list, mask_path_list, global_im_path_list,\
                global_lab_path_list, global_labels_list, global_mini_props_list, mini_props_list, counter,\
-               image_counter, patch_size
+               image_counter, patch_size, pred_path_list
 
         parent_path = QFileDialog.getExistingDirectory(None, 'Open Folder', options=QFileDialog.DontUseNativeDialog)
 
@@ -493,8 +493,6 @@ def Annotation():
         annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
         annotation_widget.viewer.value.layers[2].name = "previous prediction"
 
-        annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
-            "Image"]
         # original zoom factor to correct when annotating
         global old_zoom
         old_zoom = annotation_widget.viewer.value.camera.zoom
@@ -519,6 +517,10 @@ def Annotation():
         annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
         annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
         annotation_widget.viewer.value.layers[1].name = "mask"
+        if pred_path_list:
+            annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
+            annotation_widget.viewer.value.layers[2].name = "previous prediction"
+
 
     @annotation_widget.next_button.changed.connect
     def next_image(e: Any):
@@ -542,6 +544,9 @@ def Annotation():
             annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
             annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
             annotation_widget.viewer.value.layers[1].name = "mask"
+            if pred_path_list:
+                annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
+                annotation_widget.viewer.value.layers[2].name = "previous prediction"
         else:
             show_info("No more images")
 
@@ -562,6 +567,9 @@ def Annotation():
             annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
             annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
             annotation_widget.viewer.value.layers[1].name = "mask"
+            if pred_path_list:
+                annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
+                annotation_widget.viewer.value.layers[2].name = "previous prediction"
 
             # Reinitialization of counter for next image
             counter = len(global_labels_list[image_counter])
@@ -626,7 +634,7 @@ def Annotation():
                 else:
                     progression_mask = np.zeros_like(circle_mask)
             else:
-                image_layer_name = layer.name
+                image_layer_name = "Image"
 
         # Contour of object to annotate
         if case == "2D" or case == "multi2D":
