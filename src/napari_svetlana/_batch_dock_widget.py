@@ -1867,6 +1867,8 @@ def Prediction():
         """
 
         path = os.path.join(os.path.split(images_folder)[0], "Svetlana", "prediction_regionprops")
+        if os.path.isdir(os.path.split(path)[0]) is False:
+            os.mkdir(os.path.split(path)[0])
         props_list = []
         if len(mask.shape) == 3:
             for i, prop in enumerate(props):
