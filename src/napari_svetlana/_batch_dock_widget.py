@@ -778,6 +778,8 @@ def Annotation():
             indexes = p["indexes"]
             counter = len(global_labels_list[j])
             props_list.append([])
+            # Image name added to the list
+            props_list[j].append(global_im_path_list[j])
 
             if props[:counter + 1][0].coords.shape[1] == 3:
                 for i in range(0, counter):
