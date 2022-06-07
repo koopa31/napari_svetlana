@@ -1958,6 +1958,8 @@ def Prediction():
         if os.path.isdir(os.path.split(path)[0]) is False:
             os.mkdir(os.path.split(path)[0])
         props_list = []
+        # Image name added to the list
+        props_list.append(image_path_list[int(prediction_widget.image_index_button.value) - 1])
         if len(mask.shape) == 3:
             for i, prop in enumerate(props):
                 props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
@@ -1968,6 +1970,7 @@ def Prediction():
                                    "eccentricity": prop.eccentricity, "area": prop.area, "perimeter": prop.perimeter,
                                    "label": int(list_pred[i].item())})
         torch.save(props_list, path)
+        show_info("ROI properties saved for this image")
 
     @prediction_widget.generate_im_labs_button.changed.connect
     def generate_im_labels():
