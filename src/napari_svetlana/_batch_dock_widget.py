@@ -1468,7 +1468,7 @@ def Prediction():
         print(str(np.sum(compteur)) + " objects remaining over " + str(len(props)))
 
         # Save the result automatically
-        res_name = "prediction_" + os.path.split(image_path_list[int(prediction_widget.image_index_button.value)])[1]
+        res_name = "prediction_" + os.path.split(image_path_list[int(prediction_widget.image_index_button.value) - 1])[1]
         imsave(os.path.join(res_folder, res_name), imagette_contours.astype(np.uint8))
 
         return imagette_contours.astype(np.uint8)
