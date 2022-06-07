@@ -86,6 +86,9 @@ global_mini_props_list = []
 # list of all regionprops to be exported in a specific binary file
 props_to_be_saved = []
 
+retrain = False
+loaded_network = None
+
 
 def Annotation():
     """
@@ -956,7 +959,7 @@ def Training():
         @return:
         """
 
-        global transform
+        global transform, retrain, loaded_network
         if rot is True and h_flip is False and v_flip is False:
             transform = A.Compose([
                 A.Rotate(-90, 90, p=prob),
@@ -1073,6 +1076,18 @@ def Training():
                 elif case == "3D":
                     model = CNN3D(max(labels_list), 2)
 
+        else:
+            retrain = True
+            if image.shape[2] <= 3:
+                case = "2D"
+            elif len(image.shape) == 4:
+                case = "multi3D"
+            else:
+                from .CustomDialog import CustomDialog
+                diag = CustomDialog()
+                diag.exec()
+                case = diag.get_case()
+
         torch_type = torch.cuda.FloatTensor
 
         losses_dict = {
@@ -1087,7 +1102,10 @@ def Training():
         # Setting the optimizer
         LR = lr
         torch.autograd.set_detect_anomaly(True)
-        optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+        if retrain is False:
+            optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+        else:
+            optimizer = loaded_network["optimizer_state_dict"]
 
         # CUDA for PyTorch
         use_cuda = torch.cuda.is_available()
@@ -1146,7 +1164,10 @@ def Training():
         optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
         # Loss function
-        LOSS_LIST = []
+        if retrain is False:
+            LOSS_LIST = []
+        else:
+            LOSS_LIST = loaded_network["loss_list"]
         weights = np.ones([max(labels_list) + 1])
         weights[0] = 0
         weights = torch.from_numpy(weights)
@@ -1337,9 +1358,10 @@ def Training():
         @return:
         """
         path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
-        checkpoint = torch.load(path)
+        global loaded_network
+        loaded_network = torch.load(path)
         global model
-        model = checkpoint["model"]
+        model = loaded_network["model"]
         show_info("Model loaded successfully")
 
     @training_widget.launch_training_button.changed.connect
