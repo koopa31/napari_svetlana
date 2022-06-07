@@ -517,7 +517,7 @@ def Annotation():
         annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
         annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
         annotation_widget.viewer.value.layers[1].name = "mask"
-        if pred_path_list:
+        if "pred_path_list" in globals():
             annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
             annotation_widget.viewer.value.layers[2].name = "previous prediction"
 
@@ -544,7 +544,7 @@ def Annotation():
             annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
             annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
             annotation_widget.viewer.value.layers[1].name = "mask"
-            if pred_path_list:
+            if "pred_path_list" in globals():
                 annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
                 annotation_widget.viewer.value.layers[2].name = "previous prediction"
         else:
@@ -567,7 +567,7 @@ def Annotation():
             annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
             annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
             annotation_widget.viewer.value.layers[1].name = "mask"
-            if pred_path_list:
+            if "pred_path_list" in globals():
                 annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
                 annotation_widget.viewer.value.layers[2].name = "previous prediction"
 
