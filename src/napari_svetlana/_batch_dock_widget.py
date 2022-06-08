@@ -1418,6 +1418,7 @@ def Prediction():
             @param viewer: Napari viewer instance
             @return:
             """
+            global imagette_contours
             if double_click is True:
                 imagette_contours[mask == lab] = int(key)
                 viewer.layers.pop()
@@ -1916,17 +1917,16 @@ def Prediction():
         @param e:
         @return:
         """
-
+        global eroded_labels
         if "edge_im" not in globals():
             # computation of the cells segmentation edges
             eroded_contours = cv2.erode(np.uint16(mask), np.ones((7, 7), np.uint8))
             eroded_labels = mask - eroded_contours
 
+        if e is True:
             # Removing the inside of the cells in the binary result using the edges mask computed just before
-            global edge_im
             edge_im = imagette_contours.copy().astype(np.uint8)
             edge_im[eroded_labels == 0] = 0
-        if e is True:
             pyramidal_edge_im = [edge_im]
             for i in range(1, 6):
                 pyramidal_edge_im.append(cv2.resize(edge_im, (edge_im.shape[0] // 2 ** i,
