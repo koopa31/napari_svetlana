@@ -198,22 +198,13 @@ def Annotation():
                         show_labs(True)
                     counter += 1
                     total_counter += 1
-                    from skimage.io import imread
-                    viewer.layers.clear()
-                    viewer.add_image(imread("https://bitbucket.org/koopa31/napari_package_images/raw/"
-                                            "a9fda1dd3361880162474cf0b30119b1e188f53c/image_finish.png"))
+
                     print("annotation over", global_labels_list[image_counter])
                     viewer.status = str(counter) + " images processed over " + str(len(props)) + " (" + \
                                     str(total_counter) + " over the whole batch)"
-                    show_info("Annotation over, press 1 to save the result")
+                    show_info("Image entirely annotated")
                 else:
-                    # Saving of the annotation result in a binary file
-
-                    path = QFileDialog.getSaveFileName(None, 'Save File', options=QFileDialog.DontUseNativeDialog)[0]
-                    res_dict = {"image_path": global_im_path_list, "labels_path": global_lab_path_list,
-                                "regionprops": global_mini_props_list, "labels_list": global_labels_list,
-                                "patch_size": annotation_widget.patch_size.value}
-                    torch.save(res_dict, path)
+                    show_info("Image entirely annotated")
 
         return set_label
 
