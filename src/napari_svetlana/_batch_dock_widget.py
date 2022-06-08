@@ -122,6 +122,7 @@ def Annotation():
                     if case == "2D" or case == "multi2D":
                         progression_mask[
                             props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = key
+                        # If show labels is ticked, then we refresh it on the fly as we label
                         if annotation_widget.show_labs.value is True:
                             annotation_widget.viewer.value.layers.pop()
                             show_labs(True)
@@ -156,6 +157,7 @@ def Annotation():
                     else:
                         progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                          props[indexes[counter]].coords[:, 2]] = key
+                        # If show labels is ticked, then we refresh it on the fly as we label
                         if annotation_widget.show_labs.value is True:
                             annotation_widget.viewer.value.layers.pop()
                             show_labs(True)
@@ -223,9 +225,12 @@ def Annotation():
 
         if case == "2D" or case == "multi2D":
             progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 0
+
+            # If show labels is ticked, then we refresh it on the fly as we label
             if annotation_widget.show_labs.value is True:
                 annotation_widget.viewer.value.layers.pop()
                 show_labs(True)
+
             if double_click is False:
                 viewer.camera.zoom = zoom_factor
                 viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
@@ -251,6 +256,7 @@ def Annotation():
             progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                              props[indexes[counter]].coords[:, 2]] = 0
 
+            # If show labels is ticked, then we refresh it on the fly as we label
             if annotation_widget.show_labs.value is True:
                 annotation_widget.viewer.value.layers.pop()
                 show_labs(True)
@@ -701,12 +707,14 @@ def Annotation():
             if e is True:
                 annotation_widget.viewer.value.add_labels(pyramid, name="progression_mask")
             else:
+                # if len = 4, we are labelling staring at the labels layer, else it's another case, no need to delete
                 if len(annotation_widget.viewer.value.layers) == 4:
                     annotation_widget.viewer.value.layers.pop()
         else:
             if e is True:
                 annotation_widget.viewer.value.add_labels(progression_mask, name="progression_mask")
             else:
+                # if len = 4, we are labelling staring at the labels layers, else it's another case, no need to delete
                 if len(annotation_widget.viewer.value.layers) == 4:
                     annotation_widget.viewer.value.layers.pop()
         annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers["Image"]
