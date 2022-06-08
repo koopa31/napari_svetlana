@@ -701,12 +701,14 @@ def Annotation():
             if e is True:
                 annotation_widget.viewer.value.add_labels(pyramid, name="progression_mask")
             else:
-                annotation_widget.viewer.value.layers.pop()
+                if len(annotation_widget.viewer.value.layers) == 4:
+                    annotation_widget.viewer.value.layers.pop()
         else:
             if e is True:
                 annotation_widget.viewer.value.add_labels(progression_mask, name="progression_mask")
             else:
-                annotation_widget.viewer.value.layers.pop()
+                if len(annotation_widget.viewer.value.layers) == 4:
+                    annotation_widget.viewer.value.layers.pop()
         annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers["Image"]
 
     @annotation_widget.save_button.changed.connect
