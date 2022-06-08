@@ -122,6 +122,10 @@ def Annotation():
                     if case == "2D" or case == "multi2D":
                         progression_mask[
                             props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = key
+                        if annotation_widget.show_labs.value is True:
+                            annotation_widget.viewer.value.layers.pop()
+                            show_labs(True)
+
                         counter += 1
                         total_counter += 1
 
@@ -139,19 +143,23 @@ def Annotation():
 
                         # Pyramidal representation of the contours to enhance the display speed
 
-                        annotation_widget.viewer.value.layers[-1].data_raw[0][
-                            annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
-                        annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
+                        annotation_widget.viewer.value.layers["object to annotate"].data_raw[0][
+                            annotation_widget.viewer.value.layers["object to annotate"].data_raw[0] != 0] = 0
+                        annotation_widget.viewer.value.layers["object to annotate"].data_raw[0][eroded_labels == 1] = 1
 
-                        for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
-                            annotation_widget.viewer.value.layers[-1].data_raw[i] = \
-                                cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
-                                    annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
-                                    annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
+                        for i in range(1, len(annotation_widget.viewer.value.layers["object to annotate"].data_raw)):
+                            annotation_widget.viewer.value.layers["object to annotate"].data_raw[i] = \
+                                cv2.resize(annotation_widget.viewer.value.layers["object to annotate"].data_raw[0], (
+                                    annotation_widget.viewer.value.layers["object to annotate"].data_raw[0].shape[0] // 2 ** i,
+                                    annotation_widget.viewer.value.layers["object to annotate"].data_raw[0].shape[1] // 2 ** i))
 
                     else:
                         progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                          props[indexes[counter]].coords[:, 2]] = key
+                        if annotation_widget.show_labs.value is True:
+                            annotation_widget.viewer.value.layers.pop()
+                            show_labs(True)
+
                         counter += 1
                         total_counter += 1
 
@@ -171,7 +179,7 @@ def Annotation():
                         circle_mask[circle_mask != 0] = 0
                         circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                                     props[indexes[counter]].coords[:, 2]] = 1
-                        annotation_widget.viewer.value.layers[-1].data = circle_mask
+                        annotation_widget.viewer.value.layers["object to annotate"].data = circle_mask
 
                     annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
                         image_layer_name]
@@ -185,6 +193,9 @@ def Annotation():
                         {"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
                          "label": props[indexes[counter]].label})
                     progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = key
+                    if annotation_widget.show_labs.value is True:
+                        annotation_widget.viewer.value.layers.pop()
+                        show_labs(True)
                     counter += 1
                     total_counter += 1
                     from skimage.io import imread
@@ -221,6 +232,9 @@ def Annotation():
 
         if case == "2D" or case == "multi2D":
             progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 0
+            if annotation_widget.show_labs.value is True:
+                annotation_widget.viewer.value.layers.pop()
+                show_labs(True)
             if double_click is False:
                 viewer.camera.zoom = zoom_factor
                 viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
@@ -232,19 +246,24 @@ def Annotation():
             eroded_labels = circle_mask - eroded_contours
 
             # Pyramidal representation of the contours to enhance the display speed
-            annotation_widget.viewer.value.layers[-1].data_raw[0][
-                annotation_widget.viewer.value.layers[-1].data_raw[0] != 0] = 0
-            annotation_widget.viewer.value.layers[-1].data_raw[0][eroded_labels == 1] = 1
+            annotation_widget.viewer.value.layers["object to annotate"].data_raw[0][
+                annotation_widget.viewer.value.layers["object to annotate"].data_raw[0] != 0] = 0
+            annotation_widget.viewer.value.layers["object to annotate"].data_raw[0][eroded_labels == 1] = 1
 
-            for i in range(1, len(annotation_widget.viewer.value.layers[-1].data_raw)):
-                annotation_widget.viewer.value.layers[-1].data_raw[i] = \
-                    cv2.resize(annotation_widget.viewer.value.layers[-1].data_raw[0], (
-                        annotation_widget.viewer.value.layers[-1].data_raw[0].shape[0] // 2 ** i,
-                        annotation_widget.viewer.value.layers[-1].data_raw[0].shape[1] // 2 ** i))
+            for i in range(1, len(annotation_widget.viewer.value.layers["object to annotate"].data_raw)):
+                annotation_widget.viewer.value.layers["object to annotate"].data_raw[i] = \
+                    cv2.resize(annotation_widget.viewer.value.layers["object to annotate"].data_raw[0], (
+                        annotation_widget.viewer.value.layers["object to annotate"].data_raw[0].shape[0] // 2 ** i,
+                        annotation_widget.viewer.value.layers["object to annotate"].data_raw[0].shape[1] // 2 ** i))
 
         else:
             progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                              props[indexes[counter]].coords[:, 2]] = 0
+
+            if annotation_widget.show_labs.value is True:
+                annotation_widget.viewer.value.layers.pop()
+                show_labs(True)
+
             if double_click is False:
                 viewer.camera.zoom = zoom_factor
                 viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
@@ -259,7 +278,7 @@ def Annotation():
             circle_mask[circle_mask != 0] = 0
             circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
                         props[indexes[counter]].coords[:, 2]] = 1
-            annotation_widget.viewer.value.layers[-1].data = circle_mask
+            annotation_widget.viewer.value.layers["object to annotate"].data = circle_mask
 
         annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
             image_layer_name]
@@ -381,9 +400,8 @@ def Annotation():
         global layer, double_click
         # By default, we do not annotate clicking
         double_click = False
-        for l in viewer.layers:
-            if "mask" not in l.name:
-                layer = l
+
+        layer = viewer.layers["Image"]
 
         # We generate the functions to add a label when a key i pressed
         for i in range(1, 10):
@@ -528,7 +546,6 @@ def Annotation():
             if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
                 annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
 
-
     @annotation_widget.next_button.changed.connect
     def next_image(e: Any):
         """
@@ -658,10 +675,12 @@ def Annotation():
                 pyramid.append(cv2.resize(eroded_labels, (eroded_labels.shape[0] // 2 ** i,
                                                           eroded_labels.shape[1] // 2 ** i)))
             annotation_widget.viewer.value.add_labels(pyramid)
+            annotation_widget.viewer.value.layers[-1].name = "object to annotate"
         else:
             circle_mask[props[current_index].coords[:, 0], props[current_index].coords[:, 1],
                         props[current_index].coords[:, 2]] = 1
             annotation_widget.viewer.value.add_labels(circle_mask)
+            annotation_widget.viewer.value.layers[-1].name = "object to annotate"
             """
             pyramid = [circle_mask]
             for i in range(1, 6):
@@ -697,6 +716,7 @@ def Annotation():
                 annotation_widget.viewer.value.add_labels(progression_mask, name="progression_mask")
             else:
                 annotation_widget.viewer.value.layers.pop()
+        annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers["Image"]
 
     @annotation_widget.save_button.changed.connect
     def save_annotations(e: Any):
