@@ -471,6 +471,9 @@ def Annotation():
 
     @annotation_widget.restart_labelling_button.changed.connect
     def restart_labelling(e: Any):
+        """
+        Function to resume the labelling after a first prediction or not
+        """
 
         global images_folder, masks_folder, parent_path, image_path_list, mask_path_list, global_im_path_list,\
                global_lab_path_list, global_labels_list, global_mini_props_list, mini_props_list, counter,\
@@ -486,8 +489,9 @@ def Annotation():
         image_path_list = global_im_path_list.copy()
         global_lab_path_list = labels_file["labels_path"]
         mask_path_list = global_lab_path_list.copy()
-        pred_path_list = sorted([os.path.join(parent_path, "Predictions", f) for f in os.listdir(os.path.join(parent_path,
-                                                                                                 "Predictions"))])
+        if os.path.isdir(os.path.join(parent_path, "Predictions")) is True:
+            pred_path_list = sorted([os.path.join(parent_path, "Predictions", f) for f in
+                                     os.listdir(os.path.join(parent_path, "Predictions"))])
         global_labels_list = labels_file["labels_list"]
         global_mini_props_list = labels_file["regionprops"]
         patch_size = labels_file["patch_size"]
@@ -508,10 +512,12 @@ def Annotation():
         annotation_widget.viewer.value.add_image(imread(global_im_path_list[image_counter]))
         annotation_widget.viewer.value.add_labels(imread(global_lab_path_list[image_counter]))
         annotation_widget.viewer.value.layers[1].name = "mask"
-        annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
-        annotation_widget.viewer.value.layers[2].name = "previous prediction"
-        if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
-            annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
+
+        if os.path.isdir(os.path.join(parent_path, "Predictions")) is True:
+            annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
+            annotation_widget.viewer.value.layers[2].name = "previous prediction"
+            if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
+                annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
 
         # original zoom factor to correct when annotating
         global old_zoom
@@ -519,6 +525,9 @@ def Annotation():
 
     @annotation_widget.image_index_button.changed.connect
     def set_image_index(e: Any):
+        """
+        Function to set the index of the image to visualize in the batch instead of using previous/next buttons
+        """
 
         global counter, image_counter
 
@@ -1852,6 +1861,9 @@ def Prediction():
 
     @prediction_widget.image_index_button.changed.connect
     def set_image_index(e: Any):
+        """
+        Set image index instead of using previous/next
+        """
         if int(e) > len(image_path_list):
             prediction_widget.image_index_button.value = len(image_path_list)
         elif int(e) < 1:
@@ -1868,6 +1880,9 @@ def Prediction():
 
     @prediction_widget.previous_button.changed.connect
     def load_previous_image(e: Any):
+        """
+        Turn to previous image
+        """
         if int(prediction_widget.image_index_button.value) > 1:
             prediction_widget.image_index_button.value = int(prediction_widget.image_index_button.value) - 1
         else:
@@ -1875,6 +1890,9 @@ def Prediction():
 
     @prediction_widget.next_button.changed.connect
     def load_next_image(e: Any):
+        """
+        Turn to next image
+        """
         if int(prediction_widget.image_index_button.value) < len(image_path_list):
             prediction_widget.image_index_button.value = int(prediction_widget.image_index_button.value) + 1
         else:
