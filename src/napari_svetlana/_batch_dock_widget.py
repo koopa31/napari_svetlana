@@ -77,6 +77,8 @@ counter = 0
 # counter of images to be annotated
 image_counter = 0
 total_counter = 0
+# edges thickness
+thickness = 7
 
 global_labels_list = []
 global_im_path_list = []
@@ -1989,17 +1991,17 @@ def Prediction():
         show_info("Prediction started")
 
     @prediction_widget.bound.changed.connect
-    def show_boundaries(e: Any, size=7):
+    def show_boundaries(e: Any):
         """
         Only show the edges of the predicted mask instead of an overlay (only for 2D)
         @param e:
         @param size: edges thickness
         @return:
         """
-        global eroded_labels
+        global eroded_labels, thickness
         if "edge_im" not in globals():
             # computation of the cells segmentation edges
-            eroded_contours = cv2.erode(np.uint16(mask), np.ones((int(size), int(size)), np.uint8))
+            eroded_contours = cv2.erode(np.uint16(mask), np.ones((int(thickness), int(thickness)), np.uint8))
             eroded_labels = mask - eroded_contours
 
         if e is True:
@@ -2031,12 +2033,17 @@ def Prediction():
 
     @prediction_widget.edges_thickness.changed.connect
     def set_edges_thickness(e: Any):
+        """
+        Function which changes the edges thickness in the mask
+        @param e: 
+        @return: 
+        """
+        global thickness
 
         if prediction_widget.bound.value is True:
-            if int(e) % 2 == 0:
-                prediction_widget.edges_thickness.value = int(e) + 1
-                show_info("Size must be odd")
-            show_boundaries(True, int(e))
+
+            thickness = int(e)
+            show_boundaries(True)
 
     @prediction_widget.save_regionprops_button.changed.connect
     def save_regionprops():
