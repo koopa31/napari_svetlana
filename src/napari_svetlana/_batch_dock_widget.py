@@ -1745,6 +1745,8 @@ def Prediction():
         launch_batch_prediction_button=dict(widget_type='PushButton', text='Predict whole batch',
                                             tooltip='Predict the whole batch and save the result'),
         bound=dict(widget_type='CheckBox', text='Show boundaries only', tooltip='Show boundaries only'),
+        edges_thickness=dict(widget_type='LineEdit', label='Edges thickness', value=7,
+                             tooltip='Edges thickness'),
         generate_im_labs_button=dict(widget_type='PushButton', text='Save masks of labels', tooltip='Save one '
                                                                                                     'per attributed label'),
         save_regionprops_button=dict(widget_type='PushButton', text='Save objects statistics', tooltip='Save the '
@@ -1767,6 +1769,7 @@ def Prediction():
             launch_batch_prediction_button,
             vertical_space3,
             bound,
+            edges_thickness,
             save_regionprops_button,
             generate_im_labs_button,
             click_annotate
@@ -1986,16 +1989,17 @@ def Prediction():
         show_info("Prediction started")
 
     @prediction_widget.bound.changed.connect
-    def show_boundaries(e: Any):
+    def show_boundaries(e: Any, size=7):
         """
         Only show the edges of the predicted mask instead of an overlay (only for 2D)
         @param e:
+        @param size: edges thickness
         @return:
         """
         global eroded_labels
         if "edge_im" not in globals():
             # computation of the cells segmentation edges
-            eroded_contours = cv2.erode(np.uint16(mask), np.ones((7, 7), np.uint8))
+            eroded_contours = cv2.erode(np.uint16(mask), np.ones((int(size), int(size)), np.uint8))
             eroded_labels = mask - eroded_contours
 
         if e is True:
@@ -2024,6 +2028,15 @@ def Prediction():
 
         # make image active so it can be labelled
         prediction_widget.viewer.value.layers.selection.active = prediction_widget.viewer.value.layers["image"]
+
+    @prediction_widget.edges_thickness.changed.connect
+    def set_edges_thickness(e: Any):
+
+        if prediction_widget.bound.value is True:
+            if int(e) % 2 == 0:
+                prediction_widget.edges_thickness.value = int(e) + 1
+                show_info("Size must be odd")
+            show_boundaries(True, int(e))
 
     @prediction_widget.save_regionprops_button.changed.connect
     def save_regionprops():
