@@ -1473,8 +1473,12 @@ def Prediction():
             global imagette_contours
             if double_click is True:
                 imagette_contours[mask == lab] = int(key)
-                viewer.layers.pop()
-                display_result(imagette_contours.astype(np.uint8))
+                # Choose whether to label on edges mask or overlay mask
+                if prediction_widget.bound.value is True:
+                    show_boundaries(True)
+                else:
+                    viewer.layers.pop()
+                    display_result(imagette_contours.astype(np.uint8))
 
                 prediction_widget.viewer.value.layers.selection.active = prediction_widget.viewer.value.layers[
                     "image"]
@@ -2017,6 +2021,9 @@ def Prediction():
             prediction_widget.viewer.value.add_labels(pyramidal_imagette_contours)
             if len(np.unique(prediction_widget.viewer.value.layers[1].data)) == 3:
                 prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
+
+        # make image active so it can be labelled
+        prediction_widget.viewer.value.layers.selection.active = prediction_widget.viewer.value.layers["image"]
 
     @prediction_widget.save_regionprops_button.changed.connect
     def save_regionprops():
