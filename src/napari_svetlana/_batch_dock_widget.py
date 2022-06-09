@@ -1734,8 +1734,10 @@ def Prediction():
         vertical_space1=dict(widget_type='Label', label=' '),
         vertical_space2=dict(widget_type='Label', label=' '),
         vertical_space3=dict(widget_type='Label', label=' '),
+        vertical_space4=dict(widget_type='Label', label=' '),
         network_running=dict(widget_type='Label', label='NETWORK RUNNING'),
         image_choice=dict(widget_type='Label', label="IMAGE CHOICE"),
+        classified_mask=dict(widget_type='Label', label="CLASSIFIED MASK"),
         image_index_button=dict(widget_type='LineEdit', label='Image index', value=1,
                                 tooltip='Image index in the batch'),
         previous_button=dict(widget_type='PushButton', text='Previous image',
@@ -1770,11 +1772,13 @@ def Prediction():
             launch_prediction_button,
             launch_batch_prediction_button,
             vertical_space3,
+            classified_mask,
+            click_annotate,
             bound,
             edges_thickness,
+            vertical_space4,
             save_regionprops_button,
-            generate_im_labs_button,
-            click_annotate
+            generate_im_labs_button
 
     ) -> None:
         # Import when users activate plugin
@@ -2035,7 +2039,7 @@ def Prediction():
     def set_edges_thickness(e: Any):
         """
         Function which changes the edges thickness in the mask
-        @param e: 
+        @param e:
         @return: 
         """
         global thickness
