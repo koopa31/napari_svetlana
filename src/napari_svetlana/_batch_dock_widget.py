@@ -70,7 +70,7 @@ def read_logging(log_file, logwindow):
 
 labels_number = [('2', 2), ('3', 3), ('4', 4), ('5', 5), ('6', 6), ('7', 7), ('8', 8), ('9', 9)]
 networks_list = ["ResNet18", "ResNet34", "ResNet50", "ResNet101", "ResNet152", "AlexNet", "DenseNet121",
-                 "DenseNet161", "DenseNet169", "DenseNet201", "CustomCNN2D"]
+                 "DenseNet161", "DenseNet169", "DenseNet201", "lightNN_2_3", "lightNN_3_5", "lightNN_4_5"]
 losses_list = ["CrossEntropy", "L1Smooth", "BCE", "Distance", "L1", "MSE"]
 
 counter = 0
@@ -1036,7 +1036,7 @@ def Training():
         nn_dict = {"ResNet18": "resnet18", "ResNet34": "resnet34", "ResNet50": "resnet50", "ResNet101": "resnet101",
                    "ResNet152": "resnet152", "AlexNet": "alexnet", "DenseNet121": "densenet121",
                    "DenseNet161": "densenet161", "DenseNet169": "densenet169", "DenseNet201": "densenet201",
-                   "CustomCNN2D": "CNN2D"}
+                   "lightNN_2_3": "CNN2D", "lightNN_3_5": "CNN2D", "lightNN_4_5": "CNN2D"}
         # Setting of network
 
         # Concatenation of all the labels lists and conversion to numpy array
@@ -1074,7 +1074,7 @@ def Training():
                                                       bias=False)
 
                 else:
-                    model = CNN2D(max(labels_list), 4)
+                    model = CNN2D(max(labels_list), 4, int(nn_type.split("_")[1]), int(nn_type.split("_")[2]))
 
             elif len(image.shape) == 4:
                 case = "multi3D"
@@ -1113,7 +1113,7 @@ def Training():
                             model.features[0] = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2),
                                                           padding=(3, 3), bias=False)
                     else:
-                        model = CNN2D(max(labels_list), 4)
+                        model = CNN2D(max(labels_list), 4, int(nn_type.split("_")[1]), int(nn_type.split("_")[2]))
 
                 elif case == "3D":
                     model = CNN3D(max(labels_list), 2)
