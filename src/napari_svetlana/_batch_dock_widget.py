@@ -1074,7 +1074,12 @@ def Training():
                                                       bias=False)
 
                 else:
-                    model = CNN2D(max(labels_list), 4, int(nn_type.split("_")[1]), int(nn_type.split("_")[2]))
+                    depth = int(nn_type.split("_")[1])
+                    kersize = int(nn_type.split("_")[2])
+
+                    if patch_size/(2**(depth - 1)) <=  kersize:
+                        show_info("Patch size is too small for this network")
+                    model = CNN2D(max(labels_list), 4, depth, kersize)
 
             elif len(image.shape) == 4:
                 case = "multi3D"
@@ -1113,7 +1118,12 @@ def Training():
                             model.features[0] = nn.Conv2d(image.shape[2] + 1, 64, kernel_size=(7, 7), stride=(2, 2),
                                                           padding=(3, 3), bias=False)
                     else:
-                        model = CNN2D(max(labels_list), 4, int(nn_type.split("_")[1]), int(nn_type.split("_")[2]))
+                        depth = int(nn_type.split("_")[1])
+                        kersize = int(nn_type.split("_")[2])
+
+                        if patch_size / (2 ** (depth - 1)) <= kersize:
+                            show_info("Patch size is too small for this network")
+                        model = CNN2D(max(labels_list), 4, depth, kersize)
 
                 elif case == "3D":
                     model = CNN3D(max(labels_list), 2)
