@@ -41,7 +41,7 @@ from qtpy.QtWidgets import QFileDialog
 
 # from line_profiler_pycharm import profile
 from .CNN3D import CNN3D
-from .CNN2D import CNN2D
+from .reseau import CNN2D
 
 from .PredictionDataset import PredictionDataset
 from .Prediction3DDataset import Prediction3DDataset
@@ -915,13 +915,22 @@ def Training():
                     imagette_mask = labels[xmin:xmax, ymin:ymax].copy()
 
                     imagette_mask[imagette_mask != region_props[i]["label"]] = 0
-                    imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
+                    imagette_mask[imagette_mask == region_props[i]["label"]] = 1
 
                     concat_image = np.zeros((imagette.shape[0], imagette.shape[1], image.shape[2] + 1))
+                    imagette = (imagette - imagette.min()) / (imagette.max() - imagette.min())
                     concat_image[:, :, :-1] = imagette
                     concat_image[:, :, -1] = imagette_mask
-                    # Normalization of the image
-                    concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
+                    # Image with masked of the object and inverse mask
+
+                    #concat_image[:, :, :2] = (imagette[:, :, 0] * imagette_mask)[:, :, None]
+                    #concat_image[:, :, 2:] = (imagette[:, :, 0] * (1 - imagette_mask))[:, :, None]
+
+                    """plt.figure(1)
+                    plt.imshow(concat_image[:, :, 0])
+                    plt.figure(2)
+                    plt.imshow(concat_image[:, :, 2])
+                    plt.show()"""
 
                     img_patch_list.append(concat_image)
                 elif case == "multi3D":
@@ -1002,36 +1011,19 @@ def Training():
         """
 
         global transform, retrain, loaded_network
-        if rot is True and h_flip is False and v_flip is False:
-            transform = A.Compose([
-                A.Rotate(-90, 90, p=prob),
-                ToTensorV2()])
-        elif rot is False and h_flip is True and v_flip is False:
-            transform = A.Compose([
-                A.HorizontalFlip(p=prob),
-                ToTensorV2()])
-        elif rot is False and h_flip is False and v_flip is True:
-            transform = A.Compose([
-                A.VerticalFlip(p=prob),
-                ToTensorV2()])
-        elif rot is True and h_flip is False and v_flip is True:
-            transform = A.Compose([
-                A.Rotate(-90, 90, p=prob),
-                A.VerticalFlip(p=prob),
-                ToTensorV2()])
-        elif rot is True and h_flip is True and v_flip is False:
-            transform = A.Compose([
-                A.Rotate(-90, 90, p=prob),
-                A.HorizontalFlip(p=prob),
-                ToTensorV2()])
-        elif rot is True and h_flip is True and v_flip is True:
-            transform = A.Compose([
-                A.Rotate(-90, 90, p=prob),
-                A.HorizontalFlip(p=prob),
-                A.VerticalFlip(p=prob),
-                ToTensorV2()])
-        else:
-            transform = A.Compose([ToTensorV2()])
+
+        # Data augmentation
+        transforms_list = []
+        if rot is True:
+            transforms_list.append(A.Rotate(-90, 90, p=prob))
+        if h_flip is True:
+            transforms_list.append(A.HorizontalFlip(p=prob))
+        if v_flip is True:
+            transforms_list.append(A.VerticalFlip(p=prob))
+        transforms_list.append(ToTensorV2())
+        transform = A.Compose(transforms_list)
+
+        # List of available network achitectures
 
         nn_dict = {"ResNet18": "resnet18", "ResNet34": "resnet34", "ResNet50": "resnet50", "ResNet101": "resnet101",
                    "ResNet152": "resnet152", "AlexNet": "alexnet", "DenseNet121": "densenet121",
@@ -1057,8 +1049,8 @@ def Training():
                     set_parameter_requires_grad(model, True)
 
                     if "resnet" in nn_dict[nn_type]:
-                        # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1" as we have
-                        # "labels_number" labels
+                        # The fully connected layer of the network is changed so the ouptut size is "labels_number + 1"
+                        # as we have "labels_number" labels
                         num_ftrs = model.fc.in_features
                         model.fc = nn.Linear(num_ftrs, max(labels_list) + 1, bias=True)
                         model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
@@ -1150,6 +1142,11 @@ def Training():
             "L1": "L1_Loss",
             "MSE": "MseLoss"
         }
+
+        # Computing the network's parameters number
+        model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+        params = sum([np.prod(p.size()) for p in model_parameters])
+        print("NUMBER OF PARAMETERS OF THE NETWORK : ", params)
 
         # Setting the optimizer
         LR = lr
@@ -1274,7 +1271,6 @@ def Training():
                         elif phase == "val":
                             pass
                     yield epoch + 1
-
             except:
                 if "bs" in locals():
                     bs -= 1
@@ -1286,38 +1282,9 @@ def Training():
                     bs += 1
                 training_loader = DataLoader(dataset=train_data, batch_size=int(bs), shuffle=True)
 
-        """
-        folder = "/home/cazorla/Images/TEST"
-        model = torch.load(os.path.join(folder, "training_ABS_full1000.pth"))["model"]
-        from natsort import natsorted
-        validation_folder = "/home/cazorla/Images/TEST/Imagettes_validation"
-        validation_imagettes_list = natsorted(
-            [f for f in os.listdir(validation_folder) if os.path.isfile(os.path.join(validation_folder, f)) and
-             os.path.join(validation_folder, f).endswith(".png") and os.path.splitext(f)[0].endswith("imagette")])
-        validation_imagettes_masks_list = natsorted(
-            [f for f in os.listdir(validation_folder) if os.path.isfile(os.path.join(validation_folder, f)) and
-             os.path.join(validation_folder, f).endswith(".png") and os.path.splitext(f)[0].endswith("mask")])
-        model.eval()
-        values_list = []
-        LIST = []
-        for image_nb in range(0, len(validation_imagettes_list)):
-            imagette = np.array(Image.open(os.path.join(validation_folder, validation_imagettes_list[image_nb])))
-            imagette_mask = np.array(Image.open(os.path.join(validation_folder,
-                                     validation_imagettes_masks_list[image_nb])))
-
-            concat_image = np.zeros((imagette.shape[0], imagette.shape[1], 4))
-            concat_image[:, :, :3] = imagette
-            concat_image[:, :, 3] = imagette_mask
-            # Normalization of the image
-            concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
-
-            img_t = transforms.Compose([transforms.ToTensor()])(concat_image)
-            batch_t = torch.unsqueeze(img_t, 0).type(torch.float32).to("cuda")
-            out = model(batch_t)
-            _, index = torch.max(out, 1)
-            print(index)
-        """
         plt.plot(LOSS_LIST)
+        plt.title("Training loss")
+        plt.xlabel("Epochs number")
         plt.show()
 
     @magicgui(

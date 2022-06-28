@@ -24,13 +24,19 @@ class PredictionDataset(Dataset):
             maskette = self.labels[xmin:xmax, ymin:ymax].copy()
 
             maskette[maskette != prop.label] = 0
-            maskette[maskette == prop.label] = self.max_type_val
+            maskette[maskette == prop.label] = 1
 
-            # L'imagette et son mask étant générés, on passe a la concaténation pour faire la prédiction du label par le CNN
+            # L'imagette et son mask étant générés, on passe a la concaténation pour faire la prédiction du label par
+            # le CNN
 
             concat_image = np.zeros((imagette.shape[0], imagette.shape[1], imagette.shape[2] + 1))
+            imagette = (imagette - imagette.min()) / (imagette.max() - imagette.min())
             concat_image[:, :, :-1] = imagette
             concat_image[:, :, -1] = maskette
+
+            # Image with masked of the object and inverse mask
+            #concat_image[:, :, :2] = (imagette[:, :, 0] * maskette)[:, :, None]
+            #concat_image[:, :, 2:] = (imagette[:, :, 0] * (1 - maskette))[:, :, None]
             if concat_image.shape[0] == 0 or concat_image.shape[1] == 0:
                 pass
             else:
