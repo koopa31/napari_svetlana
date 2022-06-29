@@ -24,7 +24,7 @@ class CNN3D(Module):
             MaxPool3d(kernel_size=2, stride=2),
         )
         self.avg_pool = Sequential(AdaptiveAvgPool3d(output_size=(1, 1, 1)))
-        self.fc = Sequential(Linear(512, labels_number + 1))
+        self.fc = Sequential(Linear(512, labels_number))
 
     # Defining the forward pass
     def forward(self, x):

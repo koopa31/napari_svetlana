@@ -41,7 +41,7 @@ from qtpy.QtWidgets import QFileDialog
 
 # from line_profiler_pycharm import profile
 from .CNN3D import CNN3D
-from .reseau import CNN2D
+from .CNN2D import CNN2D
 
 from .PredictionDataset import PredictionDataset
 from .Prediction3DDataset import Prediction3DDataset
@@ -116,7 +116,7 @@ def Annotation():
             print("key is ", key)
             if (int(annotation_widget.labels_nb.value) < key) is False:
                 if counter < len(props) - 1:
-                    global_labels_list[image_counter].append(key)
+                    global_labels_list[image_counter].append(key - 1)
 
                     global_mini_props_list[image_counter].append(
                         {"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
@@ -192,11 +192,12 @@ def Annotation():
                     viewer.status = str(counter) + " images processed over " + str(len(props)) + " (" + \
                                     str(total_counter) + " over the whole batch)"
                 elif counter == len(props) - 1:
-                    global_labels_list[image_counter].append(key)
+                    global_labels_list[image_counter].append(key - 1)
                     global_mini_props_list[image_counter].append(
                         {"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
                          "label": props[indexes[counter]].label})
-                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = key
+                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = \
+                        key
                     if annotation_widget.show_labs.value is True:
                         annotation_widget.viewer.value.layers.pop()
                         show_labs(True)
@@ -917,20 +918,16 @@ def Training():
                     imagette_mask[imagette_mask != region_props[i]["label"]] = 0
                     imagette_mask[imagette_mask == region_props[i]["label"]] = 1
 
-                    concat_image = np.zeros((imagette.shape[0], imagette.shape[1], image.shape[2] + 1))
-                    imagette = (imagette - imagette.min()) / (imagette.max() - imagette.min())
+                    concat_image = np.zeros((imagette.shape[0], imagette.shape[1], imagette.shape[2] + 1))
+                    imagette = imagette / 255
                     concat_image[:, :, :-1] = imagette
                     concat_image[:, :, -1] = imagette_mask
                     # Image with masked of the object and inverse mask
 
-                    #concat_image[:, :, :2] = (imagette[:, :, 0] * imagette_mask)[:, :, None]
-                    #concat_image[:, :, 2:] = (imagette[:, :, 0] * (1 - imagette_mask))[:, :, None]
+                    #concat_image[:, :, 0] = np.mean(imagette[:, :, 0] * imagette_mask) #torch.ones_like(imagette[:, :, 0])
+                    #concat_image[:, :, 0] *= torch.mean(imagette[:, :, 0] * imagette_mask)
 
-                    """plt.figure(1)
-                    plt.imshow(concat_image[:, :, 0])
-                    plt.figure(2)
-                    plt.imshow(concat_image[:, :, 2])
-                    plt.show()"""
+                    #concat_image[:, :, 1] = (imagette[:, :, 0] * (1 - imagette_mask))
 
                     img_patch_list.append(concat_image)
                 elif case == "multi3D":
@@ -1071,13 +1068,13 @@ def Training():
 
                     if patch_size/(2**(depth - 1)) <=  kersize:
                         show_info("Patch size is too small for this network")
-                    model = CNN2D(max(labels_list), 4, depth, kersize)
+                    model = CNN2D(max(labels_list) + 1, 4, depth, kersize)
 
             elif len(image.shape) == 4:
                 case = "multi3D"
                 image = np.transpose(image, (1, 2, 3, 0))
                 mask = np.transpose(mask, (1, 2, 0))
-                model = CNN3D(max(labels_list), image.shape[3] + 1)
+                model = CNN3D(max(labels_list) + 1, image.shape[3] + 1)
 
             else:
                 from .CustomDialog import CustomDialog
@@ -1115,10 +1112,10 @@ def Training():
 
                         if patch_size / (2 ** (depth - 1)) <= kersize:
                             show_info("Patch size is too small for this network")
-                        model = CNN2D(max(labels_list), 4, depth, kersize)
+                        model = CNN2D(max(labels_list) + 1, 4, depth, kersize)
 
                 elif case == "3D":
-                    model = CNN3D(max(labels_list), 2)
+                    model = CNN3D(max(labels_list) + 1, 2)
 
         else:
             retrain = True
@@ -1217,10 +1214,12 @@ def Training():
             LOSS_LIST = []
         else:
             LOSS_LIST = loaded_network["loss_list"]
-        weights = np.ones([max(labels_list) + 1])
+        """weights = np.ones([max(labels_list) + 1])
         weights[0] = 0
-        weights = torch.from_numpy(weights)
-        loss = eval("nn." + losses_dict[loss_func] + "(weight=weights).type(torch_type)")
+        weights = torch.from_numpy(weights)"""
+        #loss = eval("nn." + losses_dict[loss_func] + "(weight=weights).type(torch_type)")
+        loss = eval("nn." + losses_dict[loss_func] + "().type(torch_type)")
+
         # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
         # Loop over epochs
         iterations_number = epochs_nb
@@ -1471,7 +1470,7 @@ def Prediction():
         @return:
         """
 
-        imagette_contours[prop.coords[:, 0], prop.coords[:, 1]] = list_pred[i].item()
+        imagette_contours[prop.coords[:, 0], prop.coords[:, 1]] = list_pred[i].item() + 1
         if list_pred[i] == 1:
             compteur += 1
         return compteur
@@ -1487,7 +1486,7 @@ def Prediction():
          @return:
          """
 
-        imagette_contours[prop.coords[:, 0], prop.coords[:, 1], prop.coords[:, 2]] = list_pred[i].item()
+        imagette_contours[prop.coords[:, 0], prop.coords[:, 1], prop.coords[:, 2]] = list_pred[i].item() + 1
         if list_pred[i] == 1:
             compteur += 1
         return compteur

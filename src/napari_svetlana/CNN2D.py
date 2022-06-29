@@ -1,5 +1,5 @@
 import torch
-from torch.nn import Sequential, Conv2d, ReLU, MaxPool2d, AdaptiveAvgPool2d, Linear, Module, BatchNorm2d
+from torch.nn import Sequential, Conv2d, ReLU, MaxPool2d, AdaptiveAvgPool2d, Linear, Module, BatchNorm2d, Softmax
 
 
 class CNN2D(Module):
@@ -28,13 +28,14 @@ class CNN2D(Module):
 
         self.cnn_layers = Sequential(*layers_list)
         self.avg_pool = Sequential(AdaptiveAvgPool2d(output_size=(1, 1)))
-        self.fc = Sequential(Linear(nconv, labels_number + 1))
+        self.fc = Sequential(Linear(nconv, labels_number))
+        self.softmax = Softmax()
 
     # Defining the forward pass
     def forward(self, x):
-
         x = self.cnn_layers(x)
         x = self.avg_pool(x)
         x = torch.squeeze(x)
         x = self.fc(x)
+        x = self.softmax(x)
         return x
