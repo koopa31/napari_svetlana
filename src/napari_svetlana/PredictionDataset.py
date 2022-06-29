@@ -30,13 +30,13 @@ class PredictionDataset(Dataset):
             # le CNN
 
             concat_image = np.zeros((imagette.shape[0], imagette.shape[1], imagette.shape[2] + 1))
-            imagette = (imagette - imagette.min()) / (imagette.max() - imagette.min())
+            imagette = imagette / 255
             concat_image[:, :, :-1] = imagette
             concat_image[:, :, -1] = maskette
 
             # Image with masked of the object and inverse mask
-            #concat_image[:, :, :2] = (imagette[:, :, 0] * maskette)[:, :, None]
-            #concat_image[:, :, 2:] = (imagette[:, :, 0] * (1 - maskette))[:, :, None]
+            #concat_image[:, :, 0] = imagette[:, :, 0] * maskette
+            #concat_image[:, :, 1] = imagette[:, :, 0] * (1 - maskette)
             if concat_image.shape[0] == 0 or concat_image.shape[1] == 0:
                 pass
             else:
