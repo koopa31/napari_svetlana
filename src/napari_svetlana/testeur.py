@@ -565,7 +565,7 @@ folder_path = "/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/Test papier s
 images_folder = os.path.join(folder_path, "Images")
 masks_folder = os.path.join(folder_path, "Masks")
 res_folder = os.path.join(folder_path, "Predictions")
-binary_file = torch.load(os.path.join(folder_path, "Svetlana", "labels_xp"))
+binary_file = torch.load(os.path.join(folder_path, "Svetlana", "labels"))
 
 labels_list = binary_file["labels_list"]
 patch_size = int(binary_file["patch_size"])
@@ -584,7 +584,7 @@ mask = imread(labels_path_list[0])
 nn_type = "lightNN_2_3"
 
 model = train(image, mask, patch_size, region_props_list, labels_list, nn_type, loss_func="CrossEntropy", lr=0.01,
-              epochs_nb=1000, rot=False, h_flip=False, v_flip=False, prob=1.0, batch_size=128, saving_ep=100,
+              epochs_nb=500, rot=False, h_flip=True, v_flip=True, prob=1.0, batch_size=128, saving_ep=100,
               training_name="training", model=None)
 
 """ PREDICTION """
