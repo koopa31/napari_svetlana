@@ -13,6 +13,7 @@ from Prediction3DDataset import Prediction3DDataset
 import os
 import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
+from time import time
 
 from CustomDataset import CustomDataset
 
@@ -574,6 +575,8 @@ image_path_list = sorted([os.path.join(images_folder, f) for f in os.listdir(ima
 labels_path_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder)])
 
 """ TRAINING """
+torch.cuda.synchronize("cuda")
+start = time()
 
 retrain = False
 image = imread(image_path_list[0])
@@ -586,6 +589,9 @@ nn_type = "lightNN_2_3"
 model = train(image, mask, patch_size, region_props_list, labels_list, nn_type, loss_func="CrossEntropy", lr=0.01,
               epochs_nb=500, rot=False, h_flip=True, v_flip=True, prob=1.0, batch_size=128, saving_ep=100,
               training_name="training", model=None)
+
+end = time()
+print("training time = ", end - start)
 
 """ PREDICTION """
 
