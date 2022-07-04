@@ -919,7 +919,8 @@ def Training():
                     imagette_mask[imagette_mask == region_props[i]["label"]] = 1
 
                     concat_image = np.zeros((imagette.shape[0], imagette.shape[1], imagette.shape[2] + 1))
-                    imagette = imagette / 255
+                    #imagette = imagette / 255
+                    imagette = (imagette - imagette.min()) / (imagette.max() - imagette.min())
                     concat_image[:, :, :-1] = imagette
                     concat_image[:, :, -1] = imagette_mask
                     # Image with masked of the object and inverse mask

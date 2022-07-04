@@ -31,7 +31,8 @@ class PredictionDataset(Dataset):
             # le CNN
 
             concat_image = np.zeros((imagette.shape[0], imagette.shape[1], imagette.shape[2] + 1))
-            imagette = imagette / 255
+            # imagette = imagette / 255
+            imagette = (imagette - imagette.min()) / (imagette.max() - imagette.min())
             concat_image[:, :, :-1] = imagette
             concat_image[:, :, -1] = maskette
 

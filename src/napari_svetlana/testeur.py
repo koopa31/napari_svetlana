@@ -14,6 +14,7 @@ import os
 import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 from time import time
+from torchvision import models
 
 from CustomDataset import CustomDataset
 
@@ -66,7 +67,8 @@ def get_image_patch(image_list, mask_list, region_props_list, labels_list, torch
                 imagette_mask[imagette_mask == region_props[i]["label"]] = 1
 
                 concat_image = np.zeros((imagette.shape[0], imagette.shape[1], imagette.shape[2] + 1))
-                imagette = imagette / 255
+                #imagette = imagette / 255
+                imagette = (imagette - imagette.min()) / (imagette.max() - imagette.min())
                 concat_image[:, :, :-1] = imagette
                 concat_image[:, :, -1] = imagette_mask
                 # Image with masked of the object and inverse mask
@@ -222,10 +224,7 @@ def train(image, mask, patch_size, region_props_list, labels_list, nn_type, loss
             model = CNN3D(max(labels_list) + 1, image.shape[3] + 1)
 
         else:
-            from .CustomDialog import CustomDialog
-            diag = CustomDialog()
-            diag.exec()
-            case = diag.get_case()
+            case = "3D"
 
             if case == "multi2D":
                 if nn_dict[nn_type] != "CNN2D":
@@ -425,10 +424,10 @@ def train(image, mask, patch_size, region_props_list, labels_list, nn_type, loss
                 bs += 1
             training_loader = DataLoader(dataset=train_data, batch_size=int(bs), shuffle=True)
 
-    plt.plot(LOSS_LIST)
+    """plt.plot(LOSS_LIST)
     plt.title("Training loss")
     plt.xlabel("Epochs number")
-    plt.show()
+    plt.show()"""
     return model
 
 
@@ -570,7 +569,7 @@ def predict(image, labels, props, patch_size, batch_size):
 global device
 device = "cpu"
 
-folder_path = "/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/Test papier svetlana/Test synthétique"
+folder_path = "/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/Test papier svetlana/tube neural 3d"
 images_folder = os.path.join(folder_path, "Images")
 masks_folder = os.path.join(folder_path, "Masks")
 res_folder = os.path.join(folder_path, "Predictions")
@@ -596,7 +595,7 @@ mask = imread(labels_path_list[0])
 nn_type = "lightNN_2_3"
 
 model = train(image, mask, patch_size, region_props_list, labels_list, nn_type, loss_func="CrossEntropy", lr=0.01,
-              epochs_nb=1000, rot=False, h_flip=True, v_flip=True, prob=1.0, batch_size=128, saving_ep=100,
+              epochs_nb=1000, rot=False, h_flip=False, v_flip=False, prob=1.0, batch_size=128, saving_ep=100,
               training_name="training", model=None)
 
 end = time()
@@ -615,7 +614,7 @@ groundtruth_path = os.path.join(folder_path, "groundtruth.png")
 
 groundtruth = imread(groundtruth_path)
 
-labels_nb = np.max(imread(os.path.join(folder_path, "mask_cp_masks.png")))
+labels_nb = np.max(imread(os.path.join(folder_path, "mask_cp_masks.tif")))
 
 plt.figure(1)
 plt.imshow(groundtruth)
