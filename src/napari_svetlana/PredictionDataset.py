@@ -4,13 +4,14 @@ from torchvision import transforms
 
 
 class PredictionDataset(Dataset):
-    def __init__(self, image, labels, props, half_patch_size, max_type_val):
+    def __init__(self, image, labels, props, half_patch_size, max_type_val, device):
         self.props = props
         self.image = image
         self.labels = labels
         self.half_patch_size = half_patch_size
         self.transform = transforms.Compose([transforms.ToTensor()])
         self.max_type_val = max_type_val
+        self.device = device
 
     def __getitem__(self, index):
         prop = self.props[index]
@@ -43,7 +44,7 @@ class PredictionDataset(Dataset):
                 # Normalisation de l'image
                 concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
 
-            return self.transform(concat_image.astype("float32")).to("cuda")
+            return self.transform(concat_image.astype("float32")).to(self.device)
 
     def __len__(self):
         return len(self.props)

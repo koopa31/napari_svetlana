@@ -1532,7 +1532,7 @@ def Prediction():
             pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                          (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-            data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, max)
+            data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, max, "cuda")
 
         elif case == "multi3D":
             image = np.transpose(image, (1, 2, 3, 0))
@@ -1546,7 +1546,7 @@ def Prediction():
                                          (patch_size // 2 + 1, patch_size // 2 + 1),
                                          (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-            data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, max)
+            data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, max, "cuda")
 
         else:
             imagette_contours = np.zeros((image.shape[0], image.shape[1], image.shape[2]))
@@ -1557,7 +1557,7 @@ def Prediction():
                                          (patch_size // 2 + 1, patch_size // 2 + 1),
                                          (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-            data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, max)
+            data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, max, "cuda")
         prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
 
         global list_pred
@@ -1640,7 +1640,7 @@ def Prediction():
                 pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                              (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-                data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, max)
+                data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, max, "cuda")
 
             elif case == "multi3D":
                 image = np.transpose(image, (1, 2, 3, 0))
@@ -1654,7 +1654,7 @@ def Prediction():
                                              (patch_size // 2 + 1, patch_size // 2 + 1),
                                              (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-                data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, max)
+                data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, max, "cuda")
 
             else:
                 imagette_contours = np.zeros((image.shape[0], image.shape[1], image.shape[2]))
@@ -1665,7 +1665,7 @@ def Prediction():
                                              (patch_size // 2 + 1, patch_size // 2 + 1),
                                              (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-                data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, max)
+                data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, max, "cuda")
             prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
 
             global list_pred

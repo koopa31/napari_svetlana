@@ -37,7 +37,10 @@ def get_image_patch(image_list, mask_list, region_props_list, labels_list, torch
     """
 
     labels_tensor = torch.from_numpy(labels_list).type(torch_type)
-    labels_tensor = nn.functional.one_hot(labels_tensor.type(torch.cuda.LongTensor))
+    if device == "cuda":
+        labels_tensor = nn.functional.one_hot(labels_tensor.type(torch.cuda.LongTensor))
+    else:
+        labels_tensor = nn.functional.one_hot(labels_tensor.type(torch.LongTensor))
 
     img_patch_list = []
     try:
@@ -271,8 +274,10 @@ def train(image, mask, patch_size, region_props_list, labels_list, nn_type, loss
             diag.exec()
             case = diag.get_case()
 
-    torch_type = torch.cuda.FloatTensor
-
+    if device == "cuda":
+        torch_type = torch.cuda.FloatTensor
+    else:
+        torch_type = torch.FloatTensor
     losses_dict = {
         "CrossEntropy": "CrossEntropyLoss",
         "L1Smooth": "L1SmoothLoss",
@@ -296,8 +301,8 @@ def train(image, mask, patch_size, region_props_list, labels_list, nn_type, loss
         optimizer = loaded_network["optimizer_state_dict"]
 
     # CUDA for PyTorch
-    use_cuda = torch.cuda.is_available()
-    device = torch.device("cuda:0" if use_cuda else "cpu")
+    #use_cuda = torch.cuda.is_available()
+    #device = torch.device("cuda:0" if use_cuda else "cpu")
     torch.backends.cudnn.benchmark = True
 
     # Parameters
@@ -343,7 +348,7 @@ def train(image, mask, patch_size, region_props_list, labels_list, nn_type, loss
     training_loader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True)
 
     # Optimizer
-    model.to("cuda")
+    model.to(device)
     params_to_update = []
     for name, param in model.named_parameters():
         if param.requires_grad is True:
@@ -382,7 +387,7 @@ def train(image, mask, patch_size, region_props_list, labels_list, nn_type, loss
                             local_batch, local_labels = local_batch.to(device), local_labels.to(device)
 
                             out = model(local_batch)
-                            total_loss = loss(out, local_labels.type(torch.cuda.FloatTensor))
+                            total_loss = loss(out, local_labels.type(torch_type))
                             optimizer.zero_grad()
                             total_loss.backward()
                             optimizer.step()
@@ -502,7 +507,7 @@ def predict(image, labels, props, patch_size, batch_size):
         pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                      (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-        data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, max)
+        data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, max, device)
 
     elif case == "multi3D":
         image = np.transpose(image, (1, 2, 3, 0))
@@ -562,6 +567,9 @@ def predict(image, labels, props, patch_size, batch_size):
 
 """ DEFINITION DES PARAMÈTRES """
 
+global device
+device = "cpu"
+
 folder_path = "/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/Test papier svetlana/Test synthétique"
 images_folder = os.path.join(folder_path, "Images")
 masks_folder = os.path.join(folder_path, "Masks")
@@ -575,7 +583,8 @@ image_path_list = sorted([os.path.join(images_folder, f) for f in os.listdir(ima
 labels_path_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder)])
 
 """ TRAINING """
-torch.cuda.synchronize("cuda")
+if device == "cuda":
+    torch.cuda.synchronize("cuda")
 start = time()
 
 retrain = False
@@ -587,7 +596,7 @@ mask = imread(labels_path_list[0])
 nn_type = "lightNN_2_3"
 
 model = train(image, mask, patch_size, region_props_list, labels_list, nn_type, loss_func="CrossEntropy", lr=0.01,
-              epochs_nb=500, rot=False, h_flip=True, v_flip=True, prob=1.0, batch_size=128, saving_ep=100,
+              epochs_nb=1000, rot=False, h_flip=True, v_flip=True, prob=1.0, batch_size=128, saving_ep=100,
               training_name="training", model=None)
 
 end = time()
