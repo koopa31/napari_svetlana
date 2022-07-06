@@ -15,7 +15,7 @@ The inputs are :
 </ul>
 Svetlana can process 2D, 3D and multichannel image.
 
-If you use this plugin please cite the paper: ::
+If you use this plugin please cite the paper: 
 
   @article{stringer2021cellpose,<br/>
       title={Svetlana blabla},<br/>
