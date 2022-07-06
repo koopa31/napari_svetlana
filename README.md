@@ -17,14 +17,14 @@ Svetlana can process 2D, 3D and multichannel image.
 
 If you use this plugin please cite the paper: ::
 
-  @article{stringer2021cellpose,
-      title={Svetlana blabla},
-      author={Cazorla, Morin, Weiss},
-      journal={Nature Communication},
-      volume={18},
-      number={1},
-      pages={100--106},
-      year={2022},
+  @article{stringer2021cellpose,<br/>
+      title={Svetlana blabla},<br/>
+      author={Cazorla, Morin, Weiss},<br/>
+      journal={Nature Communication},<br/>
+      volume={18},<br/>
+      number={1},<br/>
+      pages={100--106},<br/>
+      year={2022},<br/>
       publisher={Nature Publishing Group}
       }
 
