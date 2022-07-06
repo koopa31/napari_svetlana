@@ -7,7 +7,27 @@
 [![codecov](https://codecov.io/gh/koopa31/napari_svetlana/branch/main/graph/badge.svg)](https://codecov.io/gh/koopa31/napari_svetlana)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari_svetlana)](https://napari-hub.org/plugins/napari_svetlana)
 
-The aim of this plugin is to classify the output of a segmentation algorithm in order to remove outliers
+The aim of this plugin is to classify the output of a segmentation algorithm.
+The inputs are :
+<ul>
+  <li>A folder of raw image</li>
+  <li>Their segmentation masks where each ROI has its own label.</li>
+</ul>
+Svetlana can process 2D, 3D and multichannel image.
+
+If you use this plugin please cite the paper: ::
+
+  @article{stringer2021cellpose,
+      title={Svetlana blabla},
+      author={Cazorla, Morin, Weiss},
+      journal={Nature Communication},
+      volume={18},
+      number={1},
+      pages={100--106},
+      year={2022},
+      publisher={Nature Publishing Group}
+      }
+
 
 ----------------------------------
 
@@ -28,6 +48,10 @@ You can install `napari_svetlana` via [pip]:
     pip install napari_svetlana
 
 
+## Tutorial
+
+To learn more about the features of
+Svetlana and how to use it, please check our [Youtube tutorial](https://youtube.com).
 
 
 ## Contributing
