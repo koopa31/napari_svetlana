@@ -2,15 +2,16 @@ from torch.utils.data import Dataset
 import numpy as np
 from torchvision import transforms
 import torch
+from .PredictionDataset import max_to_1, min_max_norm
 
 
 class Prediction3DDataset(Dataset):
-    def __init__(self, image, labels, props, half_patch_size, max_type_val, device):
+    def __init__(self, image, labels, props, half_patch_size, norm_type, device):
         self.props = props
         self.image = image
         self.labels = labels
         self.half_patch_size = half_patch_size
-        self.max_type_val = max_type_val
+        self.norm_type = norm_type
         self.device = device
 
     def __getitem__(self, index):
@@ -27,14 +28,17 @@ class Prediction3DDataset(Dataset):
             maskette = self.labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
 
             maskette[maskette != prop.label] = 0
-            maskette[maskette == prop.label] = self.max_type_val
+            maskette[maskette == prop.label] = 1
 
             concat_image = np.zeros((2, imagette.shape[0], imagette.shape[1], imagette.shape[2])).astype(imagette.dtype)
 
+            if self.norm_type == "min max normalization":
+                imagette = min_max_norm(imagette)
+            elif self.norm_type == "max to 1 normalization":
+                imagette = max_to_1(imagette)
+
             concat_image[0, :, :, :] = imagette
             concat_image[1, :, :, :] = maskette
-
-            concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
 
             return torch.from_numpy(concat_image.astype("float32")).to(self.device)
 

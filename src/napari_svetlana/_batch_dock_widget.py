@@ -43,7 +43,7 @@ from qtpy.QtWidgets import QFileDialog
 from .CNN3D import CNN3D
 from .CNN2D import CNN2D
 
-from .PredictionDataset import PredictionDataset
+from .PredictionDataset import PredictionDataset, max_to_1, min_max_norm
 from .Prediction3DDataset import Prediction3DDataset
 from .PredictionMulti3DDataset import PredictionMulti3DDataset
 
@@ -72,6 +72,7 @@ labels_number = [('2', 2), ('3', 3), ('4', 4), ('5', 5), ('6', 6), ('7', 7), ('8
 networks_list = ["ResNet18", "ResNet34", "ResNet50", "ResNet101", "ResNet152", "AlexNet", "DenseNet121",
                  "DenseNet161", "DenseNet169", "DenseNet201", "lightNN_2_3", "lightNN_3_5", "lightNN_4_5"]
 losses_list = ["CrossEntropy", "L1Smooth", "BCE", "Distance", "L1", "MSE"]
+data_norm_list = ["min max normalization", "max to 1 normalization", "no normalization"]
 
 counter = 0
 # counter of images to be annotated
@@ -880,7 +881,7 @@ def Training():
             for param in model.parameters():
                 param.requires_grad = False
 
-    def get_image_patch(image_list, mask_list, region_props_list, labels_list, torch_type, case):
+    def get_image_patch(image_list, mask_list, region_props_list, labels_list, torch_type, case, norm_type):
         """
         This function aims at contructing the tensors of the images and their labels
         @param image: Raw image
@@ -920,7 +921,12 @@ def Training():
 
                     concat_image = np.zeros((imagette.shape[0], imagette.shape[1], imagette.shape[2] + 1))
                     #imagette = imagette / 255
-                    imagette = (imagette - imagette.min()) / (imagette.max() - imagette.min())
+
+                    if norm_type == "min max normalization":
+                        imagette = min_max_norm(imagette)
+                    elif norm_type == "max to 1 normalization":
+                        imagette = max_to_1(imagette)
+
                     concat_image[:, :, :-1] = imagette
                     concat_image[:, :, -1] = imagette_mask
                     # Image with masked of the object and inverse mask
@@ -944,15 +950,19 @@ def Training():
                     imagette_mask = labels[zmin:zmax, xmin:xmax, ymin:ymax].copy()
 
                     imagette_mask[imagette_mask != region_props[i]["label"]] = 0
-                    imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
+                    imagette_mask[imagette_mask == region_props[i]["label"]] = 1
 
                     concat_image = np.zeros((imagette.shape[0] + 1, imagette.shape[1], imagette.shape[2],
                                              imagette.shape[3])).astype(image.dtype)
 
+                    # normalization
+                    if norm_type == "min max normalization":
+                        imagette = min_max_norm(imagette)
+                    elif norm_type == "max to 1 normalization":
+                        imagette = max_to_1(imagette)
+
                     concat_image[:-1, :, :, :] = imagette
                     concat_image[-1, :, :, :] = imagette_mask
-
-                    concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
 
                     img_patch_list.append(concat_image)
 
@@ -969,15 +979,19 @@ def Training():
                     imagette_mask = labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
 
                     imagette_mask[imagette_mask != region_props[i]["label"]] = 0
-                    imagette_mask[imagette_mask == region_props[i]["label"]] = max_type_val
+                    imagette_mask[imagette_mask == region_props[i]["label"]] = 1
 
                     concat_image = np.zeros((2, imagette.shape[0], imagette.shape[1], imagette.shape[2])).astype(
                         image.dtype)
 
+                    # normalization
+                    if norm_type == "min max normalization":
+                        imagette = min_max_norm(imagette)
+                    elif norm_type == "max to 1 normalization":
+                        imagette = max_to_1(imagette)
+
                     concat_image[0, :, :, :] = imagette
                     concat_image[1, :, :, :] = imagette_mask
-
-                    concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
 
                     img_patch_list.append(concat_image)
 
@@ -985,7 +999,7 @@ def Training():
         return train_data
 
     def train(viewer, image, mask, region_props_list, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
-              v_flip, prob, batch_size, saving_ep, training_name, model=None):
+              v_flip, prob, batch_size, saving_ep, training_name, norm_type, model=None):
         """
         Training of the classification neural network
         @param viewer: Napari viewer instance
@@ -1198,7 +1212,7 @@ def Training():
                                                          (patch_size // 2 + 1, patch_size // 2 + 1),
                                                          (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
         train_data = get_image_patch(pad_image_list, pad_labels_list, region_props_list_to_clean,
-                                     labels_list, torch_type, case)
+                                     labels_list, torch_type, case, norm_type)
         training_loader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True)
 
         # Optimizer
@@ -1309,6 +1323,8 @@ def Training():
         h_flip=dict(widget_type='CheckBox', text='Horizontal flip', tooltip='Horizontal flip'),
         prob=dict(widget_type='LineEdit', label='Probability', value=0.8, tooltip='Probability'),
         b_size=dict(widget_type='LineEdit', label='Batch Size', value=128, tooltip='Batch Size'),
+        data_norm=dict(widget_type='ComboBox', label='Data normalization', choices=data_norm_list,
+                       value="min max normalization", tooltip='Type of data normalization'),
         vertical_space3=dict(widget_type='Label', label=' '),
         vertical_space4=dict(widget_type='Label', label=' '),
         SAVING_PARAMETERS=dict(widget_type='Label'),
@@ -1328,6 +1344,7 @@ def Training():
             lr,
             epochs,
             b_size,
+            data_norm,
             vertical_space2,
             DATA_AUGMENTATION_TYPE,
             rotations,
@@ -1407,7 +1424,8 @@ def Training():
                  int(training_widget.epochs.value), training_widget.rotations.value,
                  training_widget.h_flip.value, training_widget.v_flip.value,
                  float(training_widget.prob.value), int(training_widget.b_size.value),
-                 int(training_widget.saving_ep.value), str(training_widget.training_name.value), model)
+                 int(training_widget.saving_ep.value), str(training_widget.training_name.value),
+                 str(training_widget.data_norm.value), model)
         else:
 
             training_worker = thread_worker(train, progress={"total": int(training_widget.epochs.value)})(
@@ -1417,7 +1435,8 @@ def Training():
                 int(training_widget.epochs.value), training_widget.rotations.value,
                 training_widget.h_flip.value, training_widget.v_flip.value,
                 float(training_widget.prob.value), int(training_widget.b_size.value),
-                int(training_widget.saving_ep.value), str(training_widget.training_name.value), None)
+                int(training_widget.saving_ep.value), str(training_widget.training_name.value),
+                str(training_widget.data_norm.value), None)
 
         training_worker.start()
         show_info('Training started')

@@ -3,14 +3,34 @@ import numpy as np
 from torchvision import transforms
 
 
+def min_max_norm(im):
+    """
+    min max normalization of an image
+    @param im: Numpy array
+    @return: Normalized Numpy array
+    """
+    im = (im - im.min()) / (im.max() - im.min())
+    return im
+
+
+def max_to_1(im):
+    """
+    Standardization of a function
+    @param im: Numpy array
+    @return: Standardized Numpy array
+    """
+    im = im / 1
+    return im
+
+
 class PredictionDataset(Dataset):
-    def __init__(self, image, labels, props, half_patch_size, max_type_val, device):
+    def __init__(self, image, labels, props, half_patch_size, norm_type, device):
         self.props = props
         self.image = image
         self.labels = labels
         self.half_patch_size = half_patch_size
         self.transform = transforms.Compose([transforms.ToTensor()])
-        self.max_type_val = max_type_val
+        self.norm_type = norm_type
         self.device = device
 
     def __getitem__(self, index):
@@ -32,7 +52,12 @@ class PredictionDataset(Dataset):
 
             concat_image = np.zeros((imagette.shape[0], imagette.shape[1], imagette.shape[2] + 1))
             # imagette = imagette / 255
-            imagette = (imagette - imagette.min()) / (imagette.max() - imagette.min())
+
+            if self.norm_type == "min max normalization":
+                imagette = min_max_norm(imagette)
+            elif self.norm_type == "max to 1 normalization":
+                imagette = max_to_1(imagette)
+
             concat_image[:, :, :-1] = imagette
             concat_image[:, :, -1] = maskette
 
@@ -41,9 +66,6 @@ class PredictionDataset(Dataset):
             #concat_image[:, :, 1] = imagette[:, :, 0] * (1 - maskette)
             if concat_image.shape[0] == 0 or concat_image.shape[1] == 0:
                 pass
-            else:
-                # Normalisation de l'image
-                concat_image = (concat_image - concat_image.min()) / (concat_image.max() - concat_image.min())
 
             return self.transform(concat_image.astype("float32")).to(self.device)
 
