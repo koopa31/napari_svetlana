@@ -19,7 +19,7 @@ def max_to_1(im):
     @param im: Numpy array
     @return: Standardized Numpy array
     """
-    im = im / 1
+    im = im / im.max()
     return im
 
 

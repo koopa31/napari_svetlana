@@ -1270,7 +1270,7 @@ def Training():
                                     d = {"model": model, "optimizer_state_dict": optimizer,
                                          "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
                                          "image_path": image_path_list[0], "labels_path": labels_path_list[0],
-                                         "patch_size": patch_size}
+                                         "patch_size": patch_size, "norm_type": norm_type}
                                     if training_name == "":
                                         model_path = os.path.join(save_folder, "training_" + str(epoch + 1))
                                     else:
@@ -1552,7 +1552,7 @@ def Prediction():
             pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                          (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-            data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, max, "cuda")
+            data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda")
 
         elif case == "multi3D":
             image = np.transpose(image, (1, 2, 3, 0))
@@ -1566,7 +1566,7 @@ def Prediction():
                                          (patch_size // 2 + 1, patch_size // 2 + 1),
                                          (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-            data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, max, "cuda")
+            data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda")
 
         else:
             imagette_contours = np.zeros((image.shape[0], image.shape[1], image.shape[2]))
@@ -1577,7 +1577,7 @@ def Prediction():
                                          (patch_size // 2 + 1, patch_size // 2 + 1),
                                          (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-            data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, max, "cuda")
+            data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda")
         prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
 
         global list_pred
@@ -1660,7 +1660,7 @@ def Prediction():
                 pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                              (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-                data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, max, "cuda")
+                data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda")
 
             elif case == "multi3D":
                 image = np.transpose(image, (1, 2, 3, 0))
@@ -1674,7 +1674,7 @@ def Prediction():
                                              (patch_size // 2 + 1, patch_size // 2 + 1),
                                              (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-                data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, max, "cuda")
+                data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda")
 
             else:
                 imagette_contours = np.zeros((image.shape[0], image.shape[1], image.shape[2]))
@@ -1685,7 +1685,7 @@ def Prediction():
                                              (patch_size // 2 + 1, patch_size // 2 + 1),
                                              (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-                data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, max, "cuda")
+                data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda")
             prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
 
             global list_pred
@@ -1839,11 +1839,11 @@ def Prediction():
         """
         b = torch.load(path)
 
-        global model
-        global patch_size
+        global model, patch_size, norm_type
 
         model = b["model"].to("cuda")
         patch_size = b["patch_size"]
+        norm_type = b["norm_type"]
         model.eval()
         show_info("NN loaded successfully")
 
