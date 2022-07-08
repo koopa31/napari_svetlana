@@ -1052,7 +1052,7 @@ def Training():
             l += p
         labels_list = np.array(l)
 
-        if model is None:
+        if retrain is False:
             # 2D case
             if image.shape[2] <= 3:
                 case = "2D"
@@ -1133,7 +1133,6 @@ def Training():
                     model = CNN3D(max(labels_list) + 1, 2)
 
         else:
-            retrain = True
             if image.shape[2] <= 3:
                 case = "2D"
             elif len(image.shape) == 4:
@@ -1229,10 +1228,7 @@ def Training():
             LOSS_LIST = []
         else:
             LOSS_LIST = loaded_network["loss_list"]
-        """weights = np.ones([max(labels_list) + 1])
-        weights[0] = 0
-        weights = torch.from_numpy(weights)"""
-        #loss = eval("nn." + losses_dict[loss_func] + "(weight=weights).type(torch_type)")
+
         loss = eval("nn." + losses_dict[loss_func] + "().type(torch_type)")
 
         # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
@@ -1406,7 +1402,8 @@ def Training():
         path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
         global loaded_network
         loaded_network = torch.load(path)
-        global model
+        global model, retrain
+        retrain = True
         model = loaded_network["model"]
         show_info("Model loaded successfully")
 
