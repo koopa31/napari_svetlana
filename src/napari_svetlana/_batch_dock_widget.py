@@ -214,7 +214,7 @@ def Annotation():
 
         return set_label
 
-    @Viewer.bind_key('r')
+    @Viewer.bind_key('r', overwrite=True)
     def remove_label(viewer):
         """
         Cancels the last attributed label when r is pressed and goes back to previous object to be re-labelled
@@ -523,7 +523,7 @@ def Annotation():
 
         counter = len(global_labels_list[image_counter])
 
-        # Deletion of remaining image and displaying of the first uimage of the list
+        # Deletion of remaining image and displaying of the first image of the list
         annotation_widget.viewer.value.layers.clear()
         annotation_widget.viewer.value.add_image(imread(global_im_path_list[image_counter]))
         annotation_widget.viewer.value.add_labels(imread(global_lab_path_list[image_counter]))
@@ -1851,6 +1851,7 @@ def Prediction():
         @param e:
         @return:
         """
+
 
         path = QFileDialog.getExistingDirectory(None, 'Open Folder', options=QFileDialog.DontUseNativeDialog)
 
