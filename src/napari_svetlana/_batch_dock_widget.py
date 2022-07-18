@@ -346,7 +346,8 @@ def Annotation():
         return props, zoom_factor
 
     @magicgui(
-        auto_call=True,
+        auto_call=False,
+        call_button=False,
         layout='vertical',
         load_images_button=dict(widget_type='PushButton', text='LOAD IMAGES',
                                 tooltip='Load images'),
@@ -457,6 +458,16 @@ def Annotation():
         # Gets the folder url and the two subfolder containing the images and the masks
         global images_folder, masks_folder, parent_path
 
+        # As autocall is set to False, it is necessary to call the function when loading the data
+        annotation_widget.viewer.value.layers.clear()
+        annotation_widget()
+
+        # Make sure they are reset to True in case another batch has been processed before, so you can reset the batch
+        # size too
+        annotation_widget.estimate_size_button.enabled = True
+        annotation_widget.patch_size.enabled = True
+
+        # Choice of the batch folder
         parent_path = QFileDialog.getExistingDirectory(None, 'Open Folder', options=QFileDialog.DontUseNativeDialog)
 
         images_folder = os.path.join(parent_path, "Images")
@@ -470,6 +481,10 @@ def Annotation():
         mask_path_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder)])
         global_im_path_list = image_path_list.copy()
         global_lab_path_list = mask_path_list.copy()
+
+        # reset of these lists when loading new dataset
+        global_labels_list = []
+        global_mini_props_list = []
 
         for i in range(0, len(image_path_list)):
             global_labels_list.append([])
@@ -494,6 +509,10 @@ def Annotation():
         global images_folder, masks_folder, parent_path, image_path_list, mask_path_list, global_im_path_list,\
                global_lab_path_list, global_labels_list, global_mini_props_list, mini_props_list, counter,\
                image_counter, patch_size, pred_path_list
+
+        # As autocall is set to False, it is necessary to call the function when loading the data
+        annotation_widget.viewer.value.layers.clear()
+        annotation_widget()
 
         parent_path = QFileDialog.getExistingDirectory(None, 'Open Folder', options=QFileDialog.DontUseNativeDialog)
 
@@ -547,7 +566,7 @@ def Annotation():
 
         global counter, image_counter
 
-        if int(e) > len(global_im_path_list) - 1:
+        if int(e) > len(global_im_path_list):
             show_info("Too high index")
             annotation_widget.image_index_button.value = len(global_im_path_list)
         elif int(e) < 1:
