@@ -456,7 +456,7 @@ def Annotation():
         @return:
         """
         # Gets the folder url and the two subfolder containing the images and the masks
-        global images_folder, masks_folder, parent_path
+        global images_folder, masks_folder, parent_path, counter, total_counter
 
         # As autocall is set to False, it is necessary to call the function when loading the data
         annotation_widget.viewer.value.layers.clear()
@@ -486,6 +486,10 @@ def Annotation():
         global_labels_list = []
         global_mini_props_list = []
 
+        # labels counters reset
+        counter = 0
+        total_counter = 0
+
         for i in range(0, len(image_path_list)):
             global_labels_list.append([])
             global_mini_props_list.append([])
@@ -508,7 +512,7 @@ def Annotation():
 
         global images_folder, masks_folder, parent_path, image_path_list, mask_path_list, global_im_path_list,\
                global_lab_path_list, global_labels_list, global_mini_props_list, mini_props_list, counter,\
-               image_counter, patch_size, pred_path_list
+               image_counter, patch_size, pred_path_list, total_counter
 
         # As autocall is set to False, it is necessary to call the function when loading the data
         annotation_widget.viewer.value.layers.clear()
@@ -541,6 +545,9 @@ def Annotation():
         image_counter = int(annotation_widget.image_index_button.value) - 1
 
         counter = len(global_labels_list[image_counter])
+        total_counter = 0
+        for l in global_labels_list:
+            total_counter += len(l)
 
         # Deletion of remaining image and displaying of the first image of the list
         annotation_widget.viewer.value.layers.clear()
