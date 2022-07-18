@@ -1734,7 +1734,8 @@ def Prediction():
             show_info("prediction of image " + os.path.split(image_path_list[ind])[1] + " done")
 
     @magicgui(
-        auto_call=True,
+        auto_call=False,
+        call_button=False,
         layout='vertical',
         batch_size=dict(widget_type='LineEdit', label='Batch size', value=100, tooltip='Batch size'),
         load_network_button=dict(widget_type='PushButton', text='Load network', tooltip='Load weights of the NN'),
@@ -1848,6 +1849,7 @@ def Prediction():
         """
         # Removal of the remaining images of the previous widgets
         prediction_widget.viewer.value.layers.clear()
+        prediction_widget()
         path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
         """
         with open(path, 'rb') as handle:
@@ -1871,7 +1873,7 @@ def Prediction():
         @return:
         """
 
-
+        prediction_widget()
         path = QFileDialog.getExistingDirectory(None, 'Open Folder', options=QFileDialog.DontUseNativeDialog)
 
         # Result folder
