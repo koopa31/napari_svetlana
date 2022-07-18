@@ -154,8 +154,10 @@ def Annotation():
                         for i in range(1, len(annotation_widget.viewer.value.layers["object to annotate"].data_raw)):
                             annotation_widget.viewer.value.layers["object to annotate"].data_raw[i] = \
                                 cv2.resize(annotation_widget.viewer.value.layers["object to annotate"].data_raw[0], (
-                                    annotation_widget.viewer.value.layers["object to annotate"].data_raw[0].shape[0] // 2 ** i,
-                                    annotation_widget.viewer.value.layers["object to annotate"].data_raw[0].shape[1] // 2 ** i))
+                                    annotation_widget.viewer.value.layers["object to annotate"].data_raw[0].shape[
+                                        0] // 2 ** i,
+                                    annotation_widget.viewer.value.layers["object to annotate"].data_raw[0].shape[
+                                        1] // 2 ** i))
 
                     else:
                         progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
@@ -174,11 +176,12 @@ def Annotation():
                             viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
                                                     int(props[indexes[counter]].centroid[1]),
                                                     int(props[indexes[counter]].centroid[2]))
-                            annotation_widget.viewer.value.dims.current_step = (int(props[indexes[counter]].centroid[0]),
-                                                                                annotation_widget.viewer.value.dims.current_step[
-                                                                                    1],
-                                                                                annotation_widget.viewer.value.dims.current_step[
-                                                                                    2])
+                            annotation_widget.viewer.value.dims.current_step = (
+                                int(props[indexes[counter]].centroid[0]),
+                                annotation_widget.viewer.value.dims.current_step[
+                                    1],
+                                annotation_widget.viewer.value.dims.current_step[
+                                    2])
                             viewer.camera.zoom = zoom_factor + 10 ** -8
                         # deletion of the old contours and drawing of the new one
                         circle_mask[circle_mask != 0] = 0
@@ -353,7 +356,7 @@ def Annotation():
                                 tooltip='Load images'),
         OR=dict(widget_type='Label'),
         restart_labelling_button=dict(widget_type='PushButton', text='RESUME LABELLING',
-                                tooltip='Resume a started labelling'),
+                                      tooltip='Resume a started labelling'),
         vertical_space1=dict(widget_type='Label', label=' '),
         image_choice=dict(widget_type='Label', label="IMAGE CHOICE"),
         vertical_space2=dict(widget_type='Label', label=' '),
@@ -510,9 +513,9 @@ def Annotation():
         Function to resume the labelling after a first prediction or not
         """
 
-        global images_folder, masks_folder, parent_path, image_path_list, mask_path_list, global_im_path_list,\
-               global_lab_path_list, global_labels_list, global_mini_props_list, mini_props_list, counter,\
-               image_counter, patch_size, pred_path_list, total_counter
+        global images_folder, masks_folder, parent_path, image_path_list, mask_path_list, global_im_path_list, \
+            global_lab_path_list, global_labels_list, global_mini_props_list, mini_props_list, counter, \
+            image_counter, patch_size, pred_path_list, total_counter
 
         # As autocall is set to False, it is necessary to call the function when loading the data
         annotation_widget.viewer.value.layers.clear()
@@ -613,7 +616,8 @@ def Annotation():
             annotation_widget.image_index_button.value = image_counter + 1
 
             annotation_widget.viewer.value.layers.clear()
-            annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
+            annotation_widget.viewer.value.add_image(
+                imread(os.path.join(images_folder, image_path_list[image_counter])))
             annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
             annotation_widget.viewer.value.layers[1].name = "mask"
             if "pred_path_list" in globals():
@@ -638,7 +642,8 @@ def Annotation():
             annotation_widget.image_index_button.value = image_counter + 1
 
             annotation_widget.viewer.value.layers.clear()
-            annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
+            annotation_widget.viewer.value.add_image(
+                imread(os.path.join(images_folder, image_path_list[image_counter])))
             annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
             annotation_widget.viewer.value.layers[1].name = "mask"
             if "pred_path_list" in globals():
@@ -705,8 +710,8 @@ def Annotation():
                     progression_mask = np.zeros_like(annotation_widget.viewer.value.layers["mask"].data)
                     for ind, prop in enumerate(global_mini_props_list[image_counter]):
                         progression_mask[prop["coords"][:, 0], prop["coords"][:, 1]] = \
-                        global_labels_list[image_counter][
-                            ind]
+                            global_labels_list[image_counter][
+                                ind]
                 else:
                     progression_mask = np.zeros_like(circle_mask)
             else:
@@ -858,8 +863,10 @@ def Annotation():
                 for i in range(0, counter):
                     props_list[j].append({"position": props[indexes[i]].label, "coords": props[indexes[i]].coords,
                                           "centroid": props[indexes[i]].centroid,
-                                          "eccentricity": props[indexes[i]].eccentricity, "area": props[indexes[i]].area,
-                                          "perimeter": props[indexes[i]].perimeter, "label": int(global_labels_list[j][i])})
+                                          "eccentricity": props[indexes[i]].eccentricity,
+                                          "area": props[indexes[i]].area,
+                                          "perimeter": props[indexes[i]].perimeter,
+                                          "label": int(global_labels_list[j][i])})
         torch.save(props_list, path)
         show_info("ROI properties saved")
 
@@ -882,7 +889,8 @@ def Annotation():
             for i in range(0, counter):
                 im_labs_list[global_labels_list[image_counter][i] - 1][props[indexes[i]].coords[:, 0],
                                                                        props[indexes[i]].coords[:, 1],
-                                                 props[indexes[i]].coords[:, 2]] = props[indexes[i]].label
+                                                                       props[indexes[i]].coords[:, 2]] = props[
+                    indexes[i]].label
         else:
             for i in range(0, counter):
                 im_labs_list[global_labels_list[image_counter][i] - 1][props[indexes[i]].coords[:, 0],
@@ -946,7 +954,7 @@ def Training():
                     imagette_mask[imagette_mask == region_props[i]["label"]] = 1
 
                     concat_image = np.zeros((imagette.shape[0], imagette.shape[1], imagette.shape[2] + 1))
-                    #imagette = imagette / 255
+                    # imagette = imagette / 255
 
                     if norm_type == "min max normalization":
                         imagette = min_max_norm(imagette)
@@ -957,10 +965,10 @@ def Training():
                     concat_image[:, :, -1] = imagette_mask
                     # Image with masked of the object and inverse mask
 
-                    #concat_image[:, :, 0] = np.mean(imagette[:, :, 0] * imagette_mask) #torch.ones_like(imagette[:, :, 0])
-                    #concat_image[:, :, 0] *= torch.mean(imagette[:, :, 0] * imagette_mask)
+                    # concat_image[:, :, 0] = np.mean(imagette[:, :, 0] * imagette_mask) #torch.ones_like(imagette[:, :, 0])
+                    # concat_image[:, :, 0] *= torch.mean(imagette[:, :, 0] * imagette_mask)
 
-                    #concat_image[:, :, 1] = (imagette[:, :, 0] * (1 - imagette_mask))
+                    # concat_image[:, :, 1] = (imagette[:, :, 0] * (1 - imagette_mask))
 
                     img_patch_list.append(concat_image)
                 elif case == "multi3D":
@@ -1107,7 +1115,7 @@ def Training():
                     depth = int(nn_type.split("_")[1])
                     kersize = int(nn_type.split("_")[2])
 
-                    if patch_size/(2**(depth - 1)) <=  kersize:
+                    if patch_size / (2 ** (depth - 1)) <= kersize:
                         show_info("Patch size is too small for this network")
                     model = CNN2D(max(labels_list) + 1, 4, depth, kersize)
 
@@ -1272,41 +1280,39 @@ def Training():
 
                 for epoch in range(iterations_number):
                     print("Epoch ", epoch + 1)
-                    for phase in ["train", "val"]:
-                        if phase == "train":
-                            # Training
-                            for local_batch, local_labels in training_loader:
-                                # Transfer to GPU
-                                local_batch, local_labels = local_batch.to(device), local_labels.to(device)
 
-                                out = model(local_batch)
-                                total_loss = loss(out, local_labels.type(torch.cuda.FloatTensor))
-                                optimizer.zero_grad()
-                                total_loss.backward()
-                                optimizer.step()
-                                LOSS_LIST.append(total_loss.item())
-                                print(total_loss.item())
-                                viewer.value.status = "loss = " + str(total_loss.item())
-                                # scheduler.step()
-                                if (epoch + 1) % saving_ep == 0:
-                                    d = {"model": model, "optimizer_state_dict": optimizer,
-                                         "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
-                                         "image_path": image_path_list[0], "labels_path": labels_path_list[0],
-                                         "patch_size": patch_size, "norm_type": norm_type}
-                                    if training_name == "":
-                                        model_path = os.path.join(save_folder, "training_" + str(epoch + 1))
-                                    else:
-                                        model_path = os.path.join(save_folder, training_name + "_" + str(epoch + 1))
-                                    if model_path.endswith(".pt") or model_path.endswith(".pth"):
-                                        torch.save(d, model_path)
-                                    else:
-                                        torch.save(d, model_path + ".pth")
+                    # Training
+                    for local_batch, local_labels in training_loader:
+                        # Transfer to GPU
+                        local_batch, local_labels = local_batch.to(device), local_labels.to(device)
 
-                                found = True
+                        out = model(local_batch)
+                        total_loss = loss(out, local_labels.type(torch.cuda.FloatTensor))
+                        optimizer.zero_grad()
+                        total_loss.backward()
+                        optimizer.step()
+                        # LOSS_LIST.append(total_loss.item())
+                        print(total_loss.item())
+                        viewer.value.status = "loss = " + str(total_loss.item())
+                        # scheduler.step()
+                        if (epoch + 1) % saving_ep == 0:
+                            d = {"model": model, "optimizer_state_dict": optimizer,
+                                 "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
+                                 "image_path": image_path_list[0], "labels_path": labels_path_list[0],
+                                 "patch_size": patch_size, "norm_type": norm_type}
+                            if training_name == "":
+                                model_path = os.path.join(save_folder, "training_" + str(epoch + 1))
+                            else:
+                                model_path = os.path.join(save_folder, training_name + "_" + str(epoch + 1))
+                            if model_path.endswith(".pt") or model_path.endswith(".pth"):
+                                torch.save(d, model_path)
+                            else:
+                                torch.save(d, model_path + ".pth")
 
-                        elif phase == "val":
-                            pass
+                        found = True
+
                     yield epoch + 1
+                    LOSS_LIST.append(total_loss.item())
             except:
                 if "bs" in locals():
                     bs -= 1
@@ -1318,7 +1324,7 @@ def Training():
                     bs += 1
                 training_loader = DataLoader(dataset=train_data, batch_size=int(bs), shuffle=True)
 
-        plt.plot(LOSS_LIST)
+        plt.plot(np.arange(1, len(LOSS_LIST) + 1, 1), LOSS_LIST)
         plt.title("Training loss")
         plt.xlabel("Epochs number")
         plt.show()
@@ -1630,7 +1636,8 @@ def Prediction():
         print(str(np.sum(compteur)) + " objects remaining over " + str(len(props)))
 
         # Save the result automatically
-        res_name = "prediction_" + os.path.split(image_path_list[int(prediction_widget.image_index_button.value) - 1])[1]
+        res_name = "prediction_" + os.path.split(image_path_list[int(prediction_widget.image_index_button.value) - 1])[
+            1]
         imsave(os.path.join(res_folder, res_name), imagette_contours.astype(np.uint8))
 
         return imagette_contours.astype(np.uint8)
@@ -2063,7 +2070,6 @@ def Prediction():
         global thickness
 
         if prediction_widget.bound.value is True:
-
             thickness = int(e)
             show_boundaries(True)
 
