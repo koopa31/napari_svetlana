@@ -1344,10 +1344,10 @@ def Training():
         launch_training_button=dict(widget_type='PushButton', text='Launch training', tooltip='Launch training'),
         vertical_space2=dict(widget_type='Label', label=' '),
         DATA_AUGMENTATION_TYPE=dict(widget_type='Label'),
-        rotations=dict(widget_type='CheckBox', text='Rotations', tooltip='Rotations'),
+        rotations=dict(widget_type='CheckBox', text='Rotations', tooltip='Random rotations between -90° and 90°'),
         v_flip=dict(widget_type='CheckBox', text='Vertical flip', tooltip='Vertical flip'),
         h_flip=dict(widget_type='CheckBox', text='Horizontal flip', tooltip='Horizontal flip'),
-        prob=dict(widget_type='LineEdit', label='Probability', value=0.8, tooltip='Probability'),
+        prob=dict(widget_type='LineEdit', label='Probability', value=0.8, tooltip='Occurrence of a data augmentation'),
         b_size=dict(widget_type='LineEdit', label='Batch Size', value=128, tooltip='Batch Size'),
         data_norm=dict(widget_type='ComboBox', label='Data normalization', choices=data_norm_list,
                        value="min max normalization", tooltip='Type of data normalization'),
@@ -1356,7 +1356,8 @@ def Training():
         SAVING_PARAMETERS=dict(widget_type='Label'),
         saving_ep=dict(widget_type='LineEdit', label='Save training each (epochs)', value=100,
                        tooltip='Each how many epoch the training should be saved'),
-        training_name=dict(widget_type='LineEdit', label='Training file name', tooltip='Training file name'),
+        training_name=dict(widget_type='LineEdit', label='Training file name (optional)', tooltip='if not chosen,'
+                                                                                                  ' set to "training"'),
 
     )
     def training_widget(  # label_logo,
