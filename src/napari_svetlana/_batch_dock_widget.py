@@ -463,7 +463,6 @@ def Annotation():
 
         # As autocall is set to False, it is necessary to call the function when loading the data
         annotation_widget.viewer.value.layers.clear()
-        annotation_widget()
 
         # Make sure they are reset to True in case another batch has been processed before, so you can reset the batch
         # size too
@@ -507,6 +506,10 @@ def Annotation():
         global old_zoom
         old_zoom = annotation_widget.viewer.value.camera.zoom
 
+        # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
+        # the layer named Image
+        annotation_widget()
+
     @annotation_widget.restart_labelling_button.changed.connect
     def restart_labelling(e: Any):
         """
@@ -519,7 +522,6 @@ def Annotation():
 
         # As autocall is set to False, it is necessary to call the function when loading the data
         annotation_widget.viewer.value.layers.clear()
-        annotation_widget()
 
         parent_path = QFileDialog.getExistingDirectory(None, 'Open Folder', options=QFileDialog.DontUseNativeDialog)
 
@@ -568,6 +570,10 @@ def Annotation():
         global old_zoom
         old_zoom = annotation_widget.viewer.value.camera.zoom
 
+        # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
+        # the layer named Image
+        annotation_widget()
+
     @annotation_widget.image_index_button.changed.connect
     def set_image_index(e: Any):
         """
@@ -597,6 +603,10 @@ def Annotation():
             if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
                 annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
 
+        # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
+        # the layer named Image
+        annotation_widget()
+
     @annotation_widget.next_button.changed.connect
     def next_image(e: Any):
         """
@@ -625,6 +635,10 @@ def Annotation():
                 annotation_widget.viewer.value.layers[2].name = "previous prediction"
                 if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
                     annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
+
+            # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
+            # the layer named Image
+            annotation_widget()
         else:
             show_info("No more images")
 
@@ -654,6 +668,10 @@ def Annotation():
 
             # Reinitialization of counter for next image
             counter = len(global_labels_list[image_counter])
+
+            # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
+            # the layer named Image
+            annotation_widget()
 
         else:
             show_info("No previous image")
@@ -710,8 +728,7 @@ def Annotation():
                     progression_mask = np.zeros_like(annotation_widget.viewer.value.layers["mask"].data)
                     for ind, prop in enumerate(global_mini_props_list[image_counter]):
                         progression_mask[prop["coords"][:, 0], prop["coords"][:, 1]] = \
-                            global_labels_list[image_counter][
-                                ind]
+                            global_labels_list[image_counter][ind] + 1
                 else:
                     progression_mask = np.zeros_like(circle_mask)
             else:
@@ -1876,6 +1893,7 @@ def Prediction():
         # Removal of the remaining images of the previous widgets
         prediction_widget.viewer.value.layers.clear()
         prediction_widget()
+
         path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
         """
         with open(path, 'rb') as handle:
@@ -1898,8 +1916,9 @@ def Prediction():
         @param e:
         @return:
         """
+        # Removal of the remaining images of the previous widgets
+        prediction_widget.viewer.value.layers.clear()
 
-        prediction_widget()
         path = QFileDialog.getExistingDirectory(None, 'Open Folder', options=QFileDialog.DontUseNativeDialog)
 
         # Result folder
@@ -1939,6 +1958,10 @@ def Prediction():
             case = diag.get_case()
             print(case)
 
+        # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
+        # the layer named Image
+        prediction_widget()
+
         return
 
     @prediction_widget.image_index_button.changed.connect
@@ -1960,6 +1983,10 @@ def Prediction():
         prediction_widget.viewer.value.add_image(image)
         prediction_widget.viewer.value.add_labels(mask)
 
+        # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
+        # the layer named Image
+        prediction_widget()
+
     @prediction_widget.previous_button.changed.connect
     def load_previous_image(e: Any):
         """
@@ -1967,6 +1994,9 @@ def Prediction():
         """
         if int(prediction_widget.image_index_button.value) > 1:
             prediction_widget.image_index_button.value = int(prediction_widget.image_index_button.value) - 1
+            # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
+            # the layer named Image
+            prediction_widget()
         else:
             show_info("No previous image")
 
@@ -1977,6 +2007,9 @@ def Prediction():
         """
         if int(prediction_widget.image_index_button.value) < len(image_path_list):
             prediction_widget.image_index_button.value = int(prediction_widget.image_index_button.value) + 1
+            # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
+            # the layer named Image
+            prediction_widget()
         else:
             show_info("No more images")
 
