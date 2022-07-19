@@ -477,40 +477,45 @@ def Annotation():
         images_folder = os.path.join(parent_path, "Images")
         masks_folder = os.path.join(parent_path, "Masks")
 
-        # Gets the list of images and masks
-        global image_path_list, mask_path_list, global_im_path_list, global_lab_path_list, global_labels_list, \
-            global_mini_props_list, mini_props_list
+        # Check if the selected folder is correct
+        if os.path.isdir(images_folder) is True and os.path.isdir(masks_folder) is True:
 
-        image_path_list = sorted([os.path.join(images_folder, f) for f in os.listdir(images_folder)])
-        mask_path_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder)])
-        global_im_path_list = image_path_list.copy()
-        global_lab_path_list = mask_path_list.copy()
+            # Gets the list of images and masks
+            global image_path_list, mask_path_list, global_im_path_list, global_lab_path_list, global_labels_list, \
+                global_mini_props_list, mini_props_list
 
-        # reset of these lists when loading new dataset
-        global_labels_list = []
-        global_mini_props_list = []
+            image_path_list = sorted([os.path.join(images_folder, f) for f in os.listdir(images_folder)])
+            mask_path_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder)])
+            global_im_path_list = image_path_list.copy()
+            global_lab_path_list = mask_path_list.copy()
 
-        # labels counters reset
-        counter = 0
-        total_counter = 0
+            # reset of these lists when loading new dataset
+            global_labels_list = []
+            global_mini_props_list = []
 
-        for i in range(0, len(image_path_list)):
-            global_labels_list.append([])
-            global_mini_props_list.append([])
+            # labels counters reset
+            counter = 0
+            total_counter = 0
 
-        # Deletion of remaining image and displaying of the first uimage of the list
-        annotation_widget.viewer.value.layers.clear()
-        annotation_widget.viewer.value.add_image(imread(image_path_list[image_counter]))
-        annotation_widget.viewer.value.add_labels(imread(mask_path_list[image_counter]))
-        annotation_widget.viewer.value.layers[1].name = "mask"
+            for i in range(0, len(image_path_list)):
+                global_labels_list.append([])
+                global_mini_props_list.append([])
 
-        # original zoom factor to correct when annotating
-        global old_zoom
-        old_zoom = annotation_widget.viewer.value.camera.zoom
+            # Deletion of remaining image and displaying of the first uimage of the list
+            annotation_widget.viewer.value.layers.clear()
+            annotation_widget.viewer.value.add_image(imread(image_path_list[image_counter]))
+            annotation_widget.viewer.value.add_labels(imread(mask_path_list[image_counter]))
+            annotation_widget.viewer.value.layers[1].name = "mask"
 
-        # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
-        # the layer named Image
-        annotation_widget()
+            # original zoom factor to correct when annotating
+            global old_zoom
+            old_zoom = annotation_widget.viewer.value.camera.zoom
+
+            # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
+            # the layer named Image
+            annotation_widget()
+        else:
+            show_info("The folder should contain two folders called Images and Masks")
 
     @annotation_widget.restart_labelling_button.changed.connect
     def restart_labelling(e: Any):
@@ -531,51 +536,57 @@ def Annotation():
         images_folder = os.path.join(parent_path, "Images")
         masks_folder = os.path.join(parent_path, "Masks")
 
-        labels_file = torch.load(os.path.join(parent_path, "Svetlana", "labels"))
-        global_im_path_list = labels_file["image_path"]
-        image_path_list = global_im_path_list.copy()
-        global_lab_path_list = labels_file["labels_path"]
-        mask_path_list = global_lab_path_list.copy()
-        if os.path.isdir(os.path.join(parent_path, "Predictions")) is True:
-            pred_path_list = sorted([os.path.join(parent_path, "Predictions", f) for f in
-                                     os.listdir(os.path.join(parent_path, "Predictions"))])
-        global_labels_list = labels_file["labels_list"]
-        global_mini_props_list = labels_file["regionprops"]
-        patch_size = labels_file["patch_size"]
+        # Check if the selected folder is correct
+        if os.path.isdir(images_folder) is True and os.path.isdir(masks_folder) is True:
 
-        annotation_widget.patch_size.value = patch_size
-        annotation_widget.image_index_button.value = 1
+            labels_file = torch.load(os.path.join(parent_path, "Svetlana", "labels"))
+            global_im_path_list = labels_file["image_path"]
+            image_path_list = global_im_path_list.copy()
+            global_lab_path_list = labels_file["labels_path"]
+            mask_path_list = global_lab_path_list.copy()
+            if os.path.isdir(os.path.join(parent_path, "Predictions")) is True:
+                pred_path_list = sorted([os.path.join(parent_path, "Predictions", f) for f in
+                                         os.listdir(os.path.join(parent_path, "Predictions"))])
+            global_labels_list = labels_file["labels_list"]
+            global_mini_props_list = labels_file["regionprops"]
+            patch_size = labels_file["patch_size"]
 
-        # Disabling the estimate size and patch size in the gui so it is not change while annotating
-        annotation_widget.estimate_size_button.enabled = False
-        annotation_widget.patch_size.enabled = False
+            annotation_widget.patch_size.value = patch_size
+            annotation_widget.image_index_button.value = 1
 
-        image_counter = int(annotation_widget.image_index_button.value) - 1
+            # Disabling the estimate size and patch size in the gui so it is not change while annotating
+            annotation_widget.estimate_size_button.enabled = False
+            annotation_widget.patch_size.enabled = False
 
-        counter = len(global_labels_list[image_counter])
-        total_counter = 0
-        for l in global_labels_list:
-            total_counter += len(l)
+            image_counter = int(annotation_widget.image_index_button.value) - 1
 
-        # Deletion of remaining image and displaying of the first image of the list
-        annotation_widget.viewer.value.layers.clear()
-        annotation_widget.viewer.value.add_image(imread(global_im_path_list[image_counter]))
-        annotation_widget.viewer.value.add_labels(imread(global_lab_path_list[image_counter]))
-        annotation_widget.viewer.value.layers[1].name = "mask"
+            counter = len(global_labels_list[image_counter])
+            total_counter = 0
+            for l in global_labels_list:
+                total_counter += len(l)
 
-        if os.path.isdir(os.path.join(parent_path, "Predictions")) is True:
-            annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
-            annotation_widget.viewer.value.layers[2].name = "previous prediction"
-            if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
-                annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
+            # Deletion of remaining image and displaying of the first image of the list
+            annotation_widget.viewer.value.layers.clear()
+            annotation_widget.viewer.value.add_image(imread(global_im_path_list[image_counter]))
+            annotation_widget.viewer.value.add_labels(imread(global_lab_path_list[image_counter]))
+            annotation_widget.viewer.value.layers[1].name = "mask"
 
-        # original zoom factor to correct when annotating
-        global old_zoom
-        old_zoom = annotation_widget.viewer.value.camera.zoom
+            if os.path.isdir(os.path.join(parent_path, "Predictions")) is True:
+                annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
+                annotation_widget.viewer.value.layers[2].name = "previous prediction"
+                if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
+                    annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
 
-        # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
-        # the layer named Image
-        annotation_widget()
+            # original zoom factor to correct when annotating
+            global old_zoom
+            old_zoom = annotation_widget.viewer.value.camera.zoom
+
+            # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
+            # the layer named Image
+            annotation_widget()
+
+        else:
+            show_info("The folder should contain two folders called Images and Masks")
 
     @annotation_widget.image_index_button.changed.connect
     def set_image_index(e: Any):
