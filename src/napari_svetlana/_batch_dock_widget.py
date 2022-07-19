@@ -1931,15 +1931,21 @@ def Prediction():
         with open(path, 'rb') as handle:
             b = pickle.load(handle)
         """
-        b = torch.load(path)
+        try:
+            b = torch.load(path)
 
-        global model, patch_size, norm_type
+            global model, patch_size, norm_type
 
-        model = b["model"].to("cuda")
-        patch_size = b["patch_size"]
-        norm_type = b["norm_type"]
-        model.eval()
-        show_info("NN loaded successfully")
+            if "model" and "patch_size" and "norm_type" in b.keys():
+                model = b["model"].to("cuda")
+                patch_size = b["patch_size"]
+                norm_type = b["norm_type"]
+                model.eval()
+                show_info("NN loaded successfully")
+            else:
+                show_info("ERROR: the file seems not be correct as it does not contain the right keys")
+        except:
+            show_info("ERROR: file not recognized by Torch")
 
     @prediction_widget.load_data_button.changed.connect
     def _load_data(e: Any):
