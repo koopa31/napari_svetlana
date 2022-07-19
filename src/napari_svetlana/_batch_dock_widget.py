@@ -1970,36 +1970,39 @@ def Prediction():
         images_folder = os.path.join(path, "Images")
         masks_folder = os.path.join(path, "Masks")
 
-        global image_path_list, mask_path_list
-        image_path_list = sorted([os.path.join(images_folder, f) for f in os.listdir(images_folder)])
-        mask_path_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder)])
+        if os.path.isdir(images_folder) is True and os.path.isdir(masks_folder) is True:
+            global image_path_list, mask_path_list
+            image_path_list = sorted([os.path.join(images_folder, f) for f in os.listdir(images_folder)])
+            mask_path_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder)])
 
-        global image, mask
+            global image, mask
 
-        image = imread(image_path_list[0])
-        if len(image.shape) == 2:
-            image = np.stack((image,) * 3, axis=-1)
-        mask = imread(mask_path_list[0])
-        prediction_widget.viewer.value.add_image(image)
-        prediction_widget.viewer.value.add_labels(mask)
+            image = imread(image_path_list[0])
+            if len(image.shape) == 2:
+                image = np.stack((image,) * 3, axis=-1)
+            mask = imread(mask_path_list[0])
+            prediction_widget.viewer.value.add_image(image)
+            prediction_widget.viewer.value.add_labels(mask)
 
-        # Set the format of the image for the prediction (useful pour the click to change label)
-        global case, zoom_factor
+            # Set the format of the image for the prediction (useful pour the click to change label)
+            global case, zoom_factor
 
-        if image.shape[2] <= 3:
-            case = "2D"
-        elif len(image.shape) == 4:
-            case = "multi3D"
+            if image.shape[2] <= 3:
+                case = "2D"
+            elif len(image.shape) == 4:
+                case = "multi3D"
+            else:
+                from .CustomDialog import CustomDialog
+                diag = CustomDialog()
+                diag.exec()
+                case = diag.get_case()
+                print(case)
+
+            # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
+            # the layer named Image
+            prediction_widget()
         else:
-            from .CustomDialog import CustomDialog
-            diag = CustomDialog()
-            diag.exec()
-            case = diag.get_case()
-            print(case)
-
-        # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
-        # the layer named Image
-        prediction_widget()
+            show_info("ERROR: The folder should contain two folders called Images and Masks")
 
         return
 
