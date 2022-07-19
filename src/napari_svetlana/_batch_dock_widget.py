@@ -515,7 +515,7 @@ def Annotation():
             # the layer named Image
             annotation_widget()
         else:
-            show_info("The folder should contain two folders called Images and Masks")
+            show_info("ERROR: The folder should contain two folders called Images and Masks")
 
     @annotation_widget.restart_labelling_button.changed.connect
     def restart_labelling(e: Any):
@@ -586,7 +586,7 @@ def Annotation():
             annotation_widget()
 
         else:
-            show_info("The folder should contain two folders called Images and Masks")
+            show_info("ERROR: The folder should contain two folders called Images and Masks")
 
     @annotation_widget.image_index_button.changed.connect
     def set_image_index(e: Any):
@@ -1432,27 +1432,36 @@ def Training():
         path = QFileDialog.getOpenFileName(None, 'Choose the labels file contained in folder called Svetlana',
                                            options=QFileDialog.DontUseNativeDialog)[0]
 
-        b = torch.load(path)
+        try:
+            b = torch.load(path)
 
-        global image_path_list
-        global labels_path_list
-        global region_props_list
-        global labels_list
-        global patch_size
-        global image
-        global mask
-        image_path_list = b["image_path"]
-        labels_path_list = b["labels_path"]
-        region_props_list = b["regionprops"]
-        labels_list = b["labels_list"]
-        patch_size = int(b["patch_size"])
+            global image_path_list
+            global labels_path_list
+            global region_props_list
+            global labels_list
+            global patch_size
+            global image
+            global mask
 
-        image = imread(image_path_list[0])
-        if len(image.shape) == 2:
-            image = np.stack((image,) * 3, axis=-1)
-        mask = imread(labels_path_list[0])
-        training_widget.viewer.value.add_image(image)
-        training_widget.viewer.value.add_labels(mask)
+            if "image_path" in b.keys() and "labels_path" in b.keys() and "regionprops" in b.keys() and "labels_list" \
+                in b.keys() and "patch_size" in b.keys():
+
+                image_path_list = b["image_path"]
+                labels_path_list = b["labels_path"]
+                region_props_list = b["regionprops"]
+                labels_list = b["labels_list"]
+                patch_size = int(b["patch_size"])
+
+                image = imread(image_path_list[0])
+                if len(image.shape) == 2:
+                    image = np.stack((image,) * 3, axis=-1)
+                mask = imread(labels_path_list[0])
+                training_widget.viewer.value.add_image(image)
+                training_widget.viewer.value.add_labels(mask)
+            else:
+                show_info("ERROR: The binary file seems not to be correct as it does not contain the right keys")
+        except:
+            show_info("ERROR: File not recognized by Torch")
 
         return
 
@@ -1465,11 +1474,17 @@ def Training():
         path = QFileDialog.getOpenFileName(None, 'Choose the binary file containing the model',
                                            options=QFileDialog.DontUseNativeDialog)[0]
         global loaded_network
-        loaded_network = torch.load(path)
-        global model, retrain
-        retrain = True
-        model = loaded_network["model"]
-        show_info("Model loaded successfully")
+        try:
+            loaded_network = torch.load(path)
+            global model, retrain
+            retrain = True
+            if "model" in loaded_network.keys():
+                model = loaded_network["model"]
+                show_info("Model loaded successfully")
+            else:
+                show_info("ERROR: the file seems not to be correct as it does not contain a key called model")
+        except:
+            show_info("ERROR: file not recognized by Torch")
 
     @training_widget.launch_training_button.changed.connect
     def _launch_training(e: Any):
