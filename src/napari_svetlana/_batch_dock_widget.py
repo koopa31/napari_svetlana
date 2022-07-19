@@ -470,7 +470,9 @@ def Annotation():
         annotation_widget.patch_size.enabled = True
 
         # Choice of the batch folder
-        parent_path = QFileDialog.getExistingDirectory(None, 'Open Folder', options=QFileDialog.DontUseNativeDialog)
+        parent_path = QFileDialog.getExistingDirectory(None, 'Choose the parent folder which contains folders Images '
+                                                             'and Masks',
+                                                       options=QFileDialog.DontUseNativeDialog)
 
         images_folder = os.path.join(parent_path, "Images")
         masks_folder = os.path.join(parent_path, "Masks")
@@ -523,7 +525,8 @@ def Annotation():
         # As autocall is set to False, it is necessary to call the function when loading the data
         annotation_widget.viewer.value.layers.clear()
 
-        parent_path = QFileDialog.getExistingDirectory(None, 'Open Folder', options=QFileDialog.DontUseNativeDialog)
+        parent_path = QFileDialog.getExistingDirectory(None, 'Choose the parent folder which contains folders Images '
+                                                             'and Masks', options=QFileDialog.DontUseNativeDialog)
 
         images_folder = os.path.join(parent_path, "Images")
         masks_folder = os.path.join(parent_path, "Masks")
@@ -1353,7 +1356,7 @@ def Training():
         lr=dict(widget_type='LineEdit', label='Learning rate', value=0.01, tooltip='Learning rate'),
         nn=dict(widget_type='ComboBox', label='Network architecture', choices=networks_list, value="ResNet18",
                 tooltip='All the available network architectures'),
-        load_custom_model_button=dict(widget_type='PushButton', text='Load custom NN',
+        load_custom_model_button=dict(widget_type='PushButton', text='Load custom model',
                                       tooltip='Load your own NN pretrained or not'),
         loss=dict(widget_type='ComboBox', label='Loss function', choices=losses_list, value="CrossEntropy",
                   tooltip='All the available loss functions'),
@@ -1415,7 +1418,8 @@ def Training():
         @return:
         """
         training_widget.viewer.value.layers.clear()
-        path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
+        path = QFileDialog.getOpenFileName(None, 'Choose the labels file contained in folder called Svetlana',
+                                           options=QFileDialog.DontUseNativeDialog)[0]
 
         b = torch.load(path)
 
@@ -1447,7 +1451,8 @@ def Training():
         Function triggered by load custom model button to load a pretrained model of the user
         @return:
         """
-        path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
+        path = QFileDialog.getOpenFileName(None, 'Choose the binary file containing the model',
+                                           options=QFileDialog.DontUseNativeDialog)[0]
         global loaded_network
         loaded_network = torch.load(path)
         global model, retrain
@@ -1894,7 +1899,8 @@ def Prediction():
         prediction_widget.viewer.value.layers.clear()
         prediction_widget()
 
-        path = QFileDialog.getOpenFileName(None, 'Open File', options=QFileDialog.DontUseNativeDialog)[0]
+        path = QFileDialog.getOpenFileName(None, 'Choose the binary file containing the model',
+                                           options=QFileDialog.DontUseNativeDialog)[0]
         """
         with open(path, 'rb') as handle:
             b = pickle.load(handle)
@@ -1919,7 +1925,8 @@ def Prediction():
         # Removal of the remaining images of the previous widgets
         prediction_widget.viewer.value.layers.clear()
 
-        path = QFileDialog.getExistingDirectory(None, 'Open Folder', options=QFileDialog.DontUseNativeDialog)
+        path = QFileDialog.getExistingDirectory(None, 'Choose the parent folder which contains folders Images '
+                                                'and Masks', options=QFileDialog.DontUseNativeDialog)
 
         # Result folder
         global res_folder
