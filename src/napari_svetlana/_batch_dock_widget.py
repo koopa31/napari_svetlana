@@ -1295,24 +1295,25 @@ def Training():
                         print(total_loss.item())
                         viewer.value.status = "loss = " + str(total_loss.item())
                         # scheduler.step()
-                        if (epoch + 1) % saving_ep == 0:
-                            d = {"model": model, "optimizer_state_dict": optimizer,
-                                 "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
-                                 "image_path": image_path_list[0], "labels_path": labels_path_list[0],
-                                 "patch_size": patch_size, "norm_type": norm_type}
-                            if training_name == "":
-                                model_path = os.path.join(save_folder, "training_" + str(epoch + 1))
-                            else:
-                                model_path = os.path.join(save_folder, training_name + "_" + str(epoch + 1))
-                            if model_path.endswith(".pt") or model_path.endswith(".pth"):
-                                torch.save(d, model_path)
-                            else:
-                                torch.save(d, model_path + ".pth")
-
                         found = True
 
-                    yield epoch + 1
                     LOSS_LIST.append(total_loss.item())
+                    if (epoch + 1) % saving_ep == 0:
+                        d = {"model": model, "optimizer_state_dict": optimizer,
+                             "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
+                             "image_path": image_path_list[0], "labels_path": labels_path_list[0],
+                             "patch_size": patch_size, "norm_type": norm_type}
+                        if training_name == "":
+                            model_path = os.path.join(save_folder, "training_" + str(epoch + 1))
+                        else:
+                            model_path = os.path.join(save_folder, training_name + "_" + str(epoch + 1))
+                        if model_path.endswith(".pt") or model_path.endswith(".pth"):
+                            torch.save(d, model_path)
+                        else:
+                            torch.save(d, model_path + ".pth")
+
+                    yield epoch + 1
+
             except:
                 if "bs" in locals():
                     bs -= 1
@@ -1324,10 +1325,7 @@ def Training():
                     bs += 1
                 training_loader = DataLoader(dataset=train_data, batch_size=int(bs), shuffle=True)
 
-        plt.plot(np.arange(1, len(LOSS_LIST) + 1, 1), LOSS_LIST)
-        plt.title("Training loss")
-        plt.xlabel("Epochs number")
-        plt.show()
+        return LOSS_LIST
 
     @magicgui(
         auto_call=True,
@@ -1455,6 +1453,7 @@ def Training():
                  float(training_widget.prob.value), int(training_widget.b_size.value),
                  int(training_widget.saving_ep.value), str(training_widget.training_name.value),
                  str(training_widget.data_norm.value), model)
+            training_worker.returned.connect(plot_loss)
         else:
 
             training_worker = thread_worker(train, progress={"total": int(training_widget.epochs.value)})(
@@ -1466,9 +1465,21 @@ def Training():
                 float(training_widget.prob.value), int(training_widget.b_size.value),
                 int(training_widget.saving_ep.value), str(training_widget.training_name.value),
                 str(training_widget.data_norm.value), None)
+            training_worker.returned.connect(plot_loss)
 
         training_worker.start()
         show_info('Training started')
+
+    def plot_loss(loss_list):
+        """
+        This function gets the loss values list and plots it once the training's thread is done
+        @param loss_list:
+        @return:
+        """
+        plt.plot(np.arange(1, len(loss_list) + 1, 1), loss_list)
+        plt.title("Training loss")
+        plt.xlabel("Epochs number")
+        plt.show()
 
     return training_widget
 
