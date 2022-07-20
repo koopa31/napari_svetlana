@@ -972,7 +972,7 @@ def Training():
             image = image_list[i]
             labels = mask_list[i]
             for i, position in enumerate(region_props):
-                if case == "2D" or case == "multi_2D":
+                if case == "2D" or case == "multi2D":
                     xmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
                     xmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
                     ymin = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) - (patch_size // 2)
@@ -1192,7 +1192,7 @@ def Training():
 
                         if patch_size / (2 ** (depth - 1)) <= kersize:
                             show_info("Patch size is too small for this network")
-                        model = CNN2D(max(labels_list) + 1, 4, depth, kersize)
+                        model = CNN2D(max(labels_list) + 1, image.shape[0] + 1, depth, kersize)
 
                 elif case == "3D":
                     model = CNN3D(max(labels_list) + 1, 2)
@@ -1249,10 +1249,12 @@ def Training():
                 mask = imread(labels_path_list[i])
 
                 region_props_list_to_clean.append(region_props_list[i])
-                if len(mask.shape) == 2:
+                if case == "2D" or case == "multi2D":
                     # Turn image into 3 channel if it is grayscale
                     if len(image.shape) == 2:
                         image = np.stack((image,) * 3, axis=-1)
+                    elif case == "multi2D":
+                        image = np.transpose(image, (1, 2, 0))
                     pad_image_list.append(np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                                          (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)),
                                                  mode="constant"))
