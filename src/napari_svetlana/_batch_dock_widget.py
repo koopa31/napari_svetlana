@@ -740,9 +740,22 @@ def Annotation():
                 # Creation of progression mask if there are already annotation in previous image
                 if counter != 0:
                     progression_mask = np.zeros_like(annotation_widget.viewer.value.layers["mask"].data)
-                    for ind, prop in enumerate(global_mini_props_list[image_counter]):
-                        progression_mask[prop["coords"][:, 0], prop["coords"][:, 1]] = \
-                            global_labels_list[image_counter][ind] + 1
+                    if case == '2D':
+                        for ind, prop in enumerate(global_mini_props_list[image_counter]):
+                            progression_mask[prop["coords"][:, 0], prop["coords"][:, 1]] = \
+                                global_labels_list[image_counter][ind] + 1
+                    elif case == "multi2D":
+                        for ind, prop in enumerate(global_mini_props_list[image_counter]):
+                            progression_mask[prop["coords"][:, 0], prop["coords"][:, 1]] = \
+                                global_labels_list[image_counter][ind] + 1
+                    elif case == "3D":
+                        for ind, prop in enumerate(global_mini_props_list[image_counter]):
+                            progression_mask[prop["coords"][:, 0], prop["coords"][:, 1], prop["coords"][:, 2]] = \
+                                global_labels_list[image_counter][ind] + 1
+                    else:
+                        for ind, prop in enumerate(global_mini_props_list[image_counter]):
+                            progression_mask[:, prop["coords"][:, 2], prop["coords"][:, 0], prop["coords"][:, 1]] = \
+                                global_labels_list[image_counter][ind] + 1
                 else:
                     progression_mask = np.zeros_like(circle_mask)
             else:
