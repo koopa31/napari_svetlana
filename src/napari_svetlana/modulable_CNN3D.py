@@ -3,9 +3,9 @@ from torch.nn import Sequential, Conv3d, BatchNorm3d, ReLU, MaxPool3d, AdaptiveA
 
 
 class CNN3D(Module):
-    def __init__(self, labels_number, channels_nb):
+    def __init__(self, labels_number, channels_nb, width):
         super(CNN3D, self).__init__()
-        self.width = 2
+        self.width = width
         self.pool = 2
 
         self.conv1 = Conv3d(channels_nb, self.width, kernel_size=7, stride=2, padding=3, bias=False)
@@ -20,13 +20,13 @@ class CNN3D(Module):
             BatchNorm3d(self.width*2),
             MaxPool3d(kernel_size=2, stride=self.pool),
             # Defining another 2D convolution layer
-            Conv3d(self.width*2, self.width*4, kernel_size=3, stride=1, padding=1),
+            Conv3d(self.width*2, self.width*8, kernel_size=3, stride=1, padding=1),
             ReLU(inplace=True),
-            BatchNorm3d(self.width*4),
+            BatchNorm3d(self.width*8),
             MaxPool3d(kernel_size=2, stride=self.pool),
         )
         self.avg_pool = Sequential(AdaptiveAvgPool3d(output_size=(1, 1, 1)))
-        self.fc = Sequential(Linear(self.width*4, labels_number))
+        self.fc = Sequential(Linear(self.width*8, labels_number))
         self.softmax = Softmax()
 
     # Defining the forward pass
