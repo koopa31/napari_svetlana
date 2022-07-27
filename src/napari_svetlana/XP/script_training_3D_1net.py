@@ -145,6 +145,7 @@ def get_image_patch(image, labels, region_props, labels_list, torch_type, case, 
     train_data = CustomDataset(data_list=img_patch_list, labels_tensor=labels_tensor, transform=transform)
     return train_data
 
+
 # vérité de terrain
 
 groundtruth_path = "/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/Test papier svetlana/" \
