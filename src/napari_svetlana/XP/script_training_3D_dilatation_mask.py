@@ -229,7 +229,7 @@ for depth in depth_list:
             # Loop over epochs
             iterations_number = epochs_nb
             # folder where to save the training
-            save_folder = os.path.join(os.path.split(os.path.split(image_path[0])[0])[0], 'Test_depth')
+            save_folder = os.path.join(os.path.split(os.path.split(image_path[0])[0])[0], 'Test_dilation')
 
             for epoch in range(iterations_number):
                 # Training
@@ -320,4 +320,5 @@ for depth in depth_list:
 df = pd.DataFrame(list(zip(depth_list_pd, epochs_list_pd, width_list_pd, accuracy_list, counter_list)),
                   columns=['net depth', 'epochs_list', 'net width', 'accuracy', "errors nb"])
 
-df.to_excel(os.path.join(os.path.split(os.path.split(image_path[0])[0])[0], 'Test_depth', "accuracy.xlsx"), index=False)
+df.to_excel(os.path.join(os.path.split(os.path.split(image_path[0])[0])[0], 'Test_dilation', "accuracy.xlsx"),
+            index=False)
