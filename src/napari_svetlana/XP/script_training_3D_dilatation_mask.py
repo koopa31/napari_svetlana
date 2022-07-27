@@ -14,6 +14,8 @@ from src.napari_svetlana.CustomDataset import CustomDataset
 from src.napari_svetlana.Prediction3DDataset import Prediction3DDataset
 import matplotlib.pyplot as plt
 import pandas as pd
+import cupy as cu
+from cucim.skimage.morphology import dilation, ball
 
 
 """
@@ -58,94 +60,56 @@ def get_image_patch(image, labels, region_props, labels_list, torch_type, case, 
 
     img_patch_list = []
 
+    str_el = cu.asarray(ball(6))
+
     for i, position in enumerate(region_props):
-        if case == "2D" or case == "multi2D":
-            xmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
-            xmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
-            ymin = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) - (patch_size // 2)
-            ymax = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) + (patch_size // 2)
 
-            imagette = image[xmin:xmax, ymin:ymax].copy()
-            imagette_mask = labels[xmin:xmax, ymin:ymax].copy()
+        xmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
+        xmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
+        ymin = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) - (patch_size // 2)
+        ymax = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) + (patch_size // 2)
+        zmin = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) - (patch_size // 2)
+        zmax = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) + (patch_size // 2)
 
-            imagette_mask[imagette_mask != region_props[i]["label"]] = 0
-            imagette_mask[imagette_mask == region_props[i]["label"]] = 1
+        imagette = image[xmin:xmax, ymin:ymax, zmin:zmax].copy()
 
-            concat_image = np.zeros((imagette.shape[0], imagette.shape[1], imagette.shape[2] + 1))
-            # imagette = imagette / 255
+        imagette_mask = labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
 
-            if norm_type == "min max normalization":
-                imagette = min_max_norm(imagette)
-            elif norm_type == "max to 1 normalization":
-                imagette = max_to_1(imagette)
+        imagette_mask[imagette_mask != region_props[i]["label"]] = 0
+        imagette_mask[imagette_mask == region_props[i]["label"]] = 1
 
-            concat_image[:, :, :-1] = imagette
-            concat_image[:, :, -1] = imagette_mask
-            # Image with masked of the object and inverse mask
+        plt.figure(1)
+        plt.imshow(imagette_mask[20, :, :])
 
-            # concat_image[:, :, 0] = np.mean(imagette[:, :, 0] * imagette_mask) #torch.ones_like(imagette[:, :, 0])
-            # concat_image[:, :, 0] *= torch.mean(imagette[:, :, 0] * imagette_mask)
+        # dilation of mask
+        imagette_mask = cu.asarray(imagette_mask)
+        imagette_mask = cu.asnumpy(dilation(imagette_mask, str_el))
 
-            # concat_image[:, :, 1] = (imagette[:, :, 0] * (1 - imagette_mask))
+        plt.figure(2)
+        plt.imshow(imagette_mask[20, :, :])
 
-            img_patch_list.append(concat_image)
-        elif case == "multi3D":
-            xmin = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) - (patch_size // 2)
-            xmax = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) + (patch_size // 2)
-            ymin = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) - (patch_size // 2)
-            ymax = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) + (patch_size // 2)
-            zmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
-            zmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
+        plt.figure(3)
+        plt.imshow(imagette[20, :, :])
 
-            imagette = image[:, zmin:zmax, xmin:xmax, ymin:ymax].copy()
+        imagette *= imagette_mask
 
-            imagette_mask = labels[zmin:zmax, xmin:xmax, ymin:ymax].copy()
+        plt.figure(4)
+        plt.imshow(imagette[20, :, :])
+        plt.show()
 
-            imagette_mask[imagette_mask != region_props[i]["label"]] = 0
-            imagette_mask[imagette_mask == region_props[i]["label"]] = 1
+        concat_image = np.zeros((2, imagette.shape[0], imagette.shape[1], imagette.shape[2])).astype(
+            image.dtype)
 
-            concat_image = np.zeros((imagette.shape[0] + 1, imagette.shape[1], imagette.shape[2],
-                                     imagette.shape[3])).astype(image.dtype)
+        # normalization
+        if norm_type == "min max normalization":
+            imagette = min_max_norm(imagette)
+        elif norm_type == "max to 1 normalization":
+            imagette = max_to_1(imagette)
 
-            # normalization
-            if norm_type == "min max normalization":
-                imagette = min_max_norm(imagette)
-            elif norm_type == "max to 1 normalization":
-                imagette = max_to_1(imagette)
+        concat_image[0, :, :, :] = imagette
+        concat_image[1, :, :, :] = imagette_mask
 
-            concat_image[:-1, :, :, :] = imagette
-            concat_image[-1, :, :, :] = imagette_mask
-
-            img_patch_list.append(concat_image)
-
-        else:
-            xmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
-            xmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
-            ymin = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) - (patch_size // 2)
-            ymax = (int(region_props[i]["centroid"][1]) + (patch_size // 2) + 1) + (patch_size // 2)
-            zmin = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) - (patch_size // 2)
-            zmax = (int(region_props[i]["centroid"][2]) + (patch_size // 2) + 1) + (patch_size // 2)
-
-            imagette = image[xmin:xmax, ymin:ymax, zmin:zmax].copy()
-
-            imagette_mask = labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
-
-            imagette_mask[imagette_mask != region_props[i]["label"]] = 0
-            imagette_mask[imagette_mask == region_props[i]["label"]] = 1
-
-            concat_image = np.zeros((2, imagette.shape[0], imagette.shape[1], imagette.shape[2])).astype(
-                image.dtype)
-
-            # normalization
-            if norm_type == "min max normalization":
-                imagette = min_max_norm(imagette)
-            elif norm_type == "max to 1 normalization":
-                imagette = max_to_1(imagette)
-
-            concat_image[0, :, :, :] = imagette
-            concat_image[1, :, :, :] = imagette_mask
-
-            img_patch_list.append(concat_image)
+        img_patch_list.append(concat_image)
 
     train_data = CustomDataset(data_list=img_patch_list, labels_tensor=labels_tensor, transform=transform)
     return train_data
