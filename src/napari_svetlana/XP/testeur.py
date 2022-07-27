@@ -16,7 +16,7 @@ from joblib import Parallel, delayed
 from time import time
 from torchvision import models
 
-from CustomDataset import CustomDataset
+from src.napari_svetlana.CustomDataset import CustomDataset
 
 
 def set_parameter_requires_grad(model, feature_extracting):

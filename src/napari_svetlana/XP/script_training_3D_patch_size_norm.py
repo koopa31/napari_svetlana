@@ -11,8 +11,8 @@ from torch import nn
 import numpy as np
 from skimage.io import imread, imsave
 
-from CustomDataset import CustomDataset
-from napari_svetlana.Prediction3DDataset import Prediction3DDataset
+from src.napari_svetlana.CustomDataset import CustomDataset
+from src.napari_svetlana.Prediction3DDataset import Prediction3DDataset
 import matplotlib.pyplot as plt
 
 
