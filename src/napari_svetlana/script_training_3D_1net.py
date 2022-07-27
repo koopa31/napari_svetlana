@@ -11,7 +11,7 @@ import numpy as np
 from skimage.io import imread, imsave
 
 from CustomDataset import CustomDataset
-from napari_svetlana.Prediction3DDataset import Prediction3DDataset
+from Prediction3DDataset import Prediction3DDataset
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -147,192 +147,207 @@ def get_image_patch(image, labels, region_props, labels_list, torch_type, case, 
 
 # vérité de terrain
 
-groundtruth_path = "/home/cazorla/Images/Test papier svetlana/tube neural 3d/gt_new.tif"
+groundtruth_path = "/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/Test papier svetlana/" \
+                   "TESTS_3D_archi_et_patch size/gt_new.tif"
 gt = imread(groundtruth_path)
 
 # Chargement du binaire
-checkpoint = torch.load("/home/cazorla/Images/Test papier svetlana/tube neural 3d/Svetlana/labels")
+checkpoint = torch.load("/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/Test papier svetlana/"
+                        "TESTS_3D_archi_et_patch size/Svetlana/labels_new")
 
 width_list = [2, 4, 8, 16, 32, 64]
 accuracy_list = []
 counter_list = []
 epochs_list = [10, 50, 100, 200, 300, 400, 500, 600]
+depth_list = [2, 3, 4]
 
-for epochs_nb in epochs_list:
-    for width in width_list:
-        image_path = checkpoint["image_path"]
 
-        image = imread(image_path[0])
-        if len(image.shape) == 2:
-            image = np.stack((image,) * 3, axis=-1)
-        labels_path = checkpoint["labels_path"][0]
-        mask = imread(labels_path)
-        reg_props = checkpoint["regionprops"][0]
-        labels_list = checkpoint["labels_list"][0]
-        patch_size = 45
-        #epochs_nb = 10
-        norm_type = "no_normalization"
-        training_name = "width_" + str(width) + "_epochs_" + str(epochs_nb) + "_"
+depth_list_pd = []
+width_list_pd = []
+epochs_list_pd = []
 
-        transform = A.Compose([ToTensorV2()])
 
-        # Setting of network
-        model = CNN3D(labels_number=2, channels_nb=2, width=width)
+for depth in depth_list:
+    for epochs_nb in epochs_list:
+        for width in width_list:
 
-        # Computing the network's parameters number
-        model_parameters = filter(lambda p: p.requires_grad, model.parameters())
-        params = sum([np.prod(p.size()) for p in model_parameters])
-        print("NUMBER OF PARAMETERS OF THE NETWORK : ", params)
+            width_list_pd.append(width)
+            epochs_list_pd.append(epochs_nb)
+            depth_list_pd.append(depth)
 
-        torch_type = torch.cuda.FloatTensor
+            image_path = checkpoint["image_path"]
 
-        # Setting the optimizer
-        LR = 0.01
-        torch.autograd.set_detect_anomaly(True)
-        optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+            image = imread(image_path[0])
+            if len(image.shape) == 2:
+                image = np.stack((image,) * 3, axis=-1)
+            labels_path = checkpoint["labels_path"][0]
+            mask = imread(labels_path)
+            reg_props = checkpoint["regionprops"][0]
+            labels_list = checkpoint["labels_list"][0]
+            patch_size = 45
+            #epochs_nb = 10
+            norm_type = "no_normalization"
+            training_name = "depth_" + str(depth) + "_width_" + str(width) + "_epochs_" + str(epochs_nb) + "_"
 
-        # CUDA for PyTorch
-        use_cuda = torch.cuda.is_available()
-        device = torch.device("cuda" if use_cuda else "cpu")
-        torch.backends.cudnn.benchmark = True
+            transform = A.Compose([ToTensorV2()])
 
-        # Parameters
-        labels_list = np.array(labels_list)
+            # Setting of network
+            model = CNN3D(labels_number=2, channels_nb=2, width=width, depth=depth)
 
-        # Generators
-        if len(mask.shape) == 2:
-            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
-            pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+            # Computing the network's parameters number
+            model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+            params = sum([np.prod(p.size()) for p in model_parameters])
+            print("NUMBER OF PARAMETERS OF THE NETWORK : ", params)
 
-        elif len(image.shape) == 4:
-            pad_image = np.pad(image, ((0, 0),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
-            pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+            torch_type = torch.cuda.FloatTensor
 
-        else:
-            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
-            pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1),
-                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+            # Setting the optimizer
+            LR = 0.01
+            torch.autograd.set_detect_anomaly(True)
+            optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
-        train_data = get_image_patch(pad_image, pad_labels, reg_props, labels_list, torch_type, "3D", norm_type)
-        training_loader = DataLoader(dataset=train_data, batch_size=100, shuffle=True)
+            # CUDA for PyTorch
+            use_cuda = torch.cuda.is_available()
+            device = torch.device("cuda" if use_cuda else "cpu")
+            torch.backends.cudnn.benchmark = True
 
-        # Optimizer
-        model.to("cuda")
-        params_to_update = []
-        for name, param in model.named_parameters():
-            if param.requires_grad is True:
-                params_to_update.append(param)
-                print("\t", name)
-        optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+            # Parameters
+            labels_list = np.array(labels_list)
 
-        # Loss function
-        LOSS_LIST = []
+            # Generators
+            if len(mask.shape) == 2:
+                pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
+                pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-        loss = nn.CrossEntropyLoss().type(torch_type)
+            elif len(image.shape) == 4:
+                pad_image = np.pad(image, ((0, 0),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+                pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
-        # Loop over epochs
-        iterations_number = epochs_nb
-        # folder where to save the training
-        save_folder = os.path.join(os.path.split(os.path.split(image_path[0])[0])[0], 'Test_archi')
+            else:
+                pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+                pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1),
+                                           (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-        for epoch in range(iterations_number):
-            # Training
-            for local_batch, local_labels in training_loader:
-                # Transfer to GPU
-                local_batch, local_labels = local_batch.to(device), local_labels.to(device)
+            train_data = get_image_patch(pad_image, pad_labels, reg_props, labels_list, torch_type, "3D", norm_type)
+            training_loader = DataLoader(dataset=train_data, batch_size=100, shuffle=True)
 
+            # Optimizer
+            model.to("cuda")
+            params_to_update = []
+            for name, param in model.named_parameters():
+                if param.requires_grad is True:
+                    params_to_update.append(param)
+                    print("\t", name)
+            optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+
+            # Loss function
+            LOSS_LIST = []
+
+            loss = nn.CrossEntropyLoss().type(torch_type)
+
+            # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
+            # Loop over epochs
+            iterations_number = epochs_nb
+            # folder where to save the training
+            save_folder = os.path.join(os.path.split(os.path.split(image_path[0])[0])[0], 'Test_depth')
+
+            for epoch in range(iterations_number):
+                # Training
+                for local_batch, local_labels in training_loader:
+                    # Transfer to GPU
+                    local_batch, local_labels = local_batch.to(device), local_labels.to(device)
+
+                    out = model(local_batch)
+                    total_loss = loss(out, local_labels.type(torch.cuda.FloatTensor))
+                    optimizer.zero_grad()
+                    total_loss.backward()
+                    optimizer.step()
+                    LOSS_LIST.append(total_loss.item())
+                    # scheduler.step()
+                    if (epoch + 1) % 100 == 0:
+
+                        d = {"model": model, "optimizer_state_dict": optimizer,
+                             "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
+                             "image_path": image_path, "labels_path": labels_path,
+                             "patch_size": patch_size, "norm_type": norm_type}
+                        if training_name == "":
+                            model_path = os.path.join(save_folder, "training" + str(epoch + 1))
+                        else:
+                            model_path = os.path.join(save_folder, training_name + str(epoch + 1))
+                        if model_path.endswith(".pt") or model_path.endswith(".pth"):
+                            torch.save(d, model_path)
+                        else:
+                            torch.save(d, model_path + ".pth")
+                if epoch % 10 == 0:
+                    print("Epoch ", epoch + 1)
+                    print(total_loss.item())
+
+            # PREDICTION:
+            def draw_predicted_contour(compteur, prop, imagette_contours, i, list_pred):
+
+                imagette_contours[prop.coords[:, 0], prop.coords[:, 1], prop.coords[:, 2]] = list_pred[i].item() + 1
+                if list_pred[i] == 1:
+                    compteur += 1
+                return compteur
+
+
+            model.eval()
+
+            from skimage.measure import regionprops
+            props = regionprops(mask)
+
+            try:
+                max = np.iinfo(image.dtype).max
+            except TypeError:
+                max = np.finfo(image.dtype).max
+
+            compteur = 0
+
+            imagette_contours = np.zeros((image.shape[0], image.shape[1], image.shape[2]))
+
+            data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda")
+
+            prediction_loader = DataLoader(dataset=data, batch_size=100, shuffle=False)
+
+            global list_pred
+            list_pred = []
+            for i, local_batch in enumerate(prediction_loader):
                 out = model(local_batch)
-                total_loss = loss(out, local_labels.type(torch.cuda.FloatTensor))
-                optimizer.zero_grad()
-                total_loss.backward()
-                optimizer.step()
-                LOSS_LIST.append(total_loss.item())
-                # scheduler.step()
-                if (epoch + 1) % 100 == 0:
+                _, index = torch.max(out, 1)
+                list_pred += index
 
-                    d = {"model": model, "optimizer_state_dict": optimizer,
-                         "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
-                         "image_path": image_path, "labels_path": labels_path,
-                         "patch_size": patch_size, "norm_type": norm_type}
-                    if training_name == "":
-                        model_path = os.path.join(save_folder, "training" + str(epoch + 1))
-                    else:
-                        model_path = os.path.join(save_folder, training_name + str(epoch + 1))
-                    if model_path.endswith(".pt") or model_path.endswith(".pth"):
-                        torch.save(d, model_path)
-                    else:
-                        torch.save(d, model_path + ".pth")
-            if epoch % 10 == 0:
-                print("Epoch ", epoch + 1)
-                print(total_loss.item())
+            compteur = Parallel(n_jobs=-1, require="sharedmem")(
+                delayed(draw_predicted_contour)(compteur, prop, imagette_contours, i, list_pred)
+                for i, prop in enumerate(props))
 
-        # PREDICTION:
-        def draw_predicted_contour(compteur, prop, imagette_contours, i, list_pred):
+            print(imagette_contours.shape, imagette_contours.dtype)
+            imsave(os.path.join(save_folder, training_name + ".tif"), imagette_contours.astype("uint8"))
 
-            imagette_contours[prop.coords[:, 0], prop.coords[:, 1], prop.coords[:, 2]] = list_pred[i].item() + 1
-            if list_pred[i] == 1:
-                compteur += 1
-            return compteur
+            # Compute accuracy
+            dif = (np.abs(imagette_contours.astype("uint8") - gt)).astype(int)
 
+            ROI_nb = mask.max()
+            maskk = mask * dif
+            counter = len(np.unique(maskk))-1
+            accuracy = 1 - (counter/ROI_nb)
 
-        model.eval()
+            accuracy_list.append(accuracy)
+            counter_list.append(counter)
 
-        from skimage.measure import regionprops
-        props = regionprops(mask)
+            print("accuracy = ", accuracy)
+            print("counter = ", counter)
 
-        try:
-            max = np.iinfo(image.dtype).max
-        except TypeError:
-            max = np.finfo(image.dtype).max
+df = pd.DataFrame(list(zip(depth_list_pd, epochs_list_pd, width_list_pd, accuracy_list, counter_list)),
+                  columns=['net depth', 'epochs_list', 'net width', 'accuracy', "errors nb"])
 
-        compteur = 0
-
-        imagette_contours = np.zeros((image.shape[0], image.shape[1], image.shape[2]))
-
-        data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda")
-
-        prediction_loader = DataLoader(dataset=data, batch_size=100, shuffle=False)
-
-        global list_pred
-        list_pred = []
-        for i, local_batch in enumerate(prediction_loader):
-            out = model(local_batch)
-            _, index = torch.max(out, 1)
-            list_pred += index
-
-        compteur = Parallel(n_jobs=-1, require="sharedmem")(
-            delayed(draw_predicted_contour)(compteur, prop, imagette_contours, i, list_pred)
-            for i, prop in enumerate(props))
-
-        print(imagette_contours.shape, imagette_contours.dtype)
-        imsave(os.path.join(save_folder, training_name + ".tif"), imagette_contours.astype("uint8"))
-
-        # Compute accuracy
-        dif = (np.abs(imagette_contours.astype("uint8") - gt)).astype(int)
-
-        ROI_nb = mask.max()
-        maskk = mask * dif
-        counter = len(np.unique(maskk))-1
-        accuracy = 1 - (counter/ROI_nb)
-
-        accuracy_list.append(accuracy)
-        counter_list.append(counter)
-
-        print("accuracy = ", accuracy)
-        print("counter = ", counter)
-
-df = pd.DataFrame(list(zip(width_list, accuracy_list, counter_list)), columns=['net width', 'accuracy', "errors nb"])
-df.to_excel("/home/cazorla/Images/Test papier svetlana/tube neural 3d/Test_archi/accuracy.xlsx", index=False)
-
-
+df.to_excel(os.path.join(os.path.split(os.path.split(image_path[0])[0])[0], 'Test_depth', "accuracy.xlsx"), index=False)
