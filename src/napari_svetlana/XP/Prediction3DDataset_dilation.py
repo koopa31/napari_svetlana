@@ -9,14 +9,14 @@ import matplotlib.pyplot as plt
 
 
 class Prediction3DDataset(Dataset):
-    def __init__(self, image, labels, props, half_patch_size, norm_type, device):
+    def __init__(self, image, labels, props, half_patch_size, norm_type, device, dilation_factor):
         self.props = props
         self.image = image
         self.labels = labels
         self.half_patch_size = half_patch_size
         self.norm_type = norm_type
         self.device = device
-        self.str_el = cu.asarray(ball(6))
+        self.str_el = cu.asarray(ball(dilation_factor))
 
     def __getitem__(self, index):
         prop = self.props[index]
