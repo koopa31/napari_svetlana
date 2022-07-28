@@ -11,7 +11,7 @@ import numpy as np
 from skimage.io import imread, imsave
 
 from src.napari_svetlana.CustomDataset import CustomDataset
-from src.napari_svetlana.Prediction3DDataset import Prediction3DDataset
+from Prediction3DDataset_dilation import Prediction3DDataset
 import matplotlib.pyplot as plt
 import pandas as pd
 import cupy as cu
@@ -78,24 +78,24 @@ def get_image_patch(image, labels, region_props, labels_list, torch_type, case, 
         imagette_mask[imagette_mask != region_props[i]["label"]] = 0
         imagette_mask[imagette_mask == region_props[i]["label"]] = 1
 
-        plt.figure(1)
-        plt.imshow(imagette_mask[20, :, :])
+        """plt.figure(1)
+        plt.imshow(imagette_mask[20, :, :])"""
 
         # dilation of mask
         imagette_mask = cu.asarray(imagette_mask)
         imagette_mask = cu.asnumpy(dilation(imagette_mask, str_el))
 
-        plt.figure(2)
-        plt.imshow(imagette_mask[20, :, :])
+        """plt.figure(2)
+        plt.imshow(imagette_mask[20, :, :])"""
 
-        plt.figure(3)
-        plt.imshow(imagette[20, :, :])
+        """plt.figure(3)
+        plt.imshow(imagette[20, :, :])"""
 
         imagette *= imagette_mask
 
-        plt.figure(4)
+        """plt.figure(4)
         plt.imshow(imagette[20, :, :])
-        plt.show()
+        plt.show()"""
 
         concat_image = np.zeros((2, imagette.shape[0], imagette.shape[1], imagette.shape[2])).astype(
             image.dtype)
@@ -117,19 +117,17 @@ def get_image_patch(image, labels, region_props, labels_list, torch_type, case, 
 
 # vérité de terrain
 
-groundtruth_path = "/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/Test papier svetlana/" \
-                   "TESTS_3D_archi_et_patch size/gt_new.tif"
+groundtruth_path = "/home/cazorla/Images/Test papier svetlana/tube neural 3d/gt_new.tif"
 gt = imread(groundtruth_path)
 
 # Chargement du binaire
-checkpoint = torch.load("/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/Test papier svetlana/"
-                        "TESTS_3D_archi_et_patch size/Svetlana/labels_new")
+checkpoint = torch.load("/home/cazorla/Images/Test papier svetlana/tube neural 3d/Svetlana/labels")
 
 width_list = [2, 4, 8, 16, 32, 64]
 accuracy_list = []
 counter_list = []
 epochs_list = [10, 50, 100, 200, 300, 400, 500, 600]
-depth_list = [2, 3, 4]
+depth_list = [2, 3]
 
 
 depth_list_pd = []
