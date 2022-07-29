@@ -3,6 +3,8 @@ import torch
 from skimage.io import imread, imsave
 import os
 import numpy as np
+import cupy as cu
+from cucim.skimage.morphology import dilation, ball
 
 binary = torch.load("/home/cazorla/Images/Test papier svetlana/tube neural 3d/Svetlana/labels")
 
@@ -10,6 +12,8 @@ image = imread(binary["image_path"][0])
 mask = imread(binary["labels_path"][0])
 region_props = binary["regionprops"]
 patch_size = int(binary["patch_size"])
+patch_size = 45
+dilation_factor = 10
 labs = binary["labels_list"][0]
 
 res_folder = "/home/cazorla/Bureau/patches"
@@ -35,12 +39,22 @@ for i, position in enumerate(region_props[0]):
     maskette = mask[xmin:xmax, ymin:ymax, zmin:zmax].copy()
 
     maskette[maskette != int(region_props[0][i]["label"])] = 0
+    maskette[maskette != 0] = 1
+
+    # dilation of mask
+    dilated_maskette = cu.asarray(maskette)
+    dilated_maskette = cu.asnumpy(dilation(dilated_maskette, cu.asarray(ball(dilation_factor))))
+
+    dilated_imagette = imagette * dilated_maskette
+
     maskette[maskette != 0] = 255
 
     if labs[i] == 0:
         imsave(os.path.join(res_folder, lab1_folder, "patch_" + str(i + 1)+ ".tif"), imagette)
         imsave(os.path.join(res_folder, lab1_folder, "mask_" + str(i + 1)+ ".tif"), maskette)
+        imsave(os.path.join(res_folder, lab1_folder, "dilated_" + str(i + 1)+ ".tif"), dilated_imagette)
 
     elif labs[i] == 1:
         imsave(os.path.join(res_folder, lab2_folder, "patch_" + str(i + 1) + ".tif"), imagette)
         imsave(os.path.join(res_folder, lab2_folder, "mask_" + str(i + 1) + ".tif"), maskette)
+        imsave(os.path.join(res_folder, lab2_folder, "dilated_" + str(i + 1)+ ".tif"), dilated_imagette)
