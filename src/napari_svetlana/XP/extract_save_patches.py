@@ -6,6 +6,11 @@ import numpy as np
 import cupy as cu
 from cucim.skimage.morphology import dilation, ball
 
+
+"""
+3D patches generation from Svetlana annotations for visualisation
+"""
+
 binary = torch.load("/home/cazorla/Images/Test papier svetlana/tube neural 3d/Svetlana/labels")
 
 image = imread(binary["image_path"][0])
