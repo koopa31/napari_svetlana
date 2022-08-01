@@ -164,18 +164,22 @@ checkpoint = torch.load("/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/Tes
 width_list = [2, 4, 8, 16, 32, 64]
 accuracy_list = []
 counter_list = []
-epochs_list = [10, 50, 100, 200, 300, 400, 500, 600]
-depth_list = [2, 3, 4]
+epochs_list = [600]
+depth_list = [2, 3]
 
 
 depth_list_pd = []
 width_list_pd = []
 epochs_list_pd = []
 
+accuracy1_list = []
+accuracy2_list = []
+loss_list_pd = []
+
 
 for depth in depth_list:
-    for epochs_nb in epochs_list:
-        for width in width_list:
+    for width in width_list:
+        for epochs_nb in epochs_list:
 
             width_list_pd.append(width)
             epochs_list_pd.append(epochs_nb)
@@ -254,7 +258,9 @@ for depth in depth_list:
                 if param.requires_grad is True:
                     params_to_update.append(param)
                     print("\t", name)
-            optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+
+            optimizer = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=0)
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.1)
 
             # Loss function
             LOSS_LIST = []
@@ -294,9 +300,13 @@ for depth in depth_list:
                             torch.save(d, model_path)
                         else:
                             torch.save(d, model_path + ".pth")
-                if epoch % 10 == 0:
+
+                scheduler.step()
+
+                if epoch % 100 == 0:
                     print("Epoch ", epoch + 1)
                     print(total_loss.item())
+                    print("LR = ", optimizer.param_groups[0]['lr'])
 
             # PREDICTION:
             def draw_predicted_contour(compteur, prop, imagette_contours, i, list_pred):
@@ -339,21 +349,45 @@ for depth in depth_list:
             print(imagette_contours.shape, imagette_contours.dtype)
             imsave(os.path.join(save_folder, training_name + ".tif"), imagette_contours.astype("uint8"))
 
-            # Compute accuracy
-            dif = (np.abs(imagette_contours.astype("uint8") - gt)).astype(int)
+            # where image and gt are equal to 1
+            class1 = (imagette_contours == gt) & (gt == 1)
+            mask1 = mask.copy()
+            mask1 *= class1
+            counter1 = len(np.unique(mask1)) - 1
 
-            ROI_nb = mask.max()
-            maskk = mask * dif
-            counter = len(np.unique(maskk))-1
-            accuracy = 1 - (counter/ROI_nb)
+            # where gt is equal to 1
+            gt1 = (gt == 1)
+            mask1 = mask.copy()
+            mask1 *= gt1
+            ROI1 = len(np.unique(mask1)) - 1
 
-            accuracy_list.append(accuracy)
-            counter_list.append(counter)
+            # accuracy for label 1
+            accuracy1 = counter1 / ROI1
 
-            print("accuracy = ", accuracy)
-            print("counter = ", counter)
+            # where image and gt are equal to 1
+            class2 = (imagette_contours == gt) & (gt == 2)
+            mask2 = mask.copy()
+            mask2 *= class2
+            counter2 = len(np.unique(mask2)) - 1
 
-df = pd.DataFrame(list(zip(depth_list_pd, epochs_list_pd, width_list_pd, accuracy_list, counter_list)),
-                  columns=['net depth', 'epochs_list', 'net width', 'accuracy', "errors nb"])
+            # where gt is equal to 2
+            gt2 = (gt == 2)
+            mask2 = mask.copy()
+            mask2 *= gt2
+            ROI2 = len(np.unique(mask2)) - 1
+
+            # accuracy for label 2
+            accuracy2 = counter2 / ROI2
+
+            accuracy1_list.append(accuracy1)
+            accuracy2_list.append(accuracy2)
+            loss_list_pd.append(total_loss.item())
+
+            print("accuracy1=", accuracy1)
+            print("accuracy2=", accuracy2)
+            model.train()
+
+df = pd.DataFrame(list(zip(depth_list_pd, epochs_list_pd, width_list_pd, accuracy1_list, accuracy2_list, loss_list_pd)),
+                  columns=['net depth', 'epochs_list', 'net width', 'accuracy1', 'accuracy2', 'loss'])
 
 df.to_excel(os.path.join(os.path.split(os.path.split(image_path[0])[0])[0], 'Test_depth', "accuracy.xlsx"), index=False)
