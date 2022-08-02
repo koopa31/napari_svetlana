@@ -117,16 +117,18 @@ def get_image_patch(image, labels, region_props, labels_list, torch_type, case, 
 
 # vérité de terrain
 
-groundtruth_path = "/home/cazorla/Images/Test papier svetlana/tube neural 3d/gt_new.tif"
+groundtruth_path = "/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/Test papier svetlana/" \
+                   "TESTS_3D_archi_et_patch size/gt_new.tif"
 gt = imread(groundtruth_path)
 
 # Chargement du binaire
-checkpoint = torch.load("/home/cazorla/Images/Test papier svetlana/tube neural 3d/Svetlana/labels")
+checkpoint = torch.load("/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/Test papier svetlana/"
+                        "TESTS_3D_archi_et_patch size/Svetlana/labels_new")
 
-width_list = [2, 16]
+width_list = [2, 4, 8, 16, 32, 64]
 accuracy_list = []
 counter_list = []
-epochs_list = [100, 200, 400, 600]
+epochs_list = [600]
 depth_list = [2, 3]
 dilation_factor_list = [6, 8, 10]
 
@@ -135,6 +137,10 @@ dilation_factor_list_pd = []
 depth_list_pd = []
 width_list_pd = []
 epochs_list_pd = []
+
+accuracy1_list = []
+accuracy2_list = []
+loss_list_pd = []
 
 for dilation_factor in dilation_factor_list:
     for depth in depth_list:
@@ -221,7 +227,9 @@ for dilation_factor in dilation_factor_list:
                     if param.requires_grad is True:
                         params_to_update.append(param)
                         print("\t", name)
-                optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+
+                optimizer = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=0)
+                scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.1)
 
                 # Loss function
                 LOSS_LIST = []
@@ -261,9 +269,12 @@ for dilation_factor in dilation_factor_list:
                                 torch.save(d, model_path)
                             else:
                                 torch.save(d, model_path + ".pth")
-                    if epoch % 10 == 0:
+                    scheduler.step()
+
+                    if epoch % 100 == 0:
                         print("Epoch ", epoch + 1)
                         print(total_loss.item())
+                        print("LR = ", optimizer.param_groups[0]['lr'])
 
                 # PREDICTION:
                 def draw_predicted_contour(compteur, prop, imagette_contours, i, list_pred):
@@ -308,21 +319,48 @@ for dilation_factor in dilation_factor_list:
                 imsave(os.path.join(save_folder, training_name + ".tif"), imagette_contours.astype("uint8"))
 
                 # Compute accuracy
-                dif = (np.abs(imagette_contours.astype("uint8") - gt)).astype(int)
+                # where image and gt are equal to 1
+                class1 = (imagette_contours == gt) & (gt == 1)
+                mask1 = mask.copy()
+                mask1 *= class1
+                counter1 = len(np.unique(mask1)) - 1
 
-                ROI_nb = mask.max()
-                maskk = mask * dif
-                counter = len(np.unique(maskk))-1
-                accuracy = 1 - (counter/ROI_nb)
+                # where gt is equal to 1
+                gt1 = (gt == 1)
+                mask1 = mask.copy()
+                mask1 *= gt1
+                ROI1 = len(np.unique(mask1)) - 1
 
-                accuracy_list.append(accuracy)
-                counter_list.append(counter)
+                # accuracy for label 1
+                accuracy1 = counter1 / ROI1
 
-                print("accuracy = ", accuracy)
-                print("counter = ", counter)
+                # where image and gt are equal to 1
+                class2 = (imagette_contours == gt) & (gt == 2)
+                mask2 = mask.copy()
+                mask2 *= class2
+                counter2 = len(np.unique(mask2)) - 1
 
-df = pd.DataFrame(list(zip(dilation_factor_list_pd, depth_list_pd, epochs_list_pd, width_list_pd, accuracy_list, counter_list)),
-                  columns=['dilation factor', 'net depth', 'epochs_list', 'net width', 'accuracy', "errors nb"])
+                # where gt is equal to 2
+                gt2 = (gt == 2)
+                mask2 = mask.copy()
+                mask2 *= gt2
+                ROI2 = len(np.unique(mask2)) - 1
+
+                # accuracy for label 2
+                accuracy2 = counter2 / ROI2
+
+                accuracy1_list.append(accuracy1)
+                accuracy2_list.append(accuracy2)
+                loss_list_pd.append(total_loss.item())
+
+                print("accuracy1=", accuracy1)
+                print("accuracy2=", accuracy2)
+                model.train()
+
+df = pd.DataFrame(list(zip(dilation_factor_list_pd, depth_list_pd, epochs_list_pd, width_list_pd, accuracy1_list,
+                           accuracy2_list, loss_list_pd)),
+                  columns=['dilation factor', 'net depth', 'epochs_list', 'net width', 'accuracy1', 'accuracy2',
+                           'loss'])
 
 df.to_excel(os.path.join(os.path.split(os.path.split(image_path[0])[0])[0], 'Test_dilation', "accuracy.xlsx"),
             index=False)
