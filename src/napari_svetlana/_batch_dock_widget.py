@@ -1007,7 +1007,7 @@ def Training():
                     imagette_mask[imagette_mask == region_props[i]["label"]] = 1
 
                     # dilation of mask
-                    if bool(config_dict["options"]["dilation"]["dilate_mask"]) is True:
+                    if json.loads(config_dict["options"]["dilation"]["dilate_mask"].lower()) is True:
 
                         if cuda is True:
                             str_el = cu.asarray(disk(int(config_dict["options"]["dilation"]["str_element_size"])))
@@ -1048,7 +1048,7 @@ def Training():
                     imagette_mask[imagette_mask == region_props[i]["label"]] = 1
 
                     # dilation of mask
-                    if bool(config_dict["options"]["dilation"]["dilate_mask"]) is True:
+                    if json.loads(config_dict["options"]["dilation"]["dilate_mask"].lower()) is True:
 
                         if cuda is True:
                             str_el = cu.asarray(ball(int(config_dict["options"]["dilation"]["str_element_size"])))
@@ -1089,7 +1089,7 @@ def Training():
                     imagette_mask[imagette_mask == region_props[i]["label"]] = 1
 
                     # dilation of mask
-                    if bool(config_dict["options"]["dilation"]["dilate_mask"]) is True:
+                    if json.loads(config_dict["options"]["dilation"]["dilate_mask"].lower()) is True:
 
                         if cuda is True:
                             str_el = cu.asarray(ball(int(config_dict["options"]["dilation"]["str_element_size"])))
@@ -1732,7 +1732,8 @@ def Prediction():
             pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                          (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-            data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda")
+            data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda", config_dict,
+                                     case)
 
         elif case == "multi3D":
             image = np.transpose(image, (1, 2, 3, 0))
@@ -2050,6 +2051,11 @@ def Prediction():
 
         path = QFileDialog.getExistingDirectory(None, 'Choose the parent folder which contains folders Images '
                                                       'and Masks', options=QFileDialog.DontUseNativeDialog)
+
+        global config_dict
+        # Load parameters from config file
+        with open(os.path.join(path, "Svetlana", 'Config.json'), 'r') as f:
+            config_dict = json.load(f)
 
         # Result folder
         global res_folder

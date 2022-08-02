@@ -1,6 +1,15 @@
 from torch.utils.data import Dataset
 import numpy as np
 from torchvision import transforms
+import torch
+import json
+if torch.cuda.is_available() is True:
+    import cupy as cu
+    from cucim.skimage.morphology import dilation, ball, disk
+    cuda = True
+else:
+    from skimage.morphology import ball, dilation, disk
+    cuda = False
 
 
 def min_max_norm(im):
@@ -24,7 +33,7 @@ def max_to_1(im):
 
 
 class PredictionDataset(Dataset):
-    def __init__(self, image, labels, props, half_patch_size, norm_type, device):
+    def __init__(self, image, labels, props, half_patch_size, norm_type, device, config_dict, case):
         self.props = props
         self.image = image
         self.labels = labels
@@ -32,6 +41,8 @@ class PredictionDataset(Dataset):
         self.transform = transforms.Compose([transforms.ToTensor()])
         self.norm_type = norm_type
         self.device = device
+        self.config_dict = config_dict
+        self.case = case
 
     def __getitem__(self, index):
         prop = self.props[index]
@@ -46,6 +57,20 @@ class PredictionDataset(Dataset):
 
             maskette[maskette != prop.label] = 0
             maskette[maskette == prop.label] = 1
+
+            if json.loads(self.config_dict["options"]["dilation"]["dilate_mask"].lower()) is True:
+
+                if cuda is True:
+                    str_el = cu.asarray(disk(int(self.config_dict["options"]["dilation"]["str_element_size"])))
+                    maskette = cu.asnumpy(dilation(cu.asarray(maskette), str_el))
+                else:
+                    str_el = disk(int(self.config_dict["options"]["dilation"]["str_element_size"]))
+                    maskette = dilation(maskette, str_el)
+
+                if self.case == "2D":
+                    imagette *= maskette[:, :, None]
+                else:
+                    imagette *= maskette[None, :, :]
 
             # L'imagette et son mask étant générés, on passe a la concaténation pour faire la prédiction du label par
             # le CNN
