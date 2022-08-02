@@ -1405,6 +1405,9 @@ def Training():
         b_size=dict(widget_type='LineEdit', label='Batch Size', value=128, tooltip='Batch Size'),
         data_norm=dict(widget_type='ComboBox', label='Data normalization', choices=data_norm_list,
                        value="min max normalization", tooltip='Type of data normalization'),
+        load_config_file_button=dict(widget_type='PushButton', text='Load advanced parameters from config file',
+                                tooltip='Load a custom config file containing advanced training parameters from'
+                                        ' Svetlana folder'),
         vertical_space3=dict(widget_type='Label', label=' '),
         vertical_space4=dict(widget_type='Label', label=' '),
         SAVING_PARAMETERS=dict(widget_type='Label'),
@@ -1426,6 +1429,7 @@ def Training():
             epochs,
             b_size,
             data_norm,
+            load_config_file_button,
             vertical_space2,
             DATA_AUGMENTATION_TYPE,
             rotations,
@@ -1485,13 +1489,14 @@ def Training():
         with open(os.path.join(os.getcwd(), "src", "napari_svetlana", 'Config.json'), 'r') as f:
             config_dict = json.load(f)
 
-        # Copy of gonfig file to folder Svetlana
+        # Copy of config file to folder Svetlana
         save_folder = os.path.join(os.path.split(os.path.split(image_path_list[0])[0])[0], "Svetlana")
         if os.path.isdir(save_folder) is False:
             os.mkdir(save_folder)
         import shutil
-        shutil.copy(os.path.join(os.getcwd(), "src", "napari_svetlana", 'Config.json'),
-                    os.path.join(save_folder, "Config.json"))
+        if os.path.exists(os.path.join(save_folder, "Config.json")) is False:
+            shutil.copy(os.path.join(os.getcwd(), "src", "napari_svetlana", 'Config.json'),
+                        os.path.join(save_folder, "Config.json"))
 
         return
 
@@ -1515,6 +1520,22 @@ def Training():
                 show_info("ERROR: the file seems not to be correct as it does not contain a key called model")
         except:
             show_info("ERROR: file not recognized by Torch")
+
+    @training_widget.load_config_file_button.changed.connect
+    def load_config_file():
+        """
+        Function to load advanced training parameters from a json file
+        @return:
+        """
+        path = QFileDialog.getOpenFileName(None, 'Choose your custom config file',
+                                           options=QFileDialog.DontUseNativeDialog)[0]
+        global config_dict
+        try:
+            with open(path, 'r') as f:
+                config_dict = json.load(f)
+            show_info("Config file loaded succesfully")
+        except:
+            show_info("ERROR: Not a correct Json file")
 
     @training_widget.launch_training_button.changed.connect
     def _launch_training(e: Any):
