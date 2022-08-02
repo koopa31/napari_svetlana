@@ -11,7 +11,7 @@
       		"weight_decay": "0"
       	},
       	"dilation": {
-      		"dilate_mask": "True",
+      		"dilate_mask": "False",
       		"str_element_size": "10"
       	}
 

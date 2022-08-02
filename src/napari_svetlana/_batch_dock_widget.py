@@ -48,6 +48,14 @@ from .PredictionDataset import PredictionDataset, max_to_1, min_max_norm
 from .Prediction3DDataset import Prediction3DDataset
 from .PredictionMulti3DDataset import PredictionMulti3DDataset
 
+if torch.cuda.is_available() is True:
+    import cupy as cu
+    from cucim.skimage.morphology import dilation, ball, disk
+    cuda = True
+else:
+    from skimage.morphology import ball, dilation, disk
+    cuda = False
+
 
 @ensure_main_thread
 def show_info(message: str):
@@ -998,8 +1006,22 @@ def Training():
                     imagette_mask[imagette_mask != region_props[i]["label"]] = 0
                     imagette_mask[imagette_mask == region_props[i]["label"]] = 1
 
+                    # dilation of mask
+                    if bool(config_dict["options"]["dilation"]["dilate_mask"]) is True:
+
+                        if cuda is True:
+                            str_el = cu.asarray(disk(int(config_dict["options"]["dilation"]["str_element_size"])))
+                            imagette_mask = cu.asnumpy(dilation(cu.asarray(imagette_mask), str_el))
+                        else:
+                            str_el = disk(int(config_dict["options"]["dilation"]["str_element_size"]))
+                            imagette_mask = dilation(imagette_mask, str_el)
+
+                        if case == "2D":
+                            imagette *= imagette_mask[:, :, None]
+                        else:
+                            imagette *= imagette_mask[None, :, :]
+
                     concat_image = np.zeros((imagette.shape[0], imagette.shape[1], imagette.shape[2] + 1))
-                    # imagette = imagette / 255
 
                     if norm_type == "min max normalization":
                         imagette = min_max_norm(imagette)
@@ -1008,12 +1030,6 @@ def Training():
 
                     concat_image[:, :, :-1] = imagette
                     concat_image[:, :, -1] = imagette_mask
-                    # Image with masked of the object and inverse mask
-
-                    # concat_image[:, :, 0] = np.mean(imagette[:, :, 0] * imagette_mask) #torch.ones_like(imagette[:, :, 0])
-                    # concat_image[:, :, 0] *= torch.mean(imagette[:, :, 0] * imagette_mask)
-
-                    # concat_image[:, :, 1] = (imagette[:, :, 0] * (1 - imagette_mask))
 
                     img_patch_list.append(concat_image)
                 elif case == "multi3D":
@@ -1030,6 +1046,18 @@ def Training():
 
                     imagette_mask[imagette_mask != region_props[i]["label"]] = 0
                     imagette_mask[imagette_mask == region_props[i]["label"]] = 1
+
+                    # dilation of mask
+                    if bool(config_dict["options"]["dilation"]["dilate_mask"]) is True:
+
+                        if cuda is True:
+                            str_el = cu.asarray(ball(int(config_dict["options"]["dilation"]["str_element_size"])))
+                            imagette_mask = cu.asnumpy(dilation(cu.asarray(imagette_mask), str_el))
+                        else:
+                            str_el = ball(int(config_dict["options"]["dilation"]["str_element_size"]))
+                            imagette_mask = dilation(imagette_mask, str_el)
+
+                        imagette *= imagette_mask[None, :, :, :]
 
                     concat_image = np.zeros((imagette.shape[0] + 1, imagette.shape[1], imagette.shape[2],
                                              imagette.shape[3])).astype(image.dtype)
@@ -1059,6 +1087,18 @@ def Training():
 
                     imagette_mask[imagette_mask != region_props[i]["label"]] = 0
                     imagette_mask[imagette_mask == region_props[i]["label"]] = 1
+
+                    # dilation of mask
+                    if bool(config_dict["options"]["dilation"]["dilate_mask"]) is True:
+
+                        if cuda is True:
+                            str_el = cu.asarray(ball(int(config_dict["options"]["dilation"]["str_element_size"])))
+                            imagette_mask = cu.asnumpy(dilation(cu.asarray(imagette_mask), str_el))
+                        else:
+                            str_el = ball(int(config_dict["options"]["dilation"]["str_element_size"]))
+                            imagette_mask = dilation(imagette_mask, str_el)
+
+                        imagette *= imagette_mask
 
                     concat_image = np.zeros((2, imagette.shape[0], imagette.shape[1], imagette.shape[2])).astype(
                         image.dtype)
