@@ -15,6 +15,7 @@ from napari.utils.notifications import show_info, notification_manager
 
 import time
 import numpy as np
+import json
 
 from napari import Viewer
 from napari.layers import Image, Shapes
@@ -1241,9 +1242,14 @@ def Training():
         LR = lr
         torch.autograd.set_detect_anomaly(True)
         if retrain is False:
-            optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+            optimizer = torch.optim.Adam(model.parameters(), lr=LR,
+                                         weight_decay=float(config_dict["options"]["optimizer"]["weight_decay"]))
         else:
             optimizer = loaded_network["optimizer_state_dict"]
+
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
+                                                    step_size=int(config_dict["options"]["learning rate"]["step_size"]),
+                                                    gamma=float(config_dict["options"]["learning rate"]["gamma"]))
 
         # CUDA for PyTorch
         use_cuda = torch.cuda.is_available()
@@ -1301,7 +1307,6 @@ def Training():
             if param.requires_grad is True:
                 params_to_update.append(param)
                 print("\t", name)
-        optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
         # Loss function
         if retrain is False:
@@ -1311,7 +1316,6 @@ def Training():
 
         loss = eval("nn." + losses_dict[loss_func] + "().type(torch_type)")
 
-        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
         # Loop over epochs
         iterations_number = epochs_nb
 
@@ -1344,7 +1348,11 @@ def Training():
                         found = True
 
                     LOSS_LIST.append(total_loss.item())
+                    scheduler.step()
                     if (epoch + 1) % saving_ep == 0:
+                        # Learning rate state when saving network
+                        print("LR = ", optimizer.param_groups[0]['lr'])
+
                         d = {"model": model, "optimizer_state_dict": optimizer,
                              "loss": loss, "training_nb": iterations_number, "loss_list": LOSS_LIST,
                              "image_path": image_path_list[0], "labels_path": labels_path_list[0],
@@ -1450,16 +1458,11 @@ def Training():
         try:
             b = torch.load(path)
 
-            global image_path_list
-            global labels_path_list
-            global region_props_list
-            global labels_list
-            global patch_size
-            global image
-            global mask
+            global image_path_list, labels_path_list, region_props_list, labels_list, patch_size, image, mask,\
+                config_dict
 
             if "image_path" in b.keys() and "labels_path" in b.keys() and "regionprops" in b.keys() and "labels_list" \
-                in b.keys() and "patch_size" in b.keys():
+                    in b.keys() and "patch_size" in b.keys():
 
                 image_path_list = b["image_path"]
                 labels_path_list = b["labels_path"]
@@ -1477,6 +1480,18 @@ def Training():
                 show_info("ERROR: The binary file seems not to be correct as it does not contain the right keys")
         except:
             show_info("ERROR: File not recognized by Torch")
+
+        # Load parameters from config file
+        with open(os.path.join(os.getcwd(), "src", "napari_svetlana", 'Config.json'), 'r') as f:
+            config_dict = json.load(f)
+
+        # Copy of gonfig file to folder Svetlana
+        save_folder = os.path.join(os.path.split(os.path.split(image_path_list[0])[0])[0], "Svetlana")
+        if os.path.isdir(save_folder) is False:
+            os.mkdir(save_folder)
+        import shutil
+        shutil.copy(os.path.join(os.getcwd(), "src", "napari_svetlana", 'Config.json'),
+                    os.path.join(save_folder, "Config.json"))
 
         return
 
@@ -1973,7 +1988,7 @@ def Prediction():
         prediction_widget.viewer.value.layers.clear()
 
         path = QFileDialog.getExistingDirectory(None, 'Choose the parent folder which contains folders Images '
-                                                'and Masks', options=QFileDialog.DontUseNativeDialog)
+                                                      'and Masks', options=QFileDialog.DontUseNativeDialog)
 
         # Result folder
         global res_folder
