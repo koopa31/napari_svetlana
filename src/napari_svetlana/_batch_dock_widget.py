@@ -1747,7 +1747,8 @@ def Prediction():
                                          (patch_size // 2 + 1, patch_size // 2 + 1),
                                          (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-            data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda")
+            data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda",
+                                            config_dict)
 
         else:
             imagette_contours = np.zeros((image.shape[0], image.shape[1], image.shape[2]))
@@ -1758,7 +1759,7 @@ def Prediction():
                                          (patch_size // 2 + 1, patch_size // 2 + 1),
                                          (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-            data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda")
+            data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda", config_dict)
         prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
 
         global list_pred

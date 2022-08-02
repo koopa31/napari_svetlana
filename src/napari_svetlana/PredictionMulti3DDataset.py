@@ -3,16 +3,26 @@ import numpy as np
 from torchvision import transforms
 import torch
 from .PredictionDataset import max_to_1, min_max_norm
+import torch
+import json
+if torch.cuda.is_available() is True:
+    import cupy as cu
+    from cucim.skimage.morphology import dilation, ball
+    cuda = True
+else:
+    from skimage.morphology import ball, dilation
+    cuda = False
 
 
 class PredictionMulti3DDataset(Dataset):
-    def __init__(self, image, labels, props, half_patch_size, norm_type, device):
+    def __init__(self, image, labels, props, half_patch_size, norm_type, device, config_dict):
         self.props = props
         self.image = image
         self.labels = labels
         self.half_patch_size = half_patch_size
         self.norm_type = norm_type
         self.device = device
+        self.config_dict = config_dict
 
     def __getitem__(self, index):
         prop = self.props[index]
@@ -29,6 +39,18 @@ class PredictionMulti3DDataset(Dataset):
 
             maskette[maskette != prop.label] = 0
             maskette[maskette == prop.label] = 1
+
+            # dilation of mask
+            if json.loads(self.config_dict["options"]["dilation"]["dilate_mask"].lower()) is True:
+
+                if cuda is True:
+                    str_el = cu.asarray(ball(int(self.config_dict["options"]["dilation"]["str_element_size"])))
+                    imagette_mask = cu.asnumpy(dilation(cu.asarray(maskette), str_el))
+                else:
+                    str_el = ball(int(self.config_dict["options"]["dilation"]["str_element_size"]))
+                    imagette_mask = dilation(maskette, str_el)
+
+                imagette *= imagette_mask[None, :, :, :]
 
             concat_image = np.zeros((imagette.shape[0] + 1, imagette.shape[1], imagette.shape[2],
                                      imagette.shape[3])).astype(imagette.dtype)

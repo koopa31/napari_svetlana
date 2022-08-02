@@ -5,10 +5,10 @@ import torch
 import json
 if torch.cuda.is_available() is True:
     import cupy as cu
-    from cucim.skimage.morphology import dilation, ball, disk
+    from cucim.skimage.morphology import dilation, disk
     cuda = True
 else:
-    from skimage.morphology import ball, dilation, disk
+    from skimage.morphology import dilation, disk
     cuda = False
 
 
