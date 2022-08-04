@@ -41,7 +41,7 @@ from superqt import ensure_main_thread
 from qtpy.QtWidgets import QFileDialog
 
 # from line_profiler_pycharm import profile
-from .CNN3D import CNN3D
+from .XP.modulable_CNN3D import CNN3D
 from .CNN2D import CNN2D
 
 from .PredictionDataset import PredictionDataset, max_to_1, min_max_norm
@@ -80,6 +80,7 @@ def read_logging(log_file, logwindow):
 labels_number = [('2', 2), ('3', 3), ('4', 4), ('5', 5), ('6', 6), ('7', 7), ('8', 8), ('9', 9)]
 networks_list = ["ResNet18", "ResNet34", "ResNet50", "ResNet101", "ResNet152", "AlexNet", "DenseNet121",
                  "DenseNet161", "DenseNet169", "DenseNet201", "lightNN_2_3", "lightNN_3_5", "lightNN_4_5"]
+dims_list = ["2D", "3D"]
 losses_list = ["CrossEntropy", "L1Smooth", "BCE", "Distance", "L1", "MSE"]
 data_norm_list = ["min max normalization", "max to 1 normalization", "no normalization"]
 
@@ -1117,8 +1118,8 @@ def Training():
         train_data = CustomDataset(data_list=img_patch_list, labels_tensor=labels_tensor, transform=transform)
         return train_data
 
-    def train(viewer, image, mask, region_props_list, labels_list, nn_type, loss_func, lr, epochs_nb, rot, h_flip,
-              v_flip, prob, batch_size, saving_ep, training_name, norm_type, model=None):
+    def train(viewer, image, mask, region_props_list, labels_list, nn_type, dimension, loss_func, lr, epochs_nb, rot,
+              h_flip, v_flip, prob, batch_size, saving_ep, training_name, norm_type, model=None):
         """
         Training of the classification neural network
         @param viewer: Napari viewer instance
@@ -1156,10 +1157,16 @@ def Training():
 
         # List of available network achitectures
 
-        nn_dict = {"ResNet18": "resnet18", "ResNet34": "resnet34", "ResNet50": "resnet50", "ResNet101": "resnet101",
-                   "ResNet152": "resnet152", "AlexNet": "alexnet", "DenseNet121": "densenet121",
-                   "DenseNet161": "densenet161", "DenseNet169": "densenet169", "DenseNet201": "densenet201",
-                   "lightNN_2_3": "CNN2D", "lightNN_3_5": "CNN2D", "lightNN_4_5": "CNN2D"}
+        if dimension == "2D":
+            nn_dict = {"ResNet18": "resnet18", "ResNet34": "resnet34", "ResNet50": "resnet50", "ResNet101": "resnet101",
+                       "ResNet152": "resnet152", "AlexNet": "alexnet", "DenseNet121": "densenet121",
+                       "DenseNet161": "densenet161", "DenseNet169": "densenet169", "DenseNet201": "densenet201",
+                       "lightNN_2_3": "CNN2D", "lightNN_3_5": "CNN2D", "lightNN_4_5": "CNN2D"}
+        else:
+            nn_dict = {"lightNN_2_2": "CNN3D", "lightNN_2_4": "CNN3D", "lightNN_2_8": "CNN3D", "lightNN_2_16": "CNN3D",
+                       "lightNN_2_32": "CNN3D", "lightNN_2_64": "CNN3D", "lightNN_3_2": "CNN3D", "lightNN_3_4": "CNN3D",
+                       "lightNN_3_8": "CNN3D", "lightNN_3_16": "CNN3D", "lightNN_3_32": "CNN3D",
+                       "lightNN_3_64": "CNN3D"}
         # Setting of network
 
         # Concatenation of all the labels lists and conversion to numpy array
@@ -1208,7 +1215,11 @@ def Training():
                 case = "multi3D"
                 image = np.transpose(image, (1, 2, 3, 0))
                 mask = np.transpose(mask, (1, 2, 0))
-                model = CNN3D(max(labels_list) + 1, image.shape[3] + 1)
+                depth = int(nn_type.split("_")[1])
+                kersize = int(nn_type.split("_")[2])
+                if patch_size / (2 ** (depth - 1)) <= kersize:
+                    show_info("Patch size is too small for this network")
+                model = CNN3D(max(labels_list) + 1, image.shape[3] + 1, kersize, depth)
 
             else:
                 from .CustomDialog import CustomDialog
@@ -1249,7 +1260,11 @@ def Training():
                         model = CNN2D(max(labels_list) + 1, image.shape[0] + 1, depth, kersize)
 
                 elif case == "3D":
-                    model = CNN3D(max(labels_list) + 1, 2)
+                    depth = int(nn_type.split("_")[1])
+                    kersize = int(nn_type.split("_")[2])
+                    if patch_size / (2 ** (depth - 1)) <= kersize:
+                        show_info("Patch size is too small for this network")
+                    model = CNN3D(max(labels_list) + 1, 2, kersize, depth)
 
         else:
             if image.shape[2] <= 3:
@@ -1428,7 +1443,9 @@ def Training():
         vertical_space1=dict(widget_type='Label', label=' '),
         nn_choice=dict(widget_type='Label', label='NEURAL NETWORK CHOICE'),
         lr=dict(widget_type='LineEdit', label='Learning rate', value=0.01, tooltip='Learning rate'),
-        nn=dict(widget_type='ComboBox', label='Network architecture', choices=networks_list, value="ResNet18",
+        format_button=dict(widget_type='ComboBox', label='Dimension', choices=dims_list, value="2D",
+                           tooltip='Choose whether you want to process 2D or 3D images'),
+        nn=dict(widget_type='ComboBox', label='Network architecture', choices=networks_list.copy(), value="ResNet18",
                 tooltip='All the available network architectures'),
         load_custom_model_button=dict(widget_type='PushButton', text='Load custom model',
                                       tooltip='Load your own NN pretrained or not'),
@@ -1462,6 +1479,7 @@ def Training():
             load_data_button,
             vertical_space1,
             nn_choice,
+            format_button,
             nn,
             load_custom_model_button,
             loss,
@@ -1486,6 +1504,23 @@ def Training():
     ) -> None:
         # Import when users activate plugin
         return
+
+    @training_widget.format_button.changed.connect
+    def set_nets_list(e):
+        if e == '3D':
+            training_widget.nn.choices = ["lightNN_2_2", "lightNN_2_4", "lightNN_2_8", "lightNN_2_16", "lightNN_2_32",
+                                          "lightNN_2_64", "lightNN_3_2", "lightNN_3_4", "lightNN_3_8", "lightNN_3_16",
+                                          "lightNN_3_32", "lightNN_3_64"]
+            training_widget.nn.value = "lightNN_2_2"
+            training_widget.nn.options["choices"].clear()
+            training_widget.nn.options["choices"] += ["lightNN_2_2", "lightNN_2_4", "lightNN_2_8", "lightNN_2_16",
+                                                      "lightNN_2_32", "lightNN_2_64", "lightNN_3_2", "lightNN_3_4",
+                                                      "lightNN_3_8", "lightNN_3_16", "lightNN_3_32", "lightNN_3_64"]
+        else:
+            training_widget.nn.choices = networks_list
+            training_widget.nn.options["choices"].clear()
+            training_widget.nn.options["choices"] += networks_list
+            training_widget.nn.value = "ResNet18"
 
     @training_widget.load_data_button.changed.connect
     def _load_data(e: Any):
@@ -1587,7 +1622,7 @@ def Training():
         if "model" in globals():
             training_worker = thread_worker(train, progress={"total": int(training_widget.epochs.value)}) \
                 (training_widget.viewer, image, mask, region_props_list, labels_list, training_widget.nn.value,
-                 training_widget.loss.value, float(training_widget.lr.value),
+                 training_widget.format_button.value, training_widget.loss.value, float(training_widget.lr.value),
                  int(training_widget.epochs.value), training_widget.rotations.value,
                  training_widget.h_flip.value, training_widget.v_flip.value,
                  float(training_widget.prob.value), int(training_widget.b_size.value),
@@ -1598,7 +1633,7 @@ def Training():
 
             training_worker = thread_worker(train, progress={"total": int(training_widget.epochs.value)})(
                 training_widget.viewer, image, mask, region_props_list, labels_list,
-                training_widget.nn.value,
+                training_widget.nn.value, training_widget.format_button.value,
                 training_widget.loss.value, float(training_widget.lr.value),
                 int(training_widget.epochs.value), training_widget.rotations.value,
                 training_widget.h_flip.value, training_widget.v_flip.value,
@@ -2250,7 +2285,7 @@ def Prediction():
         """
         Function which changes the edges thickness in the mask
         @param e:
-        @return: 
+        @return:
         """
         global thickness
 
