@@ -43,9 +43,20 @@ https://napari.org/plugins/stable/index.html
 
 ## Installation
 
-You can install `napari_svetlana` via [pip]:
+First install Napari in a Python 3.9 Conda environment following the instructions provided
+in the official [documentation](https://napari.org/stable/tutorials/fundamentals/installation.html).
+
+You can install `napari_svetlana` via [pip], or directly from the Napari plugin manager (see Napari documentation):
 
     pip install napari_svetlana
+
+WARNING:
+
+If you have a Cuda compatible GPU on your computer, some computations may be fastened
+using Cupy. Unfortunately, Cupy needs Cudatoolkit to be installed. This library can only be installed via 
+Conda while the plugin is a pip plugin, so it must be installed manually for the moment:
+
+      conda install cudatoolkit=10.2 
 
 
 ## Tutorial
