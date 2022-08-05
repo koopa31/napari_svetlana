@@ -49,9 +49,14 @@ from .Prediction3DDataset import Prediction3DDataset
 from .PredictionMulti3DDataset import PredictionMulti3DDataset
 
 if torch.cuda.is_available() is True:
-    import cupy as cu
-    from cucim.skimage.morphology import dilation, ball, disk
-    cuda = True
+    try:
+        import cupy as cu
+        from cucim.skimage.morphology import dilation, ball, disk
+        cuda = True
+    except ImportError:
+        from skimage.morphology import ball, dilation, disk
+        cuda = False
+        show_info("Could not make cupy work, please do: conda install cudatoolkit=10.2")
 else:
     from skimage.morphology import ball, dilation, disk
     cuda = False

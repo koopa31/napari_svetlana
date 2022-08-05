@@ -6,9 +6,13 @@ from .PredictionDataset import max_to_1, min_max_norm
 import torch
 import json
 if torch.cuda.is_available() is True:
-    import cupy as cu
-    from cucim.skimage.morphology import dilation, ball
-    cuda = True
+    try:
+        import cupy as cu
+        from cucim.skimage.morphology import dilation, ball
+        cuda = True
+    except ImportError:
+        from skimage.morphology import ball, dilation
+        cuda = False
 else:
     from skimage.morphology import ball, dilation
     cuda = False

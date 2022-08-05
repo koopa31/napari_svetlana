@@ -4,9 +4,14 @@ from torchvision import transforms
 import torch
 import json
 if torch.cuda.is_available() is True:
-    import cupy as cu
-    from cucim.skimage.morphology import dilation, disk
-    cuda = True
+    try:
+        import cupy as cu
+        from cucim.skimage.morphology import dilation, disk
+
+        cuda = True
+    except ImportError:
+        from skimage.morphology import dilation, disk
+        cuda = False
 else:
     from skimage.morphology import dilation, disk
     cuda = False
