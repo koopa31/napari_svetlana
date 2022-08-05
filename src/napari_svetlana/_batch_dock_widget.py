@@ -986,6 +986,11 @@ def Training():
         @return:
         """
 
+        try:
+            import cupy as cu
+        except ImportError:
+            show_info("WARNING: If you want to fasten using Cupy, do in this Conda env: conda install cudatoolkit=10.2")
+
         labels_tensor = torch.from_numpy(labels_list).type(torch_type)
         labels_tensor = nn.functional.one_hot(labels_tensor.type(torch.cuda.LongTensor))
 
