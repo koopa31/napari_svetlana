@@ -17,17 +17,18 @@ Svetlana can process 2D, 3D and multichannel image.
 
 If you use this plugin please cite the paper: 
 
-  @article{cazorla2022Svetlana,<br/>
-      title={Svetlana blabla},<br/>
-      author={Cazorla, Morin, Weiss},<br/>
-      journal={Nature Communication},<br/>
-      volume={18},<br/>
-      number={1},<br/>
-      pages={100--106},<br/>
-      year={2022},<br/>
-      publisher={Nature Publishing Group}
-      }
-
+```bibtex
+@article{cazorla2022Svetlana,<br/>
+title={Svetlana blabla},<br/>
+author={Cazorla, Morin, Weiss},<br/>
+journal={Nature Communication},<br/>
+volume={18},<br/>
+number={1},<br/>
+pages={100--106},<br/>
+year={2022},<br/>
+publisher={Nature Publishing Group}
+}
+```
 
 ----------------------------------
 
