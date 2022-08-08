@@ -88,7 +88,7 @@ Equivalent in JSON configuration file:
   }
 ```
 
-where apply means you want this data augmentation to be applied or not.
+where _apply_ means you want this data augmentation to be applied or not.
 
 ## Contributing
 
