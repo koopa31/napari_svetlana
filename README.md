@@ -55,15 +55,40 @@ WARNING:
 If you have a Cuda compatible GPU on your computer, some computations may be fastened
 using Cupy. Unfortunately, Cupy needs Cudatoolkit to be installed. This library can only be installed via 
 Conda while the plugin is a pip plugin, so it must be installed manually for the moment:
-
-      conda install cudatoolkit=10.2 
-
+```bash
+conda install cudatoolkit=10.2 
+```
 
 ## Tutorial
 
 To learn more about the features of
 Svetlana and how to use it, please check our [Youtube tutorial](https://youtube.com).
 
+## The data augmentation 
+
+It is possible to perform all the complex data augmentations proposed in the Albumentations
+library. To do so, please refer to the [documentation](https://albumentations.ai/docs/getting_started/transforms_and_targets/),
+and add all the needed parameters to the JSON configuration file.
+
+**Example:**
+
+Gaussian blurring in documentation :
+
+```python
+GaussianBlur(blur_limit=(3, 7), sigma_limit=0, always_apply=False, p=0.5)
+```
+
+Equivalent in JSON configuration file:
+```json
+"GaussianBlur": {
+      "apply": "False",
+      "blur_limit": "(3, 7)",
+      "sigma_limit": "0", 
+      "p": "0.5"
+  }
+```
+
+where apply means you want this data augmentation to be applied or not.
 
 ## Contributing
 
