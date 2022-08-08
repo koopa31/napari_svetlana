@@ -15,6 +15,21 @@
       		"str_element_size": "10"
       	}
 
-  	}
+  	},
+    "data augmentation": {
+        "GaussNoise": {
+            "apply": "False",
+            "var_limit": "(10, 50)",
+            "mean": "0", 
+            "p": "0.8"
+        },
+        "GaussianBlur": {
+            "apply": "False",
+            "blur_limit": "(3, 7)",
+            "sigma_limit": "0", 
+            "p": "0.8"
+        }
+
+    }
 }
 	

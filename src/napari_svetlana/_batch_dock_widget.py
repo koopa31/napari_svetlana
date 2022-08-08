@@ -1156,6 +1156,19 @@ def Training():
 
         # Data augmentation
         transforms_list = []
+        # This section allows to read as many data augmentation types as we want from the config file:
+        for key in config_dict["data augmentation"]:
+            if config_dict["data augmentation"][key]["apply"] == "True":
+                args_list = list(config_dict["data augmentation"][key].keys())
+                args_list.remove("apply")
+                s = ""
+                for i, arg in enumerate(args_list):
+                    s += arg + "=" + config_dict["data augmentation"][key][arg]
+                    if i != len(args_list) - 1:
+                        s += ","
+
+                transforms_list.append(eval("A." + str(key) + "(" + s + ")"))
+
         if rot is True:
             transforms_list.append(A.Rotate(-90, 90, p=prob))
         if h_flip is True:
