@@ -47,9 +47,9 @@ First install Napari in a Python 3.9 Conda environment following the instruction
 in the official [documentation](https://napari.org/stable/tutorials/fundamentals/installation.html).
 
 You can install `napari_svetlana` via [pip], or directly from the Napari plugin manager (see Napari documentation):
-
-    pip install napari_svetlana
-
+```bash
+pip install napari_svetlana
+```
 WARNING:
 
 If you have a Cuda compatible GPU on your computer, some computations may be fastened
