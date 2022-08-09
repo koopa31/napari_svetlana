@@ -11,7 +11,7 @@ from cucim.skimage.morphology import dilation, ball
 3D patches generation from Svetlana annotations for visualisation
 """
 
-binary = torch.load("/home/cazorla/Images/Test papier svetlana/tube neural 3d/Svetlana/labels")
+binary = torch.load("/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/Test papier svetlana/tube neural 3d/Svetlana/labels")
 
 image = imread(binary["image_path"][0])
 mask = imread(binary["labels_path"][0])
@@ -21,9 +21,25 @@ patch_size = 45
 dilation_factor = 10
 labs = binary["labels_list"][0]
 
-res_folder = "/home/cazorla/Bureau/patches"
+res_folder = "/home/clement/Bureau/patches"
+if os.path.isdir(res_folder) is False:
+    os.mkdir(res_folder)
 lab1_folder = os.path.join(res_folder, "label1")
+if os.path.isdir(lab1_folder) is False:
+    os.mkdir(lab1_folder)
+
+onlyfiles = [os.path.join(lab1_folder, f) for f in os.listdir(lab1_folder) if os.path.isfile(os.path.join(lab1_folder, f))]
+for f in onlyfiles:
+    os.remove(f)
+
 lab2_folder = os.path.join(res_folder, "label2")
+if os.path.isdir(lab2_folder) is False:
+    os.mkdir(lab2_folder)
+
+onlyfiles = [os.path.join(lab2_folder, f) for f in os.listdir(lab2_folder) if os.path.isfile(os.path.join(lab2_folder, f))]
+for f in onlyfiles:
+    os.remove(f)
+
 
 image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                                          (patch_size // 2 + 1, patch_size // 2 + 1),
