@@ -320,7 +320,7 @@ def Annotation():
                 labels = im.data
                 global labels_path
                 labels_path = im.source.path
-            else:
+            elif im.name != "confidence map" and "previous prediction":
                 image = im.data
                 global image_path
                 image_path = im.source.path
@@ -540,7 +540,7 @@ def Annotation():
 
         global images_folder, masks_folder, parent_path, image_path_list, mask_path_list, global_im_path_list, \
             global_lab_path_list, global_labels_list, global_mini_props_list, mini_props_list, counter, \
-            image_counter, patch_size, pred_path_list, total_counter
+            image_counter, patch_size, pred_path_list, total_counter, conf_path_list
 
         # As autocall is set to False, it is necessary to call the function when loading the data
         annotation_widget.viewer.value.layers.clear()
@@ -562,6 +562,11 @@ def Annotation():
             if os.path.isdir(os.path.join(parent_path, "Predictions")) is True:
                 pred_path_list = sorted([os.path.join(parent_path, "Predictions", f) for f in
                                          os.listdir(os.path.join(parent_path, "Predictions"))])
+
+            if os.path.isdir(os.path.join(parent_path, "Confidence")) is True:
+                conf_path_list = sorted([os.path.join(parent_path, "Confidence", f) for f in
+                                         os.listdir(os.path.join(parent_path, "Confidence"))])
+
             global_labels_list = labels_file["labels_list"]
             global_mini_props_list = labels_file["regionprops"]
             patch_size = labels_file["patch_size"]
@@ -591,6 +596,11 @@ def Annotation():
                 annotation_widget.viewer.value.layers[2].name = "previous prediction"
                 if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
                     annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
+
+            if os.path.isdir(os.path.join(parent_path, "Confidence")) is True and \
+                    len(os.listdir(os.path.join(parent_path, "Confidence"))) != 0:
+                annotation_widget.viewer.value.add_image(imread(conf_path_list[image_counter]).astype("uint8"))
+                annotation_widget.viewer.value.layers[-1].name = "confidence map"
 
             # original zoom factor to correct when annotating
             global old_zoom
@@ -632,6 +642,10 @@ def Annotation():
             if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
                 annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
 
+        if "conf_path_list" in globals() and len(os.listdir(os.path.join(parent_path, "Confidence"))) != 0:
+            annotation_widget.viewer.value.add_image(imread(conf_path_list[image_counter]).astype("uint8"))
+            annotation_widget.viewer.value.layers[-1].name = "confidence map"
+
         # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
         # the layer named Image
         annotation_widget()
@@ -665,6 +679,10 @@ def Annotation():
                 if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
                     annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
 
+            if "conf_path_list" in globals() and len(os.listdir(os.path.join(parent_path, "Confidence"))) != 0:
+                annotation_widget.viewer.value.add_image(imread(conf_path_list[image_counter]).astype("uint8"))
+                annotation_widget.viewer.value.layers[-1].name = "confidence map"
+
             # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
             # the layer named Image
             annotation_widget()
@@ -694,6 +712,10 @@ def Annotation():
                 annotation_widget.viewer.value.layers[2].name = "previous prediction"
                 if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
                     annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
+
+            if "conf_path_list" in globals() and len(os.listdir(os.path.join(parent_path, "Confidence"))) != 0:
+                annotation_widget.viewer.value.add_image(imread(conf_path_list[image_counter]).astype("uint8"))
+                annotation_widget.viewer.value.layers[-1].name = "confidence map"
 
             # Reinitialization of counter for next image
             counter = len(global_labels_list[image_counter])
@@ -1733,6 +1755,19 @@ def Prediction():
             compteur += 1
         return compteur
 
+    def draw_uncertainty(prop, imagette_uncertainty, i, list_proba):
+        """
+        Draw the mask of an object with the colour associated to its predicted class (for 2D images)
+        @param compteur: counts the number of objects that belongs to class 1 (int)
+        @param prop: region_property of this object
+        @param imagette_contours: image of the contours
+        @param i: index of the object in the list (int)
+        @param list_pred: list of the labels of the classified objects
+        @return:
+        """
+
+        imagette_uncertainty[prop.coords[:, 0], prop.coords[:, 1]] = list_proba[i].item()
+
     def draw_3d_prediction(compteur, prop, imagette_contours, i, list_pred):
         """
          Draw the mask of an object with the colour associated to its predicted class (for 3D images)
@@ -1749,6 +1784,19 @@ def Prediction():
             compteur += 1
         return compteur
 
+    def draw_3D_uncertainty(prop, imagette_uncertainty, i, list_proba):
+        """
+        Draw the mask of an object with the colour associated to its predicted class (for 2D images)
+        @param compteur: counts the number of objects that belongs to class 1 (int)
+        @param prop: region_property of this object
+        @param imagette_contours: image of the contours
+        @param i: index of the object in the list (int)
+        @param list_pred: list of the labels of the classified objects
+        @return:
+        """
+
+        imagette_uncertainty[prop.coords[:, 0], prop.coords[:, 1], prop.coords[:, 2]] = list_proba[i].item() + 1
+
     def predict(image, labels, props, patch_size, batch_size):
         """
         Prediction of the class of each patch extracted from the great mask
@@ -1763,7 +1811,7 @@ def Prediction():
         import time
         start = time.time()
         compteur = 0
-        global imagette_contours
+        global imagette_contours, imagette_uncertainty
 
         try:
             max = np.iinfo(image.dtype).max
@@ -1785,6 +1833,7 @@ def Prediction():
                 image = np.transpose(image, (1, 2, 0))
 
             imagette_contours = np.zeros((image.shape[0], image.shape[1]))
+            imagette_uncertainty = imagette_contours.copy()
             pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                        (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
             pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
@@ -1797,6 +1846,7 @@ def Prediction():
             image = np.transpose(image, (1, 2, 3, 0))
             labels = np.transpose(labels, (1, 2, 0))
             imagette_contours = np.zeros((image.shape[3], image.shape[1], image.shape[2]))
+            imagette_uncertainty = imagette_contours.copy()
             pad_image = np.pad(image, ((0, 0),
                                        (patch_size // 2 + 1, patch_size // 2 + 1),
                                        (patch_size // 2 + 1, patch_size // 2 + 1),
@@ -1810,6 +1860,7 @@ def Prediction():
 
         else:
             imagette_contours = np.zeros((image.shape[0], image.shape[1], image.shape[2]))
+            imagette_uncertainty = imagette_contours.copy()
             pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                        (patch_size // 2 + 1, patch_size // 2 + 1),
                                        (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
@@ -1822,10 +1873,12 @@ def Prediction():
 
         global list_pred
         list_pred = []
+        list_proba = []
         for i, local_batch in enumerate(prediction_loader):
             out = model(local_batch)
-            _, index = torch.max(out, 1)
+            proba, index = torch.max(out, 1)
             list_pred += index
+            list_proba += proba
             yield i + 1
 
         show_info("Prediction of patches done, please wait while the result image is being generated...")
@@ -1833,10 +1886,33 @@ def Prediction():
             compteur = Parallel(n_jobs=-1, require="sharedmem")(
                 delayed(draw_predicted_contour)(compteur, prop, imagette_contours, i, list_pred)
                 for i, prop in enumerate(props))
+            # if chekbox is True, ccomputes the probabilities mask of confidence
+            if prediction_widget.confidence_button.value is True:
+                Parallel(n_jobs=-1, require="sharedmem")(
+                    delayed(draw_uncertainty)(prop, imagette_uncertainty, i, list_proba) for i, prop in enumerate(props))
+
         else:
             compteur = Parallel(n_jobs=-1, require="sharedmem")(
                 delayed(draw_3d_prediction)(compteur, prop, imagette_contours, i, list_pred)
                 for i, prop in enumerate(props))
+            # if chekbox is True, ccomputes the probabilities mask of confidence
+            if prediction_widget.confidence_button.value is True:
+                Parallel(n_jobs=-1, require="sharedmem")(
+                    delayed(draw_3D_uncertainty)(prop, imagette_uncertainty, i, list_proba) for i, prop in enumerate(props))
+
+        if prediction_widget.confidence_button.value is True:
+            imagette_uncertainty = ((imagette_uncertainty - imagette_uncertainty.min()) / (
+                                    imagette_uncertainty.max() - imagette_uncertainty.min()) * 255).astype("uint8")
+            if case == "2D" or case == "multi2D":
+                imagette_uncertainty = cv2.applyColorMap(imagette_uncertainty, cv2.COLORMAP_JET)
+            else:
+                imagette_uncertainty3d = np.zeros((*imagette_uncertainty.shape, 3))
+                for i in range(imagette_uncertainty.shape[0]):
+                    imagette_uncertainty3d[i, :, :, :] = cv2.applyColorMap(imagette_uncertainty[i, :, :],
+                                                                           cv2.COLORMAP_JET)
+                imagette_uncertainty = imagette_uncertainty3d.copy().astype("uint8")
+
+            imagette_uncertainty[mask == 0] = 0
 
         # Deletion of the old mask
         prediction_widget.viewer.value.layers.pop()
@@ -1849,7 +1925,11 @@ def Prediction():
         # Save the result automatically
         res_name = "prediction_" + os.path.split(image_path_list[int(prediction_widget.image_index_button.value) - 1])[
             1]
+        conf_name = "confidence_" + os.path.split(image_path_list[int(prediction_widget.image_index_button.value) - 1])[
+            1]
         imsave(os.path.join(res_folder, res_name), imagette_contours.astype(np.uint8))
+        if prediction_widget.confidence_button.value is True:
+            imsave(os.path.join(conf_folder, conf_name), imagette_uncertainty)
 
         return imagette_contours.astype(np.uint8)
 
@@ -1871,7 +1951,7 @@ def Prediction():
             import time
             start = time.time()
             compteur = 0
-            global imagette_contours
+            global imagette_contours, imagette_uncertainty
 
             try:
                 max = np.iinfo(image.dtype).max
@@ -1896,17 +1976,21 @@ def Prediction():
                     image = np.transpose(image, (1, 2, 0))
 
                 imagette_contours = np.zeros((image.shape[0], image.shape[1]))
+                imagette_uncertainty = imagette_contours.copy()
+
                 pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                            (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
                 pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                              (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-                data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda")
+                data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda", config_dict,
+                                     case)
 
             elif case == "multi3D":
                 image = np.transpose(image, (1, 2, 3, 0))
                 labels = np.transpose(labels, (1, 2, 0))
                 imagette_contours = np.zeros((image.shape[3], image.shape[1], image.shape[2]))
+                imagette_uncertainty = imagette_contours.copy()
                 pad_image = np.pad(image, ((0, 0),
                                            (patch_size // 2 + 1, patch_size // 2 + 1),
                                            (patch_size // 2 + 1, patch_size // 2 + 1),
@@ -1915,10 +1999,12 @@ def Prediction():
                                              (patch_size // 2 + 1, patch_size // 2 + 1),
                                              (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-                data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda")
+                data = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda",
+                                                config_dict)
 
             else:
                 imagette_contours = np.zeros((image.shape[0], image.shape[1], image.shape[2]))
+                imagette_uncertainty = imagette_contours.copy()
                 pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                            (patch_size // 2 + 1, patch_size // 2 + 1),
                                            (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
@@ -1926,15 +2012,18 @@ def Prediction():
                                              (patch_size // 2 + 1, patch_size // 2 + 1),
                                              (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-                data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda")
+                data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda",
+                                           config_dict)
             prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
 
             global list_pred
             list_pred = []
+            list_proba = []
             for i, local_batch in enumerate(prediction_loader):
                 out = model(local_batch)
-                _, index = torch.max(out, 1)
+                proba, index = torch.max(out, 1)
                 list_pred += index
+                list_proba += proba
                 yield i + 1
 
             show_info("Prediction of patches done, please wait while the result image is being generated...")
@@ -1942,10 +2031,34 @@ def Prediction():
                 compteur = Parallel(n_jobs=-1, require="sharedmem")(
                     delayed(draw_predicted_contour)(compteur, prop, imagette_contours, i, list_pred)
                     for i, prop in enumerate(props))
+                # if chekbox is True, ccomputes the probabilities mask of confidence
+                if prediction_widget.confidence_button.value is True:
+                    Parallel(n_jobs=-1, require="sharedmem")(
+                        delayed(draw_uncertainty)(prop, imagette_uncertainty, i, list_proba) for i, prop in
+                        enumerate(props))
             else:
                 compteur = Parallel(n_jobs=-1, require="sharedmem")(
                     delayed(draw_3d_prediction)(compteur, prop, imagette_contours, i, list_pred)
                     for i, prop in enumerate(props))
+                # if chekbox is True, ccomputes the probabilities mask of confidence
+                if prediction_widget.confidence_button.value is True:
+                    Parallel(n_jobs=-1, require="sharedmem")(
+                        delayed(draw_3D_uncertainty)(prop, imagette_uncertainty, i, list_proba) for i, prop in
+                        enumerate(props))
+
+            if prediction_widget.confidence_button.value is True:
+                imagette_uncertainty = ((imagette_uncertainty - imagette_uncertainty.min()) / (
+                        imagette_uncertainty.max() - imagette_uncertainty.min()) * 255).astype("uint8")
+                if case == "2D" or case == "multi2D":
+                    imagette_uncertainty = cv2.applyColorMap(imagette_uncertainty, cv2.COLORMAP_JET)
+                else:
+                    imagette_uncertainty3d = np.zeros((*imagette_uncertainty.shape, 3))
+                    for i in range(imagette_uncertainty.shape[0]):
+                        imagette_uncertainty3d[i, :, :, :] = cv2.applyColorMap(imagette_uncertainty[i, :, :],
+                                                                               cv2.COLORMAP_JET)
+                    imagette_uncertainty = imagette_uncertainty3d.copy().astype("uint8")
+
+                imagette_uncertainty[mask == 0] = 0
 
             stop = time.time()
             print("temps de traitement", stop - start)
@@ -1954,7 +2067,11 @@ def Prediction():
 
             # Save the result automatically
             res_name = "prediction_" + os.path.split(image_path_list[ind])[1]
+            conf_name = "confidence_" + os.path.split(image_path_list[ind])[1]
+
             imsave(os.path.join(res_folder, res_name), imagette_contours.astype(np.uint8))
+            if prediction_widget.confidence_button.value is True:
+                imsave(os.path.join(conf_folder, conf_name), imagette_uncertainty)
 
             show_info("prediction of image " + os.path.split(image_path_list[ind])[1] + " done")
 
@@ -1982,6 +2099,11 @@ def Prediction():
                                       tooltip='Predict the current image'),
         launch_batch_prediction_button=dict(widget_type='PushButton', text='Predict whole batch',
                                             tooltip='Predict the whole batch and save the result'),
+        confidence_button=dict(widget_type='CheckBox', text='Compute confidence mask', tooltip='Calculate a heat map'
+                                                                                               ' showing where the '
+                                                                                               'network has lacked'
+                                                                                               ' confidence in its'
+                                                                                               ' prediction'),
         bound=dict(widget_type='CheckBox', text='Show boundaries only', tooltip='Show boundaries only'),
         edges_thickness=dict(widget_type='LineEdit', label='Edges thickness', value=7,
                              tooltip='Edges thickness'),
@@ -2005,6 +2127,7 @@ def Prediction():
             batch_size,
             launch_prediction_button,
             launch_batch_prediction_button,
+            confidence_button,
             vertical_space3,
             classified_mask,
             click_annotate,
@@ -2117,10 +2240,14 @@ def Prediction():
             config_dict = json.load(f)
 
         # Result folder
-        global res_folder
+        global res_folder, conf_folder
         res_folder = os.path.join(path, "Predictions")
         if os.path.isdir(res_folder) is False:
             os.mkdir(res_folder)
+
+        conf_folder = os.path.join(path, "Confidence")
+        if os.path.isdir(conf_folder) is False:
+            os.mkdir(conf_folder)
 
         global images_folder, masks_folder
         images_folder = os.path.join(path, "Images")
