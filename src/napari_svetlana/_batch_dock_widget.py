@@ -338,10 +338,7 @@ def Annotation():
             zoom_factor = image.shape[2] / patch_size
         else:
             zoom_factor = image.shape[1] / patch_size
-            from .CustomDialog import CustomDialog
-            diag = CustomDialog()
-            diag.exec()
-            case = diag.get_case()
+            case = yield
             print(case)
 
         global props, props_to_be_saved
@@ -362,6 +359,14 @@ def Annotation():
             props_to_be_saved.append({"props": props, "indexes": indexes})
 
         return props, zoom_factor
+
+    def send_case_to_thread():
+        patch_worker.pause()
+        from .CustomDialog import CustomDialog
+        diag = CustomDialog()
+        diag.exec()
+        patch_worker.send(diag.get_case())
+        patch_worker.resume()
 
     @magicgui(
         auto_call=False,
@@ -875,8 +880,10 @@ def Annotation():
         @param e:
         @return:
         """
+        global patch_worker
         patch_worker = generate_patches(annotation_widget.viewer.value.layers, int(annotation_widget.patch_size.value))
         patch_worker.returned.connect(display_first_patch)
+        patch_worker.yielded.connect(send_case_to_thread)
         patch_worker.start()
         print('patch extraction done')
 
@@ -1174,7 +1181,7 @@ def Training():
         @return:
         """
 
-        global transform, retrain, loaded_network
+        global transform, retrain, loaded_network, case
 
         # Data augmentation
         transforms_list = []
@@ -1225,8 +1232,7 @@ def Training():
 
         if retrain is False:
             # 2D case
-            if image.shape[2] <= 3:
-                case = "2D"
+            if case == "2D":
                 if nn_dict[nn_type] != "CNN2D":
                     model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
                     set_parameter_requires_grad(model, True)
@@ -1256,8 +1262,7 @@ def Training():
                         show_info("Patch size is too small for this network")
                     model = CNN2D(max(labels_list) + 1, 4, depth, kersize)
 
-            elif len(image.shape) == 4:
-                case = "multi3D"
+            elif case == "multi3D":
                 image = np.transpose(image, (1, 2, 3, 0))
                 mask = np.transpose(mask, (1, 2, 0))
                 depth = int(nn_type.split("_")[1])
@@ -1267,11 +1272,6 @@ def Training():
                 model = CNN3D(max(labels_list) + 1, image.shape[3] + 1, kersize, depth)
 
             else:
-                from .CustomDialog import CustomDialog
-                diag = CustomDialog()
-                diag.exec()
-                case = diag.get_case()
-
                 if case == "multi2D":
                     if nn_dict[nn_type] != "CNN2D":
                         model = eval("models." + nn_dict[nn_type] + "(pretrained=False)")
@@ -1311,16 +1311,6 @@ def Training():
                         show_info("Patch size is too small for this network")
                     model = CNN3D(max(labels_list) + 1, 2, kersize, depth)
 
-        else:
-            if image.shape[2] <= 3:
-                case = "2D"
-            elif len(image.shape) == 4:
-                case = "multi3D"
-            else:
-                from .CustomDialog import CustomDialog
-                diag = CustomDialog()
-                diag.exec()
-                case = diag.get_case()
 
         torch_type = torch.cuda.FloatTensor
 
@@ -1583,7 +1573,7 @@ def Training():
             b = torch.load(path)
 
             global image_path_list, labels_path_list, region_props_list, labels_list, patch_size, image, mask,\
-                config_dict
+                   config_dict, case
 
             if "image_path" in b.keys() and "labels_path" in b.keys() and "regionprops" in b.keys() and "labels_list" \
                     in b.keys() and "patch_size" in b.keys():
@@ -1617,6 +1607,17 @@ def Training():
         if os.path.exists(os.path.join(save_folder, "Config.json")) is False:
             shutil.copy(os.path.join(os.getcwd(), "src", "napari_svetlana", 'Config.json'),
                         os.path.join(save_folder, "Config.json"))
+
+        if image.shape[2] <= 3:
+            case = "2D"
+        elif len(image.shape) == 4:
+            case = "multi3D"
+        else:
+            from .CustomDialog import CustomDialog
+            diag = CustomDialog()
+            diag.exec()
+            case = diag.get_case()
+            print(case)
 
         return
 
