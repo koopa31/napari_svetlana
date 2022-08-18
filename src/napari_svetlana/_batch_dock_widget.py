@@ -1811,22 +1811,7 @@ def Prediction():
         import time
         start = time.time()
         compteur = 0
-        global imagette_contours, imagette_uncertainty
-
-        try:
-            max = np.iinfo(image.dtype).max
-        except:
-            max = np.finfo(image.dtype).max
-
-        if image.shape[2] <= 3:
-            case = "2D"
-        elif len(image.shape) == 4:
-            case = "multi3D"
-        else:
-            from .CustomDialog import CustomDialog
-            diag = CustomDialog()
-            diag.exec()
-            case = diag.get_case()
+        global imagette_contours, imagette_uncertainty, case
 
         if case == "2D" or case == "multi2D":
             if case == "multi2D":
@@ -1953,23 +1938,8 @@ def Prediction():
             compteur = 0
             global imagette_contours, imagette_uncertainty
 
-            try:
-                max = np.iinfo(image.dtype).max
-            except:
-                max = np.finfo(image.dtype).max
-
             if len(image.shape) == 2:
                 image = np.stack((image,) * 3, axis=-1)
-
-            if image.shape[2] <= 3:
-                case = "2D"
-            elif len(image.shape) == 4:
-                case = "multi3D"
-            else:
-                from .CustomDialog import CustomDialog
-                diag = CustomDialog()
-                diag.exec()
-                case = diag.get_case()
 
             if case == "2D" or case == "multi2D":
                 if case == "multi2D":
