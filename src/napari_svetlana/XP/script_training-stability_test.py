@@ -17,7 +17,7 @@ import pandas as pd
 
 
 """
-SCRIPT TO EVALUATE ACCURACY ON A 3D SAMPLE ACCORDING TO DEPTH, EPOCHS NB  AND WIDTH IN THE NN.
+SCRIPT TO EVALUATE THE STABILITY OF A TRAINING LAUNCHING IT N TIMES.
 """
 
 
@@ -307,9 +307,10 @@ for i in range(1, 11):
                                 torch.save(d, model_path + ".pth")
 
                     scheduler.step()
-                    print("LR = ", optimizer.param_groups[0]['lr'])
+
                     if epoch % 10 == 0:
                         print("Epoch ", epoch + 1)
+                        print("LR = ", optimizer.param_groups[0]['lr'])
                         print(total_loss.item())
                         loss_list_pd.append(total_loss.item())
 
@@ -321,7 +322,7 @@ for i in range(1, 11):
                         props = regionprops(mask)
 
                         # 1000 random indexes of labels
-                        index = np.random.randint(0, mask.max(), 1000)
+                        index = np.random.randint(0, mask.max(), 10000)
 
                         # list of groundtruth labels on 1000 random ROI
                         gt_labs_list = []
