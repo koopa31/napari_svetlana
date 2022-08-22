@@ -63,7 +63,8 @@ conda install cudatoolkit=10.2
 ## Tutorial
 
 To learn more about the features of
-Svetlana and how to use it, please check our [Youtube tutorial](https://youtube.com).
+Svetlana and how to use it, please check our [Youtube tutorial](https://youtube.com) and
+our [documentation](https://svetlana-documentation.readthedocs.io/en/latest/).
 
 ## The data augmentation 
 
