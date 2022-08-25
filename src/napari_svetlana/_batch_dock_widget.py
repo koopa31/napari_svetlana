@@ -1861,11 +1861,12 @@ def Prediction():
         list_pred = []
         list_proba = []
         for i, local_batch in enumerate(prediction_loader):
-            out = model(local_batch)
-            proba, index = torch.max(out, 1)
-            list_pred += index
-            list_proba += proba
-            yield i + 1
+            with torch.no_grad():
+                out = model(local_batch)
+                proba, index = torch.max(out, 1)
+                list_pred += index
+                list_proba += proba
+                yield i + 1
 
         show_info("Prediction of patches done, please wait while the result image is being generated...")
         if len(labels.shape) == 2:
@@ -1991,11 +1992,12 @@ def Prediction():
             list_pred = []
             list_proba = []
             for i, local_batch in enumerate(prediction_loader):
-                out = model(local_batch)
-                proba, index = torch.max(out, 1)
-                list_pred += index
-                list_proba += proba
-                yield i + 1
+                with torch.no_grad():
+                    out = model(local_batch)
+                    proba, index = torch.max(out, 1)
+                    list_pred += index
+                    list_proba += proba
+                    yield i + 1
 
             show_info("Prediction of patches done, please wait while the result image is being generated...")
             if len(labels.shape) == 2:
