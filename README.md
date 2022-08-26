@@ -13,7 +13,9 @@ The inputs are :
   <li>A folder of raw image</li>
   <li>Their segmentation masks where each ROI has its own label.</li>
 </ul>
-Svetlana can process 2D, 3D and multichannel image.
+Svetlana can process 2D, 3D and multichannel image. If you want to use it to work on cell images, we strongly
+recommend the use of [Cellpose](https://www.cellpose.org/) for the segmentation part, as it provides excellent quality results and an output format
+accepted by Svetlana. 
 
 If you use this plugin please cite the paper: 
 
