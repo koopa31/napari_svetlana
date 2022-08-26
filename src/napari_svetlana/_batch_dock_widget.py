@@ -361,10 +361,12 @@ def Annotation():
         return props, zoom_factor
 
     def send_case_to_thread():
+        global case
         patch_worker.pause()
         from .CustomDialog import CustomDialog
         diag = CustomDialog()
         diag.exec()
+        case = diag.get_case()
         patch_worker.send(diag.get_case())
         patch_worker.resume()
 
@@ -453,6 +455,7 @@ def Annotation():
             @param event: Qt click event
             @return:
             """
+            global case
             if double_click is True:
                 if case == "2D":
                     ind = labels[int(event.position[0]), int(event.position[1])] - 1
