@@ -1,6 +1,7 @@
 include LICENSE
 include README.md
 include requirements.txt
+include src/napari_svetlana/Config.json
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
