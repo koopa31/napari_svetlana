@@ -1599,7 +1599,8 @@ def Training():
             show_info("ERROR: File not recognized by Torch")
 
         # Load parameters from config file
-        with open(os.path.join(os.getcwd(), "src", "napari_svetlana", 'Config.json'), 'r') as f:
+        init = os.path.join(os.path.split(os.path.split(np.__file__)[0])[0], "napari_svetlana")
+        with open(os.path.join(init, "src", "napari_svetlana", 'Config.json'), 'r') as f:
             config_dict = json.load(f)
 
         # Copy of config file to folder Svetlana
@@ -1608,7 +1609,8 @@ def Training():
             os.mkdir(save_folder)
         import shutil
         if os.path.exists(os.path.join(save_folder, "Config.json")) is False:
-            shutil.copy(os.path.join(os.getcwd(), "src", "napari_svetlana", 'Config.json'),
+
+            shutil.copy(os.path.join(init, "src", "napari_svetlana", 'Config.json'),
                         os.path.join(save_folder, "Config.json"))
 
         if image.shape[2] <= 3:
