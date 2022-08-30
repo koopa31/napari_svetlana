@@ -339,6 +339,8 @@ def Annotation():
         else:
             zoom_factor = image.shape[1] / patch_size
             case = yield
+            while case is None:
+                pass
             print(case)
 
         global props, props_to_be_saved
@@ -482,7 +484,9 @@ def Annotation():
         @return:
         """
         # Gets the folder url and the two subfolder containing the images and the masks
-        global images_folder, masks_folder, parent_path, counter, total_counter
+        global images_folder, masks_folder, parent_path, counter, total_counter, case, props_to_be_saved
+        props_to_be_saved = []
+        case = None
 
         # As autocall is set to False, it is necessary to call the function when loading the data
         annotation_widget.viewer.value.layers.clear()
@@ -548,7 +552,11 @@ def Annotation():
 
         global images_folder, masks_folder, parent_path, image_path_list, mask_path_list, global_im_path_list, \
             global_lab_path_list, global_labels_list, global_mini_props_list, mini_props_list, counter, \
-            image_counter, patch_size, pred_path_list, total_counter, conf_path_list
+            image_counter, patch_size, pred_path_list, total_counter, conf_path_list, case, props_to_be_saved
+
+        props_to_be_saved = []
+
+        case = None
 
         # As autocall is set to False, it is necessary to call the function when loading the data
         annotation_widget.viewer.value.layers.clear()
