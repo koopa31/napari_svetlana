@@ -1876,6 +1876,8 @@ def Prediction():
         for i, local_batch in enumerate(prediction_loader):
             with torch.no_grad():
                 out = model(local_batch)
+                if out.dim() == 1:
+                    out = out[:, None]
                 proba, index = torch.max(out, 1)
                 list_pred += index
                 list_proba += proba
@@ -2007,6 +2009,8 @@ def Prediction():
             for i, local_batch in enumerate(prediction_loader):
                 with torch.no_grad():
                     out = model(local_batch)
+                    if out.dim() == 1:
+                        out = out[:, None]
                     proba, index = torch.max(out, 1)
                     list_pred += index
                     list_proba += proba
