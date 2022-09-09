@@ -101,6 +101,9 @@ global_im_path_list = []
 global_lab_path_list = []
 global_mini_props_list = []
 
+# This variable forbids to label if a correct object has not been clicked before
+enable_labeling = True
+
 # list of all regionprops to be exported in a specific binary file
 props_to_be_saved = []
 
@@ -128,108 +131,112 @@ def Annotation():
             @param viewer: Napari viewer instance
             @return:
             """
-            global counter, total_counter
-            print("key is ", key)
-            if (int(annotation_widget.labels_nb.value) < key) is False:
-                if counter < len(props) - 1:
-                    global_labels_list[image_counter].append(key - 1)
+            global counter, total_counter, enable_labeling, double_click
+            if enable_labeling is True:
+                print("key is ", key)
+                if (int(annotation_widget.labels_nb.value) < key) is False:
+                    if counter < len(props) - 1:
+                        global_labels_list[image_counter].append(key - 1)
 
-                    global_mini_props_list[image_counter].append(
-                        {"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
-                         "label": props[indexes[counter]].label})
-                    if case == "2D" or case == "multi2D":
-                        progression_mask[
-                            props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = key
-                        # If show labels is ticked, then we refresh it on the fly as we label
+                        global_mini_props_list[image_counter].append(
+                            {"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                             "label": props[indexes[counter]].label})
+                        if case == "2D" or case == "multi2D":
+                            progression_mask[
+                                props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = key
+                            # If show labels is ticked, then we refresh it on the fly as we label
+                            if annotation_widget.show_labs.value is True:
+                                annotation_widget.viewer.value.layers.pop()
+                                show_labs(True)
+
+                            counter += 1
+                            total_counter += 1
+
+                            # focus on the next object to annotate
+                            if double_click is False:
+                                viewer.camera.zoom = zoom_factor
+                                viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
+                                                        int(props[indexes[counter]].centroid[1]))
+                                viewer.camera.zoom = zoom_factor + 10 ** -8
+                            # deletion of the old contours and drawing of the new one
+                            circle_mask[circle_mask != 0] = 0
+                            circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
+                            eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
+                            eroded_labels = circle_mask - eroded_contours
+
+                            # Pyramidal representation of the contours to enhance the display speed
+
+                            annotation_widget.viewer.value.layers["object to annotate"].data_raw[0][
+                                annotation_widget.viewer.value.layers["object to annotate"].data_raw[0] != 0] = 0
+                            annotation_widget.viewer.value.layers["object to annotate"].data_raw[0][eroded_labels == 1] = 1
+
+                            for i in range(1, len(annotation_widget.viewer.value.layers["object to annotate"].data_raw)):
+                                annotation_widget.viewer.value.layers["object to annotate"].data_raw[i] = \
+                                    cv2.resize(annotation_widget.viewer.value.layers["object to annotate"].data_raw[0], (
+                                        annotation_widget.viewer.value.layers["object to annotate"].data_raw[0].shape[
+                                            0] // 2 ** i,
+                                        annotation_widget.viewer.value.layers["object to annotate"].data_raw[0].shape[
+                                            1] // 2 ** i))
+
+                        else:
+                            progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
+                                             props[indexes[counter]].coords[:, 2]] = key
+                            # If show labels is ticked, then we refresh it on the fly as we label
+                            if annotation_widget.show_labs.value is True:
+                                annotation_widget.viewer.value.layers.pop()
+                                show_labs(True)
+
+                            counter += 1
+                            total_counter += 1
+
+                            # focus on the next object to annotate
+                            if double_click is False:
+                                viewer.camera.zoom = zoom_factor
+                                viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
+                                                        int(props[indexes[counter]].centroid[1]),
+                                                        int(props[indexes[counter]].centroid[2]))
+                                annotation_widget.viewer.value.dims.current_step = (
+                                    int(props[indexes[counter]].centroid[0]),
+                                    annotation_widget.viewer.value.dims.current_step[
+                                        1],
+                                    annotation_widget.viewer.value.dims.current_step[
+                                        2])
+                                viewer.camera.zoom = zoom_factor + 10 ** -8
+                            # deletion of the old contours and drawing of the new one
+                            circle_mask[circle_mask != 0] = 0
+                            circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
+                                        props[indexes[counter]].coords[:, 2]] = 1
+                            annotation_widget.viewer.value.layers["object to annotate"].data = circle_mask
+
+                        annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
+                            image_layer_name]
+
+                        print("label 1", global_labels_list[image_counter])
+                        viewer.status = str(counter) + " images processed over " + str(len(props)) + " (" + \
+                                        str(total_counter) + " over the whole batch)"
+                    elif counter == len(props) - 1:
+                        global_labels_list[image_counter].append(key - 1)
+                        global_mini_props_list[image_counter].append(
+                            {"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
+                             "label": props[indexes[counter]].label})
+                        progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = \
+                            key
                         if annotation_widget.show_labs.value is True:
                             annotation_widget.viewer.value.layers.pop()
                             show_labs(True)
-
                         counter += 1
                         total_counter += 1
 
-                        # focus on the next object to annotate
-                        if double_click is False:
-                            viewer.camera.zoom = zoom_factor
-                            viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
-                                                    int(props[indexes[counter]].centroid[1]))
-                            viewer.camera.zoom = zoom_factor + 10 ** -8
-                        # deletion of the old contours and drawing of the new one
-                        circle_mask[circle_mask != 0] = 0
-                        circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = 1
-                        eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
-                        eroded_labels = circle_mask - eroded_contours
-
-                        # Pyramidal representation of the contours to enhance the display speed
-
-                        annotation_widget.viewer.value.layers["object to annotate"].data_raw[0][
-                            annotation_widget.viewer.value.layers["object to annotate"].data_raw[0] != 0] = 0
-                        annotation_widget.viewer.value.layers["object to annotate"].data_raw[0][eroded_labels == 1] = 1
-
-                        for i in range(1, len(annotation_widget.viewer.value.layers["object to annotate"].data_raw)):
-                            annotation_widget.viewer.value.layers["object to annotate"].data_raw[i] = \
-                                cv2.resize(annotation_widget.viewer.value.layers["object to annotate"].data_raw[0], (
-                                    annotation_widget.viewer.value.layers["object to annotate"].data_raw[0].shape[
-                                        0] // 2 ** i,
-                                    annotation_widget.viewer.value.layers["object to annotate"].data_raw[0].shape[
-                                        1] // 2 ** i))
-
+                        print("annotation over", global_labels_list[image_counter])
+                        viewer.status = str(counter) + " images processed over " + str(len(props)) + " (" + \
+                                        str(total_counter) + " over the whole batch)"
+                        show_info("Image entirely annotated")
                     else:
-                        progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
-                                         props[indexes[counter]].coords[:, 2]] = key
-                        # If show labels is ticked, then we refresh it on the fly as we label
-                        if annotation_widget.show_labs.value is True:
-                            annotation_widget.viewer.value.layers.pop()
-                            show_labs(True)
-
-                        counter += 1
-                        total_counter += 1
-
-                        # focus on the next object to annotate
-                        if double_click is False:
-                            viewer.camera.zoom = zoom_factor
-                            viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
-                                                    int(props[indexes[counter]].centroid[1]),
-                                                    int(props[indexes[counter]].centroid[2]))
-                            annotation_widget.viewer.value.dims.current_step = (
-                                int(props[indexes[counter]].centroid[0]),
-                                annotation_widget.viewer.value.dims.current_step[
-                                    1],
-                                annotation_widget.viewer.value.dims.current_step[
-                                    2])
-                            viewer.camera.zoom = zoom_factor + 10 ** -8
-                        # deletion of the old contours and drawing of the new one
-                        circle_mask[circle_mask != 0] = 0
-                        circle_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1],
-                                    props[indexes[counter]].coords[:, 2]] = 1
-                        annotation_widget.viewer.value.layers["object to annotate"].data = circle_mask
-
-                    annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
-                        image_layer_name]
-
-                    print("label 1", global_labels_list[image_counter])
-                    viewer.status = str(counter) + " images processed over " + str(len(props)) + " (" + \
-                                    str(total_counter) + " over the whole batch)"
-                elif counter == len(props) - 1:
-                    global_labels_list[image_counter].append(key - 1)
-                    global_mini_props_list[image_counter].append(
-                        {"centroid": props[indexes[counter]].centroid, "coords": props[indexes[counter]].coords,
-                         "label": props[indexes[counter]].label})
-                    progression_mask[props[indexes[counter]].coords[:, 0], props[indexes[counter]].coords[:, 1]] = \
-                        key
-                    if annotation_widget.show_labs.value is True:
-                        annotation_widget.viewer.value.layers.pop()
-                        show_labs(True)
-                    counter += 1
-                    total_counter += 1
-
-                    print("annotation over", global_labels_list[image_counter])
-                    viewer.status = str(counter) + " images processed over " + str(len(props)) + " (" + \
-                                    str(total_counter) + " over the whole batch)"
-                    show_info("Image entirely annotated")
-                else:
-                    show_info("Image entirely annotated")
-
+                        show_info("Image entirely annotated")
+                # If click to annotate is activated, we don't want the user to be able to click two labels in a row
+                # without re-choosing a new object
+                if double_click is True:
+                    enable_labeling = False
         return set_label
 
     @Viewer.bind_key('r', overwrite=True)
@@ -457,7 +464,7 @@ def Annotation():
             @param event: Qt click event
             @return:
             """
-            global case
+            global case, enable_labeling
             if double_click is True:
                 if case == "2D":
                     ind = labels[int(event.position[0]), int(event.position[1])] - 1
@@ -473,8 +480,10 @@ def Annotation():
                     indexes.insert(counter, ind)
                     print('position', event.position)
                     show_info("Choose a label for that object")
+                    enable_labeling = True
                 except ValueError:
                     show_info("please click on a valid object")
+                    enable_labeling = False
 
     @annotation_widget.load_images_button.changed.connect
     def load_images(e: Any):
@@ -750,14 +759,16 @@ def Annotation():
         @param e: boolean value of the checkbox
         @return:
         """
-        global double_click
+        global double_click, enable_labeling
         if e is True:
             double_click = True
             # select the image so the user can click on it
             annotation_widget.viewer.value.layers.selection.active = annotation_widget.viewer.value.layers[
                 image_layer_name]
+            enable_labeling = False
         else:
             double_click = False
+            enable_labeling = True
         return double_click
 
     def display_first_patch(x):
