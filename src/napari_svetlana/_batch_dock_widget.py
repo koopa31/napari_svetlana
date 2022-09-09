@@ -1739,7 +1739,7 @@ def Prediction():
             @return:
             """
             global imagette_contours
-            if double_click is True:
+            if double_click is True and lab != 0:
                 imagette_contours[mask == lab] = int(key)
                 # Choose whether to label on edges mask or overlay mask
                 if prediction_widget.bound.value is True:
@@ -2159,7 +2159,11 @@ def Prediction():
                         lab = mask[int(event.position[0]), int(event.position[1]), int(event.position[2])]
                     else:
                         lab = mask[int(event.position[1]), int(event.position[2]), int(event.position[3])]
-                    show_info("Choose a label for that object")
+
+                    if lab != 0:
+                        show_info("Choose a label for that object")
+                    else:
+                        show_info("Not an object")
 
     @prediction_widget.click_annotate.changed.connect
     def click_to_annotate(e: Any):
