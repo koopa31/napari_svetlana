@@ -154,7 +154,8 @@ def Annotation():
 
                             # focus on the next object to annotate
                             if double_click is False:
-                                viewer.camera.zoom = zoom_factor
+                                #viewer.camera.zoom = zoom_factor
+                                zoom_factor = viewer.camera.zoom
                                 viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
                                                         int(props[indexes[counter]].centroid[1]))
                                 viewer.camera.zoom = zoom_factor + 10 ** -8
@@ -191,7 +192,8 @@ def Annotation():
 
                             # focus on the next object to annotate
                             if double_click is False:
-                                viewer.camera.zoom = zoom_factor
+                                #viewer.camera.zoom = zoom_factor
+                                zoom_factor = viewer.camera.zoom
                                 viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
                                                         int(props[indexes[counter]].centroid[1]),
                                                         int(props[indexes[counter]].centroid[2]))
@@ -261,7 +263,8 @@ def Annotation():
                 show_labs(True)
 
             if double_click is False:
-                viewer.camera.zoom = zoom_factor
+                #viewer.camera.zoom = zoom_factor
+                zoom_factor = viewer.camera.zoom
                 viewer.camera.center = (0, int(props[indexes[counter]].centroid[0]),
                                         int(props[indexes[counter]].centroid[1]))
                 viewer.camera.zoom = zoom_factor + 10 ** -8
@@ -291,7 +294,8 @@ def Annotation():
                 show_labs(True)
 
             if double_click is False:
-                viewer.camera.zoom = zoom_factor
+                #viewer.camera.zoom = zoom_factor
+                zoom_factor = viewer.camera.zoom
                 viewer.camera.center = (int(props[indexes[counter]].centroid[0]),
                                         int(props[indexes[counter]].centroid[1]),
                                         int(props[indexes[counter]].centroid[2]))
