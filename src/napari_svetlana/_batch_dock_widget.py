@@ -1622,9 +1622,13 @@ def Training():
             show_info("ERROR: File not recognized by Torch")
 
         # Load parameters from config file
-        init = os.path.join(os.path.split(os.path.split(np.__file__)[0])[0], "napari_svetlana")
-        with open(os.path.join(init, 'Config.json'), 'r') as f:
-            config_dict = json.load(f)
+        try:
+            init = os.path.join(os.path.split(os.path.split(np.__file__)[0])[0], "napari_svetlana")
+            with open(os.path.join(init, 'Config.json'), 'r') as f:
+                config_dict = json.load(f)
+        except FileNotFoundError:
+            with open(os.path.join(os.getcwd(), 'Config.json'), 'r') as f:
+                config_dict = json.load(f)
 
         # Copy of config file to folder Svetlana
         save_folder = os.path.join(os.path.split(os.path.split(image_path_list[0])[0])[0], "Svetlana")
@@ -1633,8 +1637,12 @@ def Training():
         import shutil
         if os.path.exists(os.path.join(save_folder, "Config.json")) is False:
 
-            shutil.copy(os.path.join(init, 'Config.json'),
+            try:
+                shutil.copy(os.path.join(init, 'Config.json'),
                         os.path.join(save_folder, "Config.json"))
+            except FileNotFoundError:
+                shutil.copy(os.path.join(os.getcwd(), 'Config.json'),
+                            os.path.join(save_folder, "Config.json"))
 
         if image.shape[2] <= 3:
             case = "2D"
