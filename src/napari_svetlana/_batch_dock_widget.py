@@ -2153,7 +2153,7 @@ def Prediction():
     ) -> None:
         # Import when users activate plugin
         # We generate the functions to add a label when a key i pressed
-        for i in range(0, 10):
+        for i in range(1, 10):
             viewer.bind_key(str(i), on_pressed(i), overwrite=True)
 
         if len(viewer.layers) > 0:
