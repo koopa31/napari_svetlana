@@ -833,7 +833,7 @@ def Annotation():
         if case == "2D" or case == "multi2D":
             circle_mask[props[current_index].coords[:, 0], props[current_index].coords[:, 1]] = 1
             eroded_contours = cv2.erode(np.uint16(circle_mask), np.ones((5, 5), np.uint8))
-            eroded_labels = circle_mask - eroded_contours
+            eroded_labels = (circle_mask - eroded_contours).astype(np.uint8)
             # Pyramidal representation of the contours to enhance the display speed
             pyramid = [eroded_labels]
             for i in range(1, 6):
