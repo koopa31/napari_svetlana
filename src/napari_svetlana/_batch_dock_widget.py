@@ -446,6 +446,11 @@ def Annotation():
 
     ) -> None:
         # Create a black image just so layer variable exists
+        # This global instance of the viewer is created to be able to display images from the prediction plugin when
+        # it's being opened
+        global V
+        V = viewer
+
         if len(viewer.layers) == 0:
             viewer.add_image(np.zeros((1000, 1000)))
         # Import when users activate plugin
@@ -1024,6 +1029,54 @@ def Training():
     """
     from napari.qt.threading import thread_worker
 
+    # We check if parent_path exists, i.e. whe check if a labeling has been performed in the same instance of Svetlana.
+    # If it does exists, then there is no need to use the load data button and the labels and directly pre-loaded.
+
+    if "parent_path" in globals():
+        path = os.path.join(parent_path, "Svetlana", "labels")
+        b = torch.load(path)
+        global image_path_list, labels_path_list, region_props_list, labels_list, patch_size, image, mask, \
+            config_dict, case
+
+        if "image_path" in b.keys() and "labels_path" in b.keys() and "regionprops" in b.keys() and "labels_list" \
+                in b.keys() and "patch_size" in b.keys():
+
+            image_path_list = b["image_path"]
+            labels_path_list = b["labels_path"]
+            region_props_list = b["regionprops"]
+            labels_list = b["labels_list"]
+            patch_size = int(b["patch_size"])
+
+            image = imread(image_path_list[0])
+            if len(image.shape) == 2:
+                image = np.stack((image,) * 3, axis=-1)
+            mask = imread(labels_path_list[0])
+            #training_widget.viewer.value.add_image(image)
+            #training_widget.viewer.value.add_labels(mask)
+            # Load parameters from config file
+            try:
+                init = os.path.join(os.path.split(os.path.split(np.__file__)[0])[0], "napari_svetlana")
+                with open(os.path.join(init, 'Config.json'), 'r') as f:
+                    config_dict = json.load(f)
+            except FileNotFoundError:
+                with open(os.path.join(os.getcwd(), 'Config.json'), 'r') as f:
+                    config_dict = json.load(f)
+
+            # Copy of config file to folder Svetlana
+            save_folder = os.path.join(os.path.split(os.path.split(image_path_list[0])[0])[0], "Svetlana")
+            if os.path.isdir(save_folder) is False:
+                os.mkdir(save_folder)
+            import shutil
+            if os.path.exists(os.path.join(save_folder, "Config.json")) is False:
+
+                try:
+                    shutil.copy(os.path.join(init, 'Config.json'),
+                                os.path.join(save_folder, "Config.json"))
+                except FileNotFoundError:
+                    shutil.copy(os.path.join(os.getcwd(), 'Config.json'),
+                                os.path.join(save_folder, "Config.json"))
+
+
     def set_parameter_requires_grad(model, feature_extracting):
         if feature_extracting:
             for param in model.parameters():
@@ -1564,6 +1617,10 @@ def Training():
 
     ) -> None:
         # Import when users activate plugin
+        # This global instance of the viewer is created to be able to display images from the prediction plugin when
+        # it's being opened
+        global V
+        V = viewer
         return
 
     @training_widget.format_button.changed.connect
@@ -1594,6 +1651,10 @@ def Training():
         training_widget.viewer.value.layers.clear()
         path = QFileDialog.getOpenFileName(None, 'Choose the labels file contained in folder called Svetlana',
                                            options=QFileDialog.DontUseNativeDialog)[0]
+        # Necessary to directly load data then, when opening the prediction plugin. The condition to be able to reload
+        # the network and the data is that parent_path variable exists
+        global parent_path
+        parent_path = os.path.split(os.path.split(path)[0])[0]
 
         try:
             b = torch.load(path)
@@ -2088,6 +2149,82 @@ def Prediction():
 
             show_info("prediction of image " + os.path.split(image_path_list[ind])[1] + " done")
 
+    def load_data_after_training():
+        """
+        The aim of this function is to load the NN and the data directly in the prediction plugin without having to use
+         load data and NN buttons
+        @return:
+        """
+        # If parent path exists, then an annotation, or a training have been performed juste before in the same
+        # Svetlana's instance
+        if "parent_path" in globals():
+
+            V.layers.clear()
+
+            p = os.path.join(parent_path, "Svetlana")
+            onlyfiles = [os.path.join(p, f) for f in os.listdir(p) if
+                         os.path.isfile(os.path.join(p, f)) and os.path.join(p, f).endswith(".pth")]
+            if len(onlyfiles) > 0:
+                path = max(onlyfiles, key=os.path.getctime)
+
+                # Loading of last trained NN
+                try:
+                    b = torch.load(path)
+
+                    global model, patch_size, norm_type
+
+                    if "model" and "patch_size" and "norm_type" in b.keys():
+                        model = b["model"].to("cuda")
+                        patch_size = b["patch_size"]
+                        norm_type = b["norm_type"]
+                        model.eval()
+                        show_info("NN loaded successfully")
+                    else:
+                        show_info("ERROR: the file seems not be correct as it does not contain the right keys")
+                except:
+                    show_info("ERROR: file not recognized by Torch")
+
+                # Loading the data fot he prediction
+                path = parent_path
+                global config_dict
+                # Load parameters from config file
+                with open(os.path.join(path, "Svetlana", 'Config.json'), 'r') as f:
+                    config_dict = json.load(f)
+
+                # Result folder
+                global res_folder, conf_folder
+                res_folder = os.path.join(path, "Predictions")
+                if os.path.isdir(res_folder) is False:
+                    os.mkdir(res_folder)
+
+                conf_folder = os.path.join(path, "Confidence")
+                if os.path.isdir(conf_folder) is False:
+                    os.mkdir(conf_folder)
+
+                global images_folder, masks_folder
+                images_folder = os.path.join(path, "Images")
+                masks_folder = os.path.join(path, "Masks")
+
+                if os.path.isdir(images_folder) is True and os.path.isdir(masks_folder) is True:
+                    global image_path_list, mask_path_list
+                    image_path_list = sorted([os.path.join(images_folder, f) for f in os.listdir(images_folder)])
+                    mask_path_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder)])
+
+                    global image, mask
+
+                    image = imread(image_path_list[0])
+                    if len(image.shape) == 2:
+                        image = np.stack((image,) * 3, axis=-1)
+                    mask = imread(mask_path_list[0])
+                    V.add_image(image)
+                    V.add_labels(mask)
+
+                    # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
+                    # the layer named Image
+                    # prediction_widget()
+                else:
+                    show_info("ERROR: The folder should contain two folders called Images and Masks")
+
     @magicgui(
         auto_call=False,
         call_button=False,
@@ -2190,11 +2327,6 @@ def Prediction():
 
     @prediction_widget.click_annotate.changed.connect
     def click_to_annotate(e: Any):
-        """
-        Activates click to annotate option
-        @param e: boolean value of the checkbox
-        @return:
-        """
         global double_click
         if e is True:
             double_click = True
@@ -2507,6 +2639,9 @@ def Prediction():
             imsave(os.path.splitext(mask_path_list[int(prediction_widget.image_index_button.value) - 1])[0] +
                    "_label" + str(i + 1) + ".tif", im)
 
+    # Function called when opening the plugin to directly load data if a training hs juste been performed in the same
+    # Svetlana's instance
+    load_data_after_training()
     return prediction_widget
 
 
