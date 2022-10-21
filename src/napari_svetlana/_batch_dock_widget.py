@@ -411,14 +411,15 @@ def Annotation():
                                     tooltip='Start annotation'),
         estimate_size_button=dict(widget_type='PushButton', text='Estimate patch size',
                                   tooltip='Automatically estimate an optimal patch size'),
-        save_button=dict(widget_type='PushButton', text='Save annotation', tooltip='Save annotation'),
+        save_button=dict(widget_type='PushButton', text='Save annotation', tooltip='Save annotation', enabled=False),
 
         save_regionprops_button=dict(widget_type='PushButton', text='Save objects statistics', tooltip='Save the '
-                                                                                                       'properties of the annotated objects in a binary file, loadable using torch.load'),
+                                     'properties of the annotated objects in a binary file, loadable using torch.load',
+                                     enabled=False),
         generate_im_labs_button=dict(widget_type='PushButton', text='Save masks of labels', tooltip='Save one '
-                                                                                                    'per attributed label'),
-        show_labs=dict(widget_type='CheckBox', text='Show labeled objects', tooltip='Show labeled objects'),
-        click_annotate=dict(widget_type='CheckBox', text='Click to annotate', tooltip='Click to annotate'),
+                                     'per attributed label', enabled=False),
+        show_labs=dict(widget_type='CheckBox', text='Show labeled objects', tooltip='Show labeled objects', enabled=False),
+        click_annotate=dict(widget_type='CheckBox', text='Click to annotate', tooltip='Click to annotate', enabled=False),
     )
     def annotation_widget(  # label_logo,
             viewer: Viewer,
@@ -911,6 +912,13 @@ def Annotation():
         @param e:
         @return:
         """
+
+        annotation_widget.save_button.enabled = True
+        annotation_widget.save_regionprops_button.enabled = True
+        annotation_widget.generate_im_labs_button.enabled = True
+        annotation_widget.show_labs.enabled = True
+        annotation_widget.click_annotate.enabled = True
+
         global patch_worker
         patch_worker = generate_patches(annotation_widget.viewer.value.layers, int(annotation_widget.patch_size.value))
         patch_worker.returned.connect(display_first_patch)
@@ -1097,7 +1105,8 @@ def Training():
         try:
             import cupy as cu
         except ImportError:
-            show_info("WARNING: If you want to fasten using Cupy, do in this Conda env: conda install cudatoolkit=10.2")
+            show_info("WARNING: If you want to accelerate computation using Cupy, do in this Conda env: conda install"
+                      " cudatoolkit=10.2")
 
         labels_tensor = torch.from_numpy(labels_list).type(torch_type)
         labels_tensor = nn.functional.one_hot(labels_tensor.type(torch.cuda.LongTensor))
