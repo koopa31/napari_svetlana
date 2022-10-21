@@ -874,7 +874,7 @@ def Annotation():
         if case == "2D" or case == "multi2D":
             pyramid = [progression_mask]
             for i in range(1, 6):
-                pyramid.append(cv2.resize(progression_mask, (progression_mask.shape[0] // 2 ** i,
+                pyramid.append(cv2.resize(progression_mask.astype("uint8"), (progression_mask.shape[0] // 2 ** i,
                                                              progression_mask.shape[1] // 2 ** i)))
 
             if e is True:
