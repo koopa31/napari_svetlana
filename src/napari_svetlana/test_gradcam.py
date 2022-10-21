@@ -38,7 +38,9 @@ with open("/home/cazorla/Documents/Codes/napari_svetlana/src/napari_svetlana/Con
     config_dict = json.load(f)
 
 data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, b["norm_type"], "cuda", config_dict, "2D")
-prediction_loader = DataLoader(dataset=data, batch_size=2, shuffle=False)
+
+batch_size = 10
+prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
 for i, local_batch in enumerate(prediction_loader):
     input_tensor = local_batch
     """rgb_img = imread("/home/cazorla/Téléchargements/dog_cat(1).jfif")
