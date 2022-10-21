@@ -502,6 +502,14 @@ def Annotation():
         @param e:
         @return:
         """
+
+        # Make sure buttons are greyed so we cannot click them before launching annotation
+        annotation_widget.save_button.enabled = False
+        annotation_widget.save_regionprops_button.enabled = False
+        annotation_widget.generate_im_labs_button.enabled = False
+        annotation_widget.show_labs.enabled = False
+        annotation_widget.click_annotate.enabled = False
+
         # Gets the folder url and the two subfolder containing the images and the masks
         global images_folder, masks_folder, parent_path, counter, total_counter, case, props_to_be_saved
         props_to_be_saved = []
@@ -568,6 +576,13 @@ def Annotation():
         """
         Function to resume the labelling after a first prediction or not
         """
+
+        # Make sure buttons are greyed so we cannot click them before launching annotation
+        annotation_widget.save_button.enabled = False
+        annotation_widget.save_regionprops_button.enabled = False
+        annotation_widget.generate_im_labs_button.enabled = False
+        annotation_widget.show_labs.enabled = False
+        annotation_widget.click_annotate.enabled = False
 
         global images_folder, masks_folder, parent_path, image_path_list, mask_path_list, global_im_path_list, \
             global_lab_path_list, global_labels_list, global_mini_props_list, mini_props_list, counter, \
@@ -662,28 +677,36 @@ def Annotation():
         elif int(e) < 1:
             show_info("Too low index")
             annotation_widget.image_index_button.value = 1
+        else:
 
-        image_counter = int(annotation_widget.image_index_button.value) - 1
+            # Make sure buttons are greyed so we cannot click them before launching annotation
+            annotation_widget.save_button.enabled = False
+            annotation_widget.save_regionprops_button.enabled = False
+            annotation_widget.generate_im_labs_button.enabled = False
+            annotation_widget.show_labs.enabled = False
+            annotation_widget.click_annotate.enabled = False
 
-        counter = len(global_labels_list[image_counter])
+            image_counter = int(annotation_widget.image_index_button.value) - 1
 
-        annotation_widget.viewer.value.layers.clear()
-        annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
-        annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
-        annotation_widget.viewer.value.layers[1].name = "mask"
-        if "pred_path_list" in globals():
-            annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
-            annotation_widget.viewer.value.layers[2].name = "previous prediction"
-            if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
-                annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
+            counter = len(global_labels_list[image_counter])
 
-        if "conf_path_list" in globals() and len(os.listdir(os.path.join(parent_path, "Confidence"))) != 0:
-            annotation_widget.viewer.value.add_image(imread(conf_path_list[image_counter]).astype("uint8"))
-            annotation_widget.viewer.value.layers[-1].name = "confidence map"
+            annotation_widget.viewer.value.layers.clear()
+            annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
+            annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
+            annotation_widget.viewer.value.layers[1].name = "mask"
+            if "pred_path_list" in globals():
+                annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
+                annotation_widget.viewer.value.layers[2].name = "previous prediction"
+                if len(np.unique(annotation_widget.viewer.value.layers["previous prediction"].data)) == 3:
+                    annotation_widget.viewer.value.layers["previous prediction"].color = {1: "green", 2: "red"}
 
-        # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
-        # the layer named Image
-        annotation_widget()
+            if "conf_path_list" in globals() and len(os.listdir(os.path.join(parent_path, "Confidence"))) != 0:
+                annotation_widget.viewer.value.add_image(imread(conf_path_list[image_counter]).astype("uint8"))
+                annotation_widget.viewer.value.layers[-1].name = "confidence map"
+
+            # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
+            # the layer named Image
+            annotation_widget()
 
     @annotation_widget.next_button.changed.connect
     def next_image(e: Any):
@@ -695,6 +718,13 @@ def Annotation():
         global image_counter, counter, labels_list, mini_props_list
 
         if image_counter < len(global_im_path_list) - 1:
+
+            # Make sure buttons are greyed so we cannot click them before launching annotation
+            annotation_widget.save_button.enabled = False
+            annotation_widget.save_regionprops_button.enabled = False
+            annotation_widget.generate_im_labs_button.enabled = False
+            annotation_widget.show_labs.enabled = False
+            annotation_widget.click_annotate.enabled = False
 
             # Reinitialization of counter for next image
             counter = len(global_labels_list[image_counter + 1])
@@ -733,6 +763,14 @@ def Annotation():
         """
         global image_counter, counter, labels_list, mini_props_list
         if image_counter > 0:
+
+            # Make sure buttons are greyed so we cannot click them before launching annotation
+            annotation_widget.save_button.enabled = False
+            annotation_widget.save_regionprops_button.enabled = False
+            annotation_widget.generate_im_labs_button.enabled = False
+            annotation_widget.show_labs.enabled = False
+            annotation_widget.click_annotate.enabled = False
+
             image_counter -= 1
             # Update of the image index
             annotation_widget.image_index_button.value = image_counter + 1
@@ -913,6 +951,7 @@ def Annotation():
         @return:
         """
 
+        # As button are disabled while labelling isn't started, we must make sure the buttons are enabled
         annotation_widget.save_button.enabled = True
         annotation_widget.save_regionprops_button.enabled = True
         annotation_widget.generate_im_labs_button.enabled = True
