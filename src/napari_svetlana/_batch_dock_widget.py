@@ -1,6 +1,18 @@
 """
 Svetlana dock widget module
 """
+import subprocess
+
+# We call a bash function to install torch for windows as we cannot install the Cuda version from the setup.cfg file
+
+p1 = subprocess.Popen("ltt install torch torchvision torchaudio", shell=True)
+
+try:
+    import torch
+except ImportError:
+    print("Please wait while PyTorch dependencies are being installed")
+    p1.wait()
+
 import functools
 import os
 import pickle
