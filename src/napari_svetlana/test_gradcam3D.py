@@ -9,28 +9,30 @@ from torchvision import transforms
 from CNN2D import CNN2D
 from skimage.measure import regionprops
 import numpy as np
-from PredictionDataset import PredictionDataset
+from Prediction3DDataset import Prediction3DDataset
 import json
 from torch.utils.data import DataLoader
 
 
-model1 = resnet50(pretrained=True)
+#model1 = resnet50(pretrained=True)
 
-b = torch.load("/home/clement/Images/Test_fluidite/Svetlana/training_200.pth")
+b = torch.load("/home/clement/Images/Neural_tube_3D/Svetlana/training_300.pth")
 
 model = b["model"]
 
 target_layers = [model.cnn_layers]
-rgb_img = imread("/home/clement/Images/Test_fluidite/Images/image.tif")
+rgb_img = imread("/home/clement/Images/Neural_tube_3D/Images/neural_tube_3D.tif")
 if len(rgb_img.shape) == 2:
     rgb_img = np.stack((rgb_img,) * 3, axis=-1)
-mask = imread("/home/clement/Images/Test_fluidite/Masks/image_cp_masks.png")
+mask = imread("/home/clement/Images/Neural_tube_3D/Masks/neural_tube_3D_cp_masks.tif")
 
 patch_size = b["patch_size"]
 
 pad_image = np.pad(rgb_img, ((patch_size // 2 + 1, patch_size // 2 + 1),
-                   (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
+                   (patch_size // 2 + 1, patch_size // 2 + 1),
+                   (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                    (patch_size // 2 + 1, patch_size // 2 + 1),
                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 props = regionprops(mask)
 
@@ -38,14 +40,14 @@ with open("/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/Codes/napari_svet
           "Config.json", 'r') as f:
     config_dict = json.load(f)
 
-data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, b["norm_type"], "cuda", config_dict, "2D")
+data = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, b["norm_type"], "cuda", config_dict)
 
 batch_size = 2
 prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
 for i, local_batch in enumerate(prediction_loader):
     if i < 20:
         input_tensor = local_batch
-        input_tensor[1, :, :, :] = input_tensor[0, :, :, :]
+        input_tensor[1, :, :, :, :] = input_tensor[0, :, :, :, :]
         """rgb_img = imread("/home/cazorla/Téléchargements/dog_cat(1).jfif")
         input_tensor = transforms.ToTensor()(rgb_img).to("cuda")
         # Create an input tensor image for your model..
@@ -83,10 +85,15 @@ for i, local_batch in enumerate(prediction_loader):
         # In this example grayscale_cam has only one image in the batch:
         grayscale_cam = grayscale_cam[0, :]
 
-        np_arr = np.zeros((input_tensor.shape[2], input_tensor.shape[3], 3))
-        for j in range(0, 3):
-            np_arr[:, :, j] = input_tensor[0, 0, :, :].cpu().detach().numpy().copy()
+        np_arr = np.zeros((input_tensor.shape[2], input_tensor.shape[3], input_tensor.shape[4]))
 
+        np_arr = input_tensor[0, 0, :, :, :].cpu().detach().numpy().copy()
+
+        from skimage.io import imsave
+        c = (grayscale_cam - grayscale_cam.min()) / (grayscale_cam.max() - grayscale_cam.min()) * 255
+        imsave("/home/clement/Bureau/" + str(i) + "3dcam.tif", c)
+        imsave("/home/clement/Bureau/" + str(i) + "patch3D.tif", np_arr)
+        """
         np_arr = (np_arr - np_arr.min()) / (np_arr.max() - np_arr.min())
         grayscale_cam = (grayscale_cam - grayscale_cam.min()) / (grayscale_cam.max() - grayscale_cam.min())
 
@@ -98,6 +105,6 @@ for i, local_batch in enumerate(prediction_loader):
         imsave("/home/clement/Bureau/rgb" + str(i) + "_index_" + str(index[0].item()) + ".jpeg", input_tensor[0, 0, :, :, ].cpu().detach().numpy())
 
 
-        """plt.figure(1)
+        plt.figure(1)
         plt.imshow(visualization)
         plt.show()"""
