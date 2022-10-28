@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import torch
-from pytorch_grad_cam import GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM, FullGrad
+from Grad_Cam.grad_cam import GradCAM
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
-from pytorch_grad_cam.utils.image import show_cam_on_image
+from pytorch_grad_cam.utils.image import show_cam_on_image, deprocess_image
 from torchvision.models import resnet50
 from skimage.io import imread
 from torchvision import transforms
@@ -12,19 +12,21 @@ import numpy as np
 from PredictionDataset import PredictionDataset
 import json
 from torch.utils.data import DataLoader
+from pytorch_grad_cam import GuidedBackpropReLUModel
 
 
 model1 = resnet50(pretrained=True)
 
-b = torch.load("/home/clement/Images/Test_fluidite/Svetlana/training_200.pth")
+b = torch.load("/home/cazorla/Images/Test_fluidite/Svetlana/training_200.pth")
 
-model = b["model"]
+model = b["model"].to("cuda")
+model.eval()
 
 target_layers = [model.cnn_layers]
-rgb_img = imread("/home/clement/Images/Test_fluidite/Images/image.tif")
+rgb_img = imread("/home/cazorla/Images/Test_fluidite/Images/image.tif")
 if len(rgb_img.shape) == 2:
     rgb_img = np.stack((rgb_img,) * 3, axis=-1)
-mask = imread("/home/clement/Images/Test_fluidite/Masks/image_cp_masks.png")
+mask = imread("/home/cazorla/Images/Test_fluidite/Masks/image_cp_masks.png")
 
 patch_size = b["patch_size"]
 
@@ -34,18 +36,16 @@ pad_labels = np.pad(mask, ((patch_size // 2 + 1, patch_size // 2 + 1),
                     (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 props = regionprops(mask)
 
-with open("/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/Codes/napari_svetlana/src/napari_svetlana/"
-          "Config.json", 'r') as f:
+with open("/home/cazorla/Documents/Codes/napari_svetlana/src/napari_svetlana/Config.json", 'r') as f:
     config_dict = json.load(f)
 
 data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, b["norm_type"], "cuda", config_dict, "2D")
 
-batch_size = 2
+batch_size = 1
 prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
 for i, local_batch in enumerate(prediction_loader):
     if i < 20:
         input_tensor = local_batch
-        input_tensor[1, :, :, :] = input_tensor[0, :, :, :]
         """rgb_img = imread("/home/cazorla/Téléchargements/dog_cat(1).jfif")
         input_tensor = transforms.ToTensor()(rgb_img).to("cuda")
         # Create an input tensor image for your model..
@@ -92,10 +92,21 @@ for i, local_batch in enumerate(prediction_loader):
 
         visualization = show_cam_on_image(np_arr.astype(np.float32), grayscale_cam, use_rgb=True)
 
+        # Guided backpropagation :
+        gb_model = GuidedBackpropReLUModel(model=model, use_cuda=True)
+        gb = gb_model(input_tensor, target_category=None)
+
+        import cv2
+        cam_mask = cv2.merge([grayscale_cam, grayscale_cam, grayscale_cam])
+        cam_gb = deprocess_image(cam_mask * gb[:, :, :3])
+        cam_gb = (cam_gb - cam_gb.min()) / (cam_gb.max() - cam_gb.min())
+        cam_gb = show_cam_on_image(np_arr.astype(np.float32), cam_gb, use_rgb=True)
+
         from skimage.io import imsave
 
-        imsave("/home/clement/Bureau/visu" + str(i) + "_index_" + str(index[0].item()) + ".jpeg", visualization)
-        imsave("/home/clement/Bureau/rgb" + str(i) + "_index_" + str(index[0].item()) + ".jpeg", input_tensor[0, 0, :, :, ].cpu().detach().numpy())
+        imsave("/home/cazorla/Bureau/res_cam0/visu" + str(i) + "_index_" + str(index[0].item()) + ".jpeg", visualization)
+        imsave("/home/cazorla/Bureau/res_cam0/cam_gb" + str(i) + "_index_" + str(index[0].item()) + ".jpeg", cam_gb)
+        imsave("/home/cazorla/Bureau/res_cam0/rgb" + str(i) + "_index_" + str(index[0].item()) + ".jpeg", input_tensor[0, 0, :, :, ].cpu().detach().numpy())
 
 
         """plt.figure(1)
