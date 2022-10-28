@@ -35,7 +35,7 @@ class CNN2D(Module):
     def forward(self, x):
         x = self.cnn_layers(x)
         x = self.avg_pool(x)
-        x = torch.squeeze(x)
+        x = torch.flatten(x, 1)
         x = self.fc(x)
         x = self.softmax(x)
         return x
