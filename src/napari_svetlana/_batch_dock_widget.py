@@ -1279,8 +1279,7 @@ def Training():
 
                         imagette *= imagette_mask
 
-                    concat_image = np.zeros((2, imagette.shape[0], imagette.shape[1], imagette.shape[2])).astype(
-                        image.dtype)
+                    concat_image = np.zeros((2, imagette.shape[0], imagette.shape[1], imagette.shape[2]))
 
                     # normalization
                     if norm_type == "min max normalization":

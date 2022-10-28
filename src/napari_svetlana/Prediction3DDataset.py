@@ -2,7 +2,7 @@ from torch.utils.data import Dataset
 import numpy as np
 from torchvision import transforms
 import torch
-from .PredictionDataset import max_to_1, min_max_norm
+from PredictionDataset import max_to_1, min_max_norm
 import torch
 import json
 if torch.cuda.is_available() is True:
@@ -56,7 +56,7 @@ class Prediction3DDataset(Dataset):
 
                 imagette *= imagette_mask
 
-            concat_image = np.zeros((2, imagette.shape[0], imagette.shape[1], imagette.shape[2])).astype(imagette.dtype)
+            concat_image = np.zeros((2, imagette.shape[0], imagette.shape[1], imagette.shape[2]))
 
             if self.norm_type == "min max normalization":
                 imagette = min_max_norm(imagette)
