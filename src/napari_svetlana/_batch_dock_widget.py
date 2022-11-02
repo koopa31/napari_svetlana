@@ -60,6 +60,13 @@ from .PredictionDataset import PredictionDataset, max_to_1, min_max_norm
 from .Prediction3DDataset import Prediction3DDataset
 from .PredictionMulti3DDataset import PredictionMulti3DDataset
 
+# import gradcam
+from Grad_Cam.grad_cam import GradCAM
+from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+from pytorch_grad_cam.utils.image import show_cam_on_image, deprocess_image
+
+from PIL import ImageDraw, ImageFont, Image
+
 if torch.cuda.is_available() is True:
     try:
         import cupy as cu
@@ -2208,6 +2215,52 @@ def Prediction():
 
             show_info("prediction of image " + os.path.split(image_path_list[ind])[1] + " done")
 
+    def show_cam(image, labels, props, patch_size, lab):
+
+        if case == "2D":
+
+            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
+            pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+
+            for i, reg in enumerate(props):
+                if reg.label == lab:
+                    ind = i
+            input_tensor = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda", config_dict,
+                                     case).__getitem__(ind)[None, :]
+            model.eval()
+            target_layers = [model.cnn_layers]
+            cam = GradCAM(model=model, target_layers=target_layers, use_cuda=True)
+
+            with torch.no_grad():
+                out = model(input_tensor)
+                if out.dim() == 1:
+                    out = out[:, None]
+                proba, index = torch.max(out, 1)
+
+            targets = [ClassifierOutputTarget(index[0].item())]
+            # You can also pass aug_smooth=True and eigen_smooth=True, to apply smoothing.
+            grayscale_cam = cam(input_tensor=input_tensor, targets=targets, aug_smooth=True, eigen_smooth=True)
+
+            # In this example grayscale_cam has only one image in the batch:
+            grayscale_cam = grayscale_cam[0, :]
+            np_arr = np.zeros((input_tensor.shape[2], input_tensor.shape[3], 3))
+            for j in range(0, 3):
+                np_arr[:, :, j] = input_tensor[0, 0, :, :].cpu().detach().numpy().copy()
+
+            np_arr = (np_arr - np_arr.min()) / (np_arr.max() - np_arr.min())
+            grayscale_cam = (grayscale_cam - grayscale_cam.min()) / (grayscale_cam.max() - grayscale_cam.min())
+
+            visualization = show_cam_on_image(np_arr.astype(np.float32), grayscale_cam, use_rgb=True)
+
+            plt.figure(1)
+            plt.imshow(visualization)
+            plt.title("Confidence: " + "%.1f" % (proba * 100) + "%")
+            plt.show()
+        else:
+            show_info("Not supported for non-2D images")
+
     def load_data_after_training():
         """
         The aim of this function is to load the NN and the data directly in the prediction plugin without having to use
@@ -2321,6 +2374,7 @@ def Prediction():
         save_regionprops_button=dict(widget_type='PushButton', text='Save objects statistics', tooltip='Save the '
                                                                                                        'properties of the annotated objects in a binary file, loadable using torch.load'),
         click_annotate=dict(widget_type='CheckBox', text='Click to change label', tooltip='Click to change label'),
+        show_heatmap=dict(widget_type='CheckBox', text='Show heat map', tooltip='Click on a cell to show the heat map'),
     )
     def prediction_widget(  # label_logo,
             viewer: Viewer,
@@ -2339,6 +2393,7 @@ def Prediction():
             confidence_button,
             vertical_space3,
             classified_mask,
+            show_heatmap,
             click_annotate,
             bound,
             edges_thickness,
@@ -2383,6 +2438,23 @@ def Prediction():
                         show_info("Choose a label for that object")
                     else:
                         show_info("Not an object")
+
+                if heatmap is True:
+                    if case == "2D":
+                        lab = mask[int(event.position[0]), int(event.position[1])]
+                        show_cam(image, mask, props, patch_size, lab)
+
+    @prediction_widget.show_heatmap.changed.connect
+    def click_to_show_heatmap(e: Any):
+        global heatmap
+        if e is True:
+            heatmap = True
+            # select the image so the user can click on it
+            prediction_widget.viewer.value.layers.selection.active = prediction_widget.viewer.value.layers[
+                "image"]
+        else:
+            heatmap = False
+        return heatmap
 
     @prediction_widget.click_annotate.changed.connect
     def click_to_annotate(e: Any):
