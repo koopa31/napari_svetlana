@@ -33,5 +33,5 @@ class CNN3D(Module):
         x = self.avg_pool(x)
         x = torch.flatten(x, 1)
         x = self.fc(x)
-        #x = self.softmax(x)
+        x = self.softmax(x)
         return x

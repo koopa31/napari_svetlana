@@ -2255,6 +2255,7 @@ def Prediction():
 
             visualization = show_cam_on_image(np_arr.astype(np.float32), grayscale_cam, use_rgb=True)
 
+            # Display result at the right coordinates
             x_corner = (int(props[ind].centroid[0]) + patch_size // 2 + 1) - patch_size // 2 - (patch_size // 2 + 1)
             y_corner = (int(props[ind].centroid[1]) + patch_size // 2 + 1) - patch_size // 2 - (patch_size // 2 + 1)
 
@@ -2277,6 +2278,47 @@ def Prediction():
             # Stay focus on image layer to keep annotating
             prediction_widget.viewer.value.layers.selection.active = prediction_widget.viewer.value.layers[
                 "image"]
+        elif case == "3D":
+            pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+            pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                         (patch_size // 2 + 1, patch_size // 2 + 1),
+                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+
+            for i, reg in enumerate(props):
+                if reg.label == lab:
+                    ind = i
+
+            input_tensor = Prediction3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda",
+                                               config_dict).__getitem__(ind)[None, :]
+
+            model.eval()
+            target_layers = [model.cnn_layers]
+            cam = GradCAM(model=model, target_layers=target_layers, use_cuda=True)
+
+            with torch.no_grad():
+                out = model(input_tensor)
+                if out.dim() == 1:
+                    out = out[:, None]
+                proba, index = torch.max(out, 1)
+
+            targets = [ClassifierOutputTarget(index[0].item())]
+            # You can also pass aug_smooth=True and eigen_smooth=True, to apply smoothing.
+            grayscale_cam = cam(input_tensor=input_tensor, targets=targets, aug_smooth=True, eigen_smooth=True)
+
+            # In this example grayscale_cam has only one image in the batch:
+            grayscale_cam = grayscale_cam[0, :]
+            c = (grayscale_cam - grayscale_cam.min()) / (grayscale_cam.max() - grayscale_cam.min()) * 255
+
+            # Display result at the right coordinates
+            x_corner = (int(props[ind].centroid[0]) + patch_size // 2 + 1) - patch_size // 2 - (patch_size // 2 + 1)
+            y_corner = (int(props[ind].centroid[1]) + patch_size // 2 + 1) - patch_size // 2 - (patch_size // 2 + 1)
+            z_corner = (int(props[ind].centroid[2]) + patch_size // 2 + 1) - patch_size // 2 - (patch_size // 2 + 1)
+
+            prediction_widget.viewer.value.add_image(c, colormap="turbo", opacity=0.7,
+                                                     name="%.1f" % (proba * 100) + "% G-CAM",
+                                                     translate=(x_corner, y_corner, z_corner))
         else:
             show_info("Not supported for non-2D images")
 
@@ -2462,6 +2504,9 @@ def Prediction():
                 if heatmap is True:
                     if case == "2D":
                         lab = mask[int(event.position[0]), int(event.position[1])]
+                        show_cam(image, mask, props, patch_size, lab)
+                    elif case == "3D":
+                        lab = mask[int(event.position[0]), int(event.position[1]), int(event.position[2])]
                         show_cam(image, mask, props, patch_size, lab)
 
     @prediction_widget.show_heatmap.changed.connect
