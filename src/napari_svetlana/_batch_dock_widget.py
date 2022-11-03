@@ -2218,7 +2218,9 @@ def Prediction():
 
     def show_cam(image, labels, props, patch_size, lab):
 
-        if case == "2D":
+        if case == "2D" or case == "multi2D":
+            if case == "multi2D":
+                image = np.transpose(image, (1, 2, 0))
 
             pad_image = np.pad(image, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                        (patch_size // 2 + 1, patch_size // 2 + 1), (0, 0)), mode="constant")
@@ -2504,6 +2506,9 @@ def Prediction():
                 if heatmap is True:
                     if case == "2D":
                         lab = mask[int(event.position[0]), int(event.position[1])]
+                        show_cam(image, mask, props, patch_size, lab)
+                    elif case == "multi2D":
+                        lab = mask[int(event.position[1]), int(event.position[2])]
                         show_cam(image, mask, props, patch_size, lab)
                     elif case == "3D":
                         lab = mask[int(event.position[0]), int(event.position[1]), int(event.position[2])]
