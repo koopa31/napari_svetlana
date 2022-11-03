@@ -64,6 +64,7 @@ from .PredictionMulti3DDataset import PredictionMulti3DDataset
 from Grad_Cam.grad_cam import GradCAM
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image, deprocess_image
+from pytorch_grad_cam import GuidedBackpropReLUModel
 
 from PIL import ImageDraw, ImageFont, Image
 
@@ -2254,10 +2255,28 @@ def Prediction():
 
             visualization = show_cam_on_image(np_arr.astype(np.float32), grayscale_cam, use_rgb=True)
 
-            plt.figure(1)
-            plt.imshow(visualization)
-            plt.title("Confidence: " + "%.1f" % (proba * 100) + "%")
-            plt.show()
+            x_corner = (int(props[ind].centroid[0]) + patch_size // 2 + 1) - patch_size // 2 - (patch_size // 2 + 1)
+            y_corner = (int(props[ind].centroid[1]) + patch_size // 2 + 1) - patch_size // 2 - (patch_size // 2 + 1)
+
+            prediction_widget.viewer.value.add_image(visualization, name="%.1f" % (proba * 100) + "% G-CAM",
+                                                     translate=(x_corner, y_corner))
+
+            # Guided backpropagation :
+            gb_model = GuidedBackpropReLUModel(model=model, use_cuda=True)
+            gb = gb_model(input_tensor, target_category=None)
+
+            import cv2
+            cam_mask = cv2.merge([grayscale_cam, grayscale_cam, grayscale_cam])
+            cam_gb = deprocess_image(cam_mask * gb[:, :, :3])
+            cam_gb = (cam_gb - cam_gb.min()) / (cam_gb.max() - cam_gb.min())
+            cam_gb = show_cam_on_image(np_arr.astype(np.float32), cam_gb, use_rgb=True)
+
+            prediction_widget.viewer.value.add_image(cam_gb, name="Guided backpropagation GRAD-CAM",
+                                                     translate=(x_corner, y_corner))
+
+            # Stay focus on image layer to keep annotating
+            prediction_widget.viewer.value.layers.selection.active = prediction_widget.viewer.value.layers[
+                "image"]
         else:
             show_info("Not supported for non-2D images")
 
@@ -2374,7 +2393,8 @@ def Prediction():
         save_regionprops_button=dict(widget_type='PushButton', text='Save objects statistics', tooltip='Save the '
                                                                                                        'properties of the annotated objects in a binary file, loadable using torch.load'),
         click_annotate=dict(widget_type='CheckBox', text='Click to change label', tooltip='Click to change label'),
-        show_heatmap=dict(widget_type='CheckBox', text='Show heat map', tooltip='Click on a cell to show the heat map'),
+        show_heatmap=dict(widget_type='CheckBox', text='Compute Grad-CAM',
+                          tooltip='Click on a cell to show the heat map'),
     )
     def prediction_widget(  # label_logo,
             viewer: Viewer,
