@@ -131,6 +131,9 @@ props_to_be_saved = []
 retrain = False
 loaded_network = None
 
+double_click = False
+heatmap = False
+
 
 def Annotation():
     """
@@ -2360,8 +2363,55 @@ def Prediction():
             prediction_widget.viewer.value.add_image(c, colormap="turbo", opacity=0.7,
                                                      name="%.1f" % (proba * 100) + "% G-CAM",
                                                      translate=(x_corner, y_corner, z_corner))
+            # Stay focus on image layer to keep annotating
+            prediction_widget.viewer.value.layers.selection.active = prediction_widget.viewer.value.layers[
+                "image"]
         else:
-            show_info("Not supported for non-2D images")
+            image = np.transpose(image, (1, 2, 3, 0))
+            labels = np.transpose(labels, (1, 2, 0))
+            pad_image = np.pad(image, ((0, 0),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1),
+                                       (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+            pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
+                                         (patch_size // 2 + 1, patch_size // 2 + 1),
+                                         (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
+
+            for i, reg in enumerate(props):
+                if reg.label == lab:
+                    ind = i
+
+            input_tensor = PredictionMulti3DDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda",
+                                                    config_dict).__getitem__(ind)[None, :]
+
+            model.eval()
+            target_layers = [model.cnn_layers]
+            cam = GradCAM(model=model, target_layers=target_layers, use_cuda=True)
+
+            with torch.no_grad():
+                out = model(input_tensor)
+                if out.dim() == 1:
+                    out = out[:, None]
+                proba, index = torch.max(out, 1)
+
+            targets = [ClassifierOutputTarget(index[0].item())]
+            # You can also pass aug_smooth=True and eigen_smooth=True, to apply smoothing.
+            grayscale_cam = cam(input_tensor=input_tensor, targets=targets, aug_smooth=True, eigen_smooth=True)
+
+            # In this example grayscale_cam has only one image in the batch:
+            grayscale_cam = grayscale_cam[0, :]
+            c = (grayscale_cam - grayscale_cam.min()) / (grayscale_cam.max() - grayscale_cam.min()) * 255
+            # Display result at the right coordinates
+            x_corner = (int(props[ind].centroid[0]) + patch_size // 2 + 1) - patch_size // 2 - (patch_size // 2 + 1)
+            y_corner = (int(props[ind].centroid[1]) + patch_size // 2 + 1) - patch_size // 2 - (patch_size // 2 + 1)
+            z_corner = (int(props[ind].centroid[2]) + patch_size // 2 + 1) - patch_size // 2 - (patch_size // 2 + 1)
+
+            prediction_widget.viewer.value.add_image(c, colormap="turbo", opacity=0.7,
+                                                     name="%.1f" % (proba * 100) + "% G-CAM",
+                                                     translate=(x_corner, y_corner, z_corner))
+            # Stay focus on image layer to keep annotating
+            prediction_widget.viewer.value.layers.selection.active = prediction_widget.viewer.value.layers[
+                "image"]
 
     def load_data_after_training():
         """
@@ -2430,7 +2480,12 @@ def Prediction():
                     if len(image.shape) == 2:
                         image = np.stack((image,) * 3, axis=-1)
                     mask = imread(mask_path_list[0])
-                    V.add_image(image)
+
+                    # If the image is 3D multichannel, it is splitted into several images
+                    if len(image.shape) == 4:
+                        V.add_image(image, channel_axis=1, name="image")
+                    else:
+                        V.add_image(image)
                     V.add_labels(mask)
 
                     # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
@@ -2512,10 +2567,8 @@ def Prediction():
 
         if len(viewer.layers) > 0:
             global layer, double_click
-            # By default, we do not annotate clicking
-            double_click = False
 
-            layer = [x for x in prediction_widget.viewer.value.layers if x.name == "image"][0]
+            layer = prediction_widget.viewer.value.layers["image"]
 
             @layer.mouse_double_click_callbacks.append
             def label_clicking(layer, event):
@@ -2526,6 +2579,9 @@ def Prediction():
                 @param event: Qt click event
                 @return:
                 """
+                # Make sure there is only one layer dedicated to double clicking feature
+                while len(layer.mouse_double_click_callbacks) > 1:
+                    layer.mouse_double_click_callbacks.pop()
                 global lab
                 if double_click is True:
                     if case == "2D":
@@ -2742,6 +2798,8 @@ def Prediction():
         @return:
         """
         prediction_widget.viewer.value.add_labels(image)
+        # Call the function to define image as the layer for double clicking feature
+        prediction_widget()
         # Chose of the colours
         prediction_widget.viewer.value.layers[-1].name = "Classified labels"
         if len(np.unique(prediction_widget.viewer.value.layers["Classified labels"].data)) == 3:
