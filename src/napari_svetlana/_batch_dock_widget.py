@@ -67,6 +67,7 @@ from pytorch_grad_cam.utils.image import show_cam_on_image, deprocess_image
 from pytorch_grad_cam import GuidedBackpropReLUModel
 
 from PIL import ImageDraw, ImageFont, Image
+import pandas as pd
 
 if torch.cuda.is_available() is True:
     try:
@@ -345,7 +346,7 @@ def Annotation():
         @param patch_size: the estimated optimal patch size
         @return: the zoom factor and the regionprops computed from the labels mask
         """
-        for im in viewer:
+        """for im in viewer:
             if "mask" in im.name:
                 global labels
                 labels = im.data
@@ -354,7 +355,12 @@ def Annotation():
             elif im.name != "confidence map" and "previous prediction":
                 image = im.data
                 global image_path
-                image_path = im.source.path
+                image_path = im.source.path"""
+        global labels, labels_path, image_path
+        labels = mask.copy()
+        image = Image.copy()
+        labels_path = mask_path_list[int(annotation_widget.image_index_button.value) - 1]
+        image_path = image_path_list[int(annotation_widget.image_index_button.value) - 1]
 
         global case, zoom_factor
 
@@ -383,7 +389,9 @@ def Annotation():
 
         present = []
         for prop in props_to_be_saved:
-            if prop["props"] == props:
+            # Check if they are identical, converting the two props into pandas frames and checking if True is the only
+            # value inside the comparison table
+            if len(np.unique(pd.DataFrame(prop["props"]) == pd.DataFrame(props))) == 1:
                 present.append(True)
             else:
                 present.append(False)
@@ -500,10 +508,8 @@ def Annotation():
                     ind = labels[int(event.position[0]), int(event.position[1])] - 1
                 elif case == "multi2D":
                     ind = labels[int(event.position[1]), int(event.position[2])] - 1
-                elif case == "3D":
+                elif case == "3D" or case == "multi3D":
                     ind = labels[int(event.position[0]), int(event.position[1]), int(event.position[2])] - 1
-                else:
-                    ind = labels[int(event.position[1]), int(event.position[2]), int(event.position[3])] - 1
 
                 try:
                     indexes.remove(ind)
@@ -556,7 +562,7 @@ def Annotation():
 
             # Gets the list of images and masks
             global image_path_list, mask_path_list, global_im_path_list, global_lab_path_list, global_labels_list, \
-                global_mini_props_list, mini_props_list
+                global_mini_props_list, mini_props_list, Image, mask
 
             image_path_list = sorted([os.path.join(images_folder, f) for f in os.listdir(images_folder)])
             mask_path_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder)])
@@ -577,9 +583,14 @@ def Annotation():
 
             # Deletion of remaining image and displaying of the first uimage of the list
             annotation_widget.viewer.value.layers.clear()
-            annotation_widget.viewer.value.add_image(imread(image_path_list[image_counter]))
-            annotation_widget.viewer.value.add_labels(imread(mask_path_list[image_counter]))
-            annotation_widget.viewer.value.layers[1].name = "mask"
+            # If image is 3D multichannel, it is splitted into several 3D images
+            Image = imread(image_path_list[image_counter])
+            mask = imread(mask_path_list[image_counter])
+            if len(Image.shape) == 4:
+                annotation_widget.viewer.value.add_image(Image, channel_axis=1, name="Image")
+            else:
+                annotation_widget.viewer.value.add_image(imread(image_path_list[image_counter]))
+            annotation_widget.viewer.value.add_labels(mask)
 
             # original zoom factor to correct when annotating
             global old_zoom
@@ -606,7 +617,8 @@ def Annotation():
 
         global images_folder, masks_folder, parent_path, image_path_list, mask_path_list, global_im_path_list, \
             global_lab_path_list, global_labels_list, global_mini_props_list, mini_props_list, counter, \
-            image_counter, patch_size, pred_path_list, total_counter, conf_path_list, case, props_to_be_saved
+            image_counter, patch_size, pred_path_list, total_counter, conf_path_list, case, props_to_be_saved, Image, \
+            mask
 
         props_to_be_saved = []
 
@@ -657,9 +669,14 @@ def Annotation():
 
             # Deletion of remaining image and displaying of the first image of the list
             annotation_widget.viewer.value.layers.clear()
-            annotation_widget.viewer.value.add_image(imread(global_im_path_list[image_counter]))
-            annotation_widget.viewer.value.add_labels(imread(global_lab_path_list[image_counter]))
-            annotation_widget.viewer.value.layers[1].name = "mask"
+            # If image is 3D multichannel, it is splitted into several 3D images
+            Image = imread(global_im_path_list[image_counter])
+            mask = imread(global_lab_path_list[image_counter])
+            if len(Image.shape) == 4:
+                annotation_widget.viewer.value.add_image(Image, channel_axis=1, name="Image")
+            else:
+                annotation_widget.viewer.value.add_image(imread(image_path_list[image_counter]))
+            annotation_widget.viewer.value.add_labels(mask)
 
             if os.path.isdir(os.path.join(parent_path, "Predictions")) is True:
                 annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
@@ -711,9 +728,17 @@ def Annotation():
             counter = len(global_labels_list[image_counter])
 
             annotation_widget.viewer.value.layers.clear()
-            annotation_widget.viewer.value.add_image(imread(os.path.join(images_folder, image_path_list[image_counter])))
-            annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
-            annotation_widget.viewer.value.layers[1].name = "mask"
+
+            # If image is 3D multichannel, it is splitted into several 3D images
+            Image = imread(os.path.join(images_folder, image_path_list[image_counter]))
+            mask = imread(os.path.join(masks_folder, mask_path_list[image_counter]))
+            if len(Image.shape) == 4:
+                annotation_widget.viewer.value.add_image(Image, channel_axis=1, name="Image")
+            else:
+                annotation_widget.viewer.value.add_image(imread(image_path_list[image_counter]))
+            annotation_widget.viewer.value.add_labels(mask)
+            annotation_widget.viewer.value.layers[-1].name = "mask"
+
             if "pred_path_list" in globals():
                 annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
                 annotation_widget.viewer.value.layers[2].name = "previous prediction"
@@ -754,10 +779,17 @@ def Annotation():
             annotation_widget.image_index_button.value = image_counter + 1
 
             annotation_widget.viewer.value.layers.clear()
-            annotation_widget.viewer.value.add_image(
-                imread(os.path.join(images_folder, image_path_list[image_counter])))
-            annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
-            annotation_widget.viewer.value.layers[1].name = "mask"
+
+            # If image is 3D multichannel, it is splitted into several 3D images
+            Image = imread(os.path.join(images_folder, image_path_list[image_counter]))
+            mask = imread(os.path.join(masks_folder, mask_path_list[image_counter]))
+            if len(Image.shape) == 4:
+                annotation_widget.viewer.value.add_image(Image, channel_axis=1, name="Image")
+            else:
+                annotation_widget.viewer.value.add_image(imread(image_path_list[image_counter]))
+            annotation_widget.viewer.value.add_labels(mask)
+            annotation_widget.viewer.value.layers[-1].name = "mask"
+
             if "pred_path_list" in globals():
                 annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
                 annotation_widget.viewer.value.layers[2].name = "previous prediction"
@@ -796,10 +828,16 @@ def Annotation():
             annotation_widget.image_index_button.value = image_counter + 1
 
             annotation_widget.viewer.value.layers.clear()
-            annotation_widget.viewer.value.add_image(
-                imread(os.path.join(images_folder, image_path_list[image_counter])))
-            annotation_widget.viewer.value.add_labels(imread(os.path.join(masks_folder, mask_path_list[image_counter])))
-            annotation_widget.viewer.value.layers[1].name = "mask"
+            # If image is 3D multichannel, it is splitted into several 3D images
+            Image = imread(os.path.join(images_folder, image_path_list[image_counter]))
+            mask = imread(os.path.join(masks_folder, mask_path_list[image_counter]))
+            if len(Image.shape) == 4:
+                annotation_widget.viewer.value.add_image(Image, channel_axis=1, name="Image")
+            else:
+                annotation_widget.viewer.value.add_image(imread(image_path_list[image_counter]))
+            annotation_widget.viewer.value.add_labels(mask)
+            annotation_widget.viewer.value.layers[-1].name = "mask"
+
             if "pred_path_list" in globals():
                 annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
                 annotation_widget.viewer.value.layers[2].name = "previous prediction"
@@ -880,13 +918,9 @@ def Annotation():
                         for ind, prop in enumerate(global_mini_props_list[image_counter]):
                             progression_mask[prop["coords"][:, 0], prop["coords"][:, 1]] = \
                                 global_labels_list[image_counter][ind] + 1
-                    elif case == "3D":
+                    elif case == "3D" or case == "multi3D":
                         for ind, prop in enumerate(global_mini_props_list[image_counter]):
                             progression_mask[prop["coords"][:, 0], prop["coords"][:, 1], prop["coords"][:, 2]] = \
-                                global_labels_list[image_counter][ind] + 1
-                    else:
-                        for ind, prop in enumerate(global_mini_props_list[image_counter]):
-                            progression_mask[:, prop["coords"][:, 2], prop["coords"][:, 0], prop["coords"][:, 1]] = \
                                 global_labels_list[image_counter][ind] + 1
                 else:
                     progression_mask = np.zeros_like(circle_mask)
@@ -989,7 +1023,7 @@ def Annotation():
         annotation_widget.estimate_size_button.enabled = False
         annotation_widget.patch_size.enabled = False
         # We make the labels mask invisible so it does not bother not annotate
-        annotation_widget.viewer.value.layers[1].visible = False
+        annotation_widget.viewer.value.layers["mask"].visible = False
 
     @annotation_widget.estimate_size_button.changed.connect
     def estimate_patch_size():
@@ -1227,9 +1261,9 @@ def Training():
                     zmin = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) - (patch_size // 2)
                     zmax = (int(region_props[i]["centroid"][0]) + (patch_size // 2) + 1) + (patch_size // 2)
 
-                    imagette = image[:, zmin:zmax, xmin:xmax, ymin:ymax].copy()
+                    imagette = image[:, xmin:xmax, ymin:ymax, zmin:zmax].copy()
 
-                    imagette_mask = labels[zmin:zmax, xmin:xmax, ymin:ymax].copy()
+                    imagette_mask = labels[xmin:xmax, ymin:ymax, zmin:zmax].copy()
 
                     imagette_mask[imagette_mask != region_props[i]["label"]] = 0
                     imagette_mask[imagette_mask == region_props[i]["label"]] = 1
@@ -1415,7 +1449,7 @@ def Training():
                 kersize = int(nn_type.split("_")[2])
                 if patch_size / (2 ** (depth - 1)) <= kersize:
                     show_info("Patch size is too small for this network")
-                model = CNN3D(max(labels_list) + 1, image.shape[3] + 1, kersize, depth)
+                model = CNN3D(max(labels_list) + 1, image.shape[0] + 1, kersize, depth)
 
             else:
                 if case == "multi2D":
@@ -1517,6 +1551,8 @@ def Training():
                                                          (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant"))
 
                 elif len(image.shape) == 4:
+                    image = np.transpose(image, (1, 2, 3, 0))
+                    mask = np.transpose(mask, (1, 2, 0))
                     pad_image_list.append(np.pad(image, ((0, 0),
                                                          (patch_size // 2 + 1, patch_size // 2 + 1),
                                                          (patch_size // 2 + 1, patch_size // 2 + 1),
@@ -1742,7 +1778,10 @@ def Training():
                 if len(image.shape) == 2:
                     image = np.stack((image,) * 3, axis=-1)
                 mask = imread(labels_path_list[0])
-                training_widget.viewer.value.add_image(image)
+                if len(image.shape) == 4:
+                    training_widget.viewer.value.add_image(image, channel_axis=1)
+                else:
+                    training_widget.viewer.value.add_image(image)
                 training_widget.viewer.value.add_labels(mask)
             else:
                 show_info("ERROR: The binary file seems not to be correct as it does not contain the right keys")
@@ -2474,7 +2513,7 @@ def Prediction():
         if len(viewer.layers) > 0:
             global layer, double_click
             # By default, we do not annotate clicking
-            double_click = True
+            double_click = False
 
             layer = [x for x in prediction_widget.viewer.value.layers if x.name == "image"][0]
 
@@ -2496,7 +2535,7 @@ def Prediction():
                     elif case == "3D":
                         lab = mask[int(event.position[0]), int(event.position[1]), int(event.position[2])]
                     else:
-                        lab = mask[int(event.position[1]), int(event.position[2]), int(event.position[3])]
+                        lab = mask[int(event.position[0]), int(event.position[1]), int(event.position[2])]
 
                     if lab != 0:
                         show_info("Choose a label for that object")
@@ -2510,7 +2549,7 @@ def Prediction():
                     elif case == "multi2D":
                         lab = mask[int(event.position[1]), int(event.position[2])]
                         show_cam(image, mask, props, patch_size, lab)
-                    elif case == "3D":
+                    elif case == "3D" or case == "multi3D":
                         lab = mask[int(event.position[0]), int(event.position[1]), int(event.position[2])]
                         show_cam(image, mask, props, patch_size, lab)
 
@@ -2614,7 +2653,11 @@ def Prediction():
             if len(image.shape) == 2:
                 image = np.stack((image,) * 3, axis=-1)
             mask = imread(mask_path_list[0])
-            prediction_widget.viewer.value.add_image(image)
+            # If the image is 3D multichannel, it is splitted into several images
+            if len(image.shape) == 4:
+                prediction_widget.viewer.value.add_image(image, channel_axis=1, name="image")
+            else:
+                prediction_widget.viewer.value.add_image(image)
             prediction_widget.viewer.value.add_labels(mask)
 
             # Set the format of the image for the prediction (useful pour the click to change label)
@@ -2655,7 +2698,11 @@ def Prediction():
             image = np.stack((image,) * 3, axis=-1)
         mask = imread(mask_path_list[int(prediction_widget.image_index_button.value) - 1])
         prediction_widget.viewer.value.layers.clear()
-        prediction_widget.viewer.value.add_image(image)
+        # If the image is 3D multichannel, it is splitted into several images
+        if len(image.shape) == 4:
+            prediction_widget.viewer.value.add_image(image, channel_axis=1, name="image")
+        else:
+            prediction_widget.viewer.value.add_image(image)
         prediction_widget.viewer.value.add_labels(mask)
 
         # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
@@ -2696,9 +2743,9 @@ def Prediction():
         """
         prediction_widget.viewer.value.add_labels(image)
         # Chose of the colours
-        prediction_widget.viewer.value.layers[1].name = "Classified labels"
-        if len(np.unique(prediction_widget.viewer.value.layers[1].data)) == 3:
-            prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
+        prediction_widget.viewer.value.layers[-1].name = "Classified labels"
+        if len(np.unique(prediction_widget.viewer.value.layers["Classified labels"].data)) == 3:
+            prediction_widget.viewer.value.layers["Classified labels"].color = {1: "green", 2: "red"}
 
     @prediction_widget.launch_prediction_button.changed.connect
     def _launch_prediction(e: Any):
@@ -2764,7 +2811,7 @@ def Prediction():
             prediction_widget.viewer.value.layers.pop()
             prediction_widget.viewer.value.add_labels(pyramidal_edge_im)
             if len(np.unique(prediction_widget.viewer.value.layers[1].data)) == 3:
-                prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
+                prediction_widget.viewer.value.layers["Classified labels"].color = {1: "green", 2: "red"}
         else:
             pyramidal_imagette_contours = [imagette_contours.astype(np.uint8)]
             for i in range(1, 6):
@@ -2774,8 +2821,8 @@ def Prediction():
                                                                         1] // 2 ** i)))
             prediction_widget.viewer.value.layers.pop()
             prediction_widget.viewer.value.add_labels(pyramidal_imagette_contours)
-            if len(np.unique(prediction_widget.viewer.value.layers[1].data)) == 3:
-                prediction_widget.viewer.value.layers[1].color = {1: "green", 2: "red"}
+            if len(np.unique(prediction_widget.viewer.value.layers["Classified labels"].data)) == 3:
+                prediction_widget.viewer.value.layers["Classified labels"].color = {1: "green", 2: "red"}
 
         # make image active so it can be labelled
         prediction_widget.viewer.value.layers.selection.active = prediction_widget.viewer.value.layers["image"]
