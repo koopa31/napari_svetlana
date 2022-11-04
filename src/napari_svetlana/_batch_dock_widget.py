@@ -2275,7 +2275,17 @@ def Prediction():
             input_tensor = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, norm_type, "cuda", config_dict,
                                      case).__getitem__(ind)[None, :]
             model.eval()
-            target_layers = [model.cnn_layers]
+
+            import torchvision
+            if (type(model) == torchvision.models.resnet.ResNet) is True:
+                target_layers = [model.layer4[-1]]
+            elif (str(type(model)) == '<class \'torchvision.models.alexnet.AlexNet\'>') is True:
+                target_layers = [model.features[-2]]
+            elif (type(model) == torchvision.models.densenet.DenseNet) is True:
+                target_layers = [model.features[-2]]
+            else:
+                target_layers = [model.cnn_layers]
+
             cam = GradCAM(model=model, target_layers=target_layers, use_cuda=True)
 
             with torch.no_grad():
@@ -2338,7 +2348,16 @@ def Prediction():
                                                config_dict).__getitem__(ind)[None, :]
 
             model.eval()
-            target_layers = [model.cnn_layers]
+            import torchvision
+            if (type(model) == torchvision.models.resnet.ResNet) is True:
+                target_layers = [model.layer4[-1]]
+            elif (str(type(model)) == '<class \'torchvision.models.alexnet.AlexNet\'>') is True:
+                target_layers = [model.features[-2]]
+            elif (type(model) == torchvision.models.densenet.DenseNet) is True:
+                target_layers = [model.features[-2]]
+            else:
+                target_layers = [model.cnn_layers]
+
             cam = GradCAM(model=model, target_layers=target_layers, use_cuda=True)
 
             with torch.no_grad():
@@ -2385,7 +2404,16 @@ def Prediction():
                                                     config_dict).__getitem__(ind)[None, :]
 
             model.eval()
-            target_layers = [model.cnn_layers]
+            import torchvision
+            if (type(model) == torchvision.models.resnet.ResNet) is True:
+                target_layers = [model.layer4[-1]]
+            elif (str(type(model)) == '<class \'torchvision.models.alexnet.AlexNet\'>') is True:
+                target_layers = [model.features[-2]]
+            elif (type(model) == torchvision.models.densenet.DenseNet) is True:
+                target_layers = [model.features[-2]]
+            else:
+                target_layers = [model.cnn_layers]
+
             cam = GradCAM(model=model, target_layers=target_layers, use_cuda=True)
 
             with torch.no_grad():
