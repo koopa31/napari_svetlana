@@ -594,6 +594,7 @@ def Annotation():
             else:
                 annotation_widget.viewer.value.add_image(imread(image_path_list[image_counter]))
             annotation_widget.viewer.value.add_labels(mask)
+            annotation_widget.viewer.value.layers[-1].name = "mask"
 
             # original zoom factor to correct when annotating
             global old_zoom
@@ -680,6 +681,7 @@ def Annotation():
             else:
                 annotation_widget.viewer.value.add_image(imread(image_path_list[image_counter]))
             annotation_widget.viewer.value.add_labels(mask)
+            annotation_widget.viewer.value.layers[-1].name = "mask"
 
             if os.path.isdir(os.path.join(parent_path, "Predictions")) is True:
                 annotation_widget.viewer.value.add_labels(imread(pred_path_list[image_counter]))
