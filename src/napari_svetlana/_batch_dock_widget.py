@@ -61,7 +61,7 @@ from .Prediction3DDataset import Prediction3DDataset
 from .PredictionMulti3DDataset import PredictionMulti3DDataset
 
 # import gradcam
-from Grad_Cam.grad_cam import GradCAM
+from .Grad_Cam.grad_cam import GradCAM
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image, deprocess_image
 from pytorch_grad_cam import GuidedBackpropReLUModel

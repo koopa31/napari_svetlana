@@ -2,7 +2,7 @@ from torch.utils.data import Dataset
 import numpy as np
 from torchvision import transforms
 import torch
-from PredictionDataset import max_to_1, min_max_norm
+from .PredictionDataset import max_to_1, min_max_norm
 import torch
 import json
 if torch.cuda.is_available() is True:
