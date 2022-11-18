@@ -5,7 +5,7 @@ import subprocess
 
 # We call a bash function to install torch for windows as we cannot install the Cuda version from the setup.cfg file
 
-p1 = subprocess.Popen("ltt install torch torchvision torchaudio", shell=True)
+p1 = subprocess.Popen("ltt install torch torchvision torchaudio grad-cam==1.4.6", shell=True)
 
 try:
     import torch
