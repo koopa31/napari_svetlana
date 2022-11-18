@@ -2515,8 +2515,8 @@ def Prediction():
                     if len(image.shape) == 4:
                         V.add_image(image, channel_axis=1, name="image")
                     else:
-                        V.add_image(image)
-                    V.add_labels(mask)
+                        V.add_image(image, name="image")
+                    V.add_labels(mask, name="mask")
 
                     # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
                     # the layer named Image
@@ -2743,8 +2743,8 @@ def Prediction():
             if len(image.shape) == 4:
                 prediction_widget.viewer.value.add_image(image, channel_axis=1, name="image")
             else:
-                prediction_widget.viewer.value.add_image(image)
-            prediction_widget.viewer.value.add_labels(mask)
+                prediction_widget.viewer.value.add_image(image, name="image")
+            prediction_widget.viewer.value.add_labels(mask, name="mask")
 
             # Set the format of the image for the prediction (useful pour the click to change label)
             global case, zoom_factor
@@ -2788,8 +2788,8 @@ def Prediction():
         if len(image.shape) == 4:
             prediction_widget.viewer.value.add_image(image, channel_axis=1, name="image")
         else:
-            prediction_widget.viewer.value.add_image(image)
-        prediction_widget.viewer.value.add_labels(mask)
+            prediction_widget.viewer.value.add_image(image, name="image")
+        prediction_widget.viewer.value.add_labels(mask, name="mask")
 
         # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
         # the layer named Image
@@ -2897,7 +2897,7 @@ def Prediction():
                 pyramidal_edge_im.append(cv2.resize(edge_im, (edge_im.shape[0] // 2 ** i,
                                                               edge_im.shape[1] // 2 ** i)))
             prediction_widget.viewer.value.layers.pop()
-            prediction_widget.viewer.value.add_labels(pyramidal_edge_im)
+            prediction_widget.viewer.value.add_labels(pyramidal_edge_im, name="Classified labels")
             if len(np.unique(prediction_widget.viewer.value.layers[1].data)) == 3:
                 prediction_widget.viewer.value.layers["Classified labels"].color = {1: "green", 2: "red"}
         else:
@@ -2908,7 +2908,7 @@ def Prediction():
                                                                     imagette_contours.shape[
                                                                         1] // 2 ** i)))
             prediction_widget.viewer.value.layers.pop()
-            prediction_widget.viewer.value.add_labels(pyramidal_imagette_contours)
+            prediction_widget.viewer.value.add_labels(pyramidal_imagette_contours, name="Classified labels")
             if len(np.unique(prediction_widget.viewer.value.layers["Classified labels"].data)) == 3:
                 prediction_widget.viewer.value.layers["Classified labels"].color = {1: "green", 2: "red"}
 
