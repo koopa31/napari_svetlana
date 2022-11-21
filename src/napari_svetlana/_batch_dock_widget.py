@@ -2949,8 +2949,14 @@ def Prediction():
             for i, prop in enumerate(props):
                 props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
                                    "eccentricity": prop.eccentricity, "area": prop.area, "perimeter": prop.perimeter,
-                                   "label": int(list_pred[i].item())})
-        torch.save(props_list, path)
+                                   "label": int(list_pred[i].item()) + 1})
+        df = pd.DataFrame.from_dict(props_list[1:])
+        df.insert(loc=0,
+                  column='image_name',
+                  value=[props_list[0]] * len(props_list[1:]))
+        df.to_excel(path + ".xlsx", engine="xlsxwriter", index=False)
+
+        #torch.save(props_list, path + ".xlsx")
         show_info("ROI properties saved for this image")
 
     @prediction_widget.generate_im_labs_button.changed.connect
