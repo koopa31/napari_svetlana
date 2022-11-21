@@ -2139,7 +2139,8 @@ def Prediction():
         @param batch_size: batch size for the NN (int)
         @return:
         """
-
+        df_path = os.path.join(os.path.split(images_folder)[0], "Svetlana", "prediction_regionprops")
+        df_list = []
         for ind in range(0, len(image_path_list)):
             image = imread(image_path_list[ind])
             labels = imread(mask_path_list[ind])
@@ -2259,6 +2260,12 @@ def Prediction():
                 imsave(os.path.join(conf_folder, conf_name), imagette_uncertainty)
 
             show_info("prediction of image " + os.path.split(image_path_list[ind])[1] + " done")
+
+            df_list.append(save_regionprops_all(ind, props, list_pred))
+
+        d = pd.concat(df_list)
+        d.to_excel(df_path + ".xlsx", engine="xlsxwriter", index=False)
+        show_info("ROI properties saved for all images")
 
     def show_cam(image, labels, props, patch_size, lab):
 
@@ -2931,7 +2938,7 @@ def Prediction():
     @prediction_widget.save_regionprops_button.changed.connect
     def save_regionprops():
         """
-        Saves the properties of the labelled connected components in a binary file using Pytorch
+        Saves the properties of the labelled connected components of the image in a xlsx file
         @return:
         """
 
@@ -2956,8 +2963,34 @@ def Prediction():
                   value=[props_list[0]] * len(props_list[1:]))
         df.to_excel(path + ".xlsx", engine="xlsxwriter", index=False)
 
-        #torch.save(props_list, path + ".xlsx")
         show_info("ROI properties saved for this image")
+
+    def save_regionprops_all(index, props, list_pred):
+        """
+        Saves the properties of the labelled connected components of the whole batch in a xlsx file
+        @return:
+        """
+
+        path = os.path.join(os.path.split(images_folder)[0], "Svetlana", "prediction_regionprops")
+        if os.path.isdir(os.path.split(path)[0]) is False:
+            os.mkdir(os.path.split(path)[0])
+        props_list = []
+        # Image name added to the list
+        props_list.append(image_path_list[index])
+        if len(mask.shape) == 3:
+            for i, prop in enumerate(props):
+                props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
+                                   "area": prop.area, "label": int(list_pred[i].item())})
+        else:
+            for i, prop in enumerate(props):
+                props_list.append({"position": prop.label, "coords": prop.coords, "centroid": prop.centroid,
+                                   "eccentricity": prop.eccentricity, "area": prop.area, "perimeter": prop.perimeter,
+                                   "label": int(list_pred[i].item()) + 1})
+        df = pd.DataFrame.from_dict(props_list[1:])
+        df.insert(loc=0,
+                  column='image_name',
+                  value=[props_list[0]] * len(props_list[1:]))
+        return df
 
     @prediction_widget.generate_im_labs_button.changed.connect
     def generate_im_labels():
