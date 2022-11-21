@@ -92,7 +92,7 @@ def run_pipeline(plate_folder, model):
     from time import time
     start = time()
     image_list = []
-    """for aq in acquisitions:
+    for aq in acquisitions:
 
         print("traitement de: %s" % aq)
         image_list.append(skimage.io.imread(aq))
@@ -161,7 +161,7 @@ def run_pipeline(plate_folder, model):
                              os.path.join(masks1_folder, f).endswith(".png")])
     batch_size = 200
 
-    predict_batch(model_edu, image_path_list, mask_path_list, patch_size, batch_size, res_folder, "Config_edu.json")"""
+    predict_batch(model_edu, image_path_list, mask_path_list, patch_size, batch_size, res_folder, "Config_edu.json")
 
     # GÉNÉRATION MOSAIQUE IMAGES BRUTES
     generate_mosa_raw_images(plate_folder)
