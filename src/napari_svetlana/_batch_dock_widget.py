@@ -3000,15 +3000,15 @@ def Prediction():
         """
         im_labs_list = []
         # We create as many images as labels
-        for i in range(0, max(list_pred)):
+        for i in range(0, max(list_pred).item() + 1):
             im_labs_list.append(np.zeros_like(mask).astype(np.uint16))
 
         if len(mask.shape) == 3:
             for i, prop in enumerate(props):
-                im_labs_list[list_pred[i] - 1][prop.coords[:, 0], prop.coords[:, 1], prop.coords[:, 2]] = prop.label
+                im_labs_list[list_pred[i]][prop.coords[:, 0], prop.coords[:, 1], prop.coords[:, 2]] = prop.label
         else:
             for i, prop in enumerate(props):
-                im_labs_list[list_pred[i] - 1][prop.coords[:, 0], prop.coords[:, 1]] = prop.label
+                im_labs_list[list_pred[i]][prop.coords[:, 0], prop.coords[:, 1]] = prop.label
 
         for i, im in enumerate(im_labs_list):
             imsave(os.path.splitext(mask_path_list[int(prediction_widget.image_index_button.value) - 1])[0] +
