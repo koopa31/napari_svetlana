@@ -15,7 +15,7 @@ def generate_mosa_raw_images(folder):
 
     images_list = sorted([os.path.join(images_folder, f) for f in os.listdir(images_folder) if
                           os.path.isfile(os.path.join(images_folder, f)) and os.path.join(images_folder, f).endswith(
-                              ".tif")])
+                              ".tif") and "d0.tif" in os.path.join(images_folder, f)])
     fields_list = []
     pred_fields_list = []
     # On crée une liste de fichiers par puit (9 champs)

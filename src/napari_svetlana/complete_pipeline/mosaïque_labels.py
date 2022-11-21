@@ -21,7 +21,8 @@ def generate_mosa_labels(folder):
         os.mkdir(labels_folder)
 
     images_path = sorted([os.path.join(images_folder, f) for f in os.listdir(images_folder) if
-                           os.path.isfile(os.path.join(images_folder, f)) and os.path.join(images_folder, f).endswith(".TIF")])
+                           os.path.isfile(os.path.join(images_folder, f)) and
+                          os.path.join(images_folder, f).endswith(".tif") and "d0" in os.path.join(images_folder, f)])
     pred_path = sorted([os.path.join(pred_folder, f) for f in os.listdir(pred_folder) if
                            os.path.isfile(os.path.join(pred_folder, f)) and os.path.join(pred_folder, f).endswith(".png")])
 

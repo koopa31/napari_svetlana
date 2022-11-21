@@ -19,7 +19,7 @@ def calcul_masks_1et2(folder):
         os.mkdir(masks2_folder)
 
     masks_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder) if
-                         os.path.isfile(os.path.join(masks_folder, f)) and os.path.join(masks_folder, f).endswith(".tif")])
+                         os.path.isfile(os.path.join(masks_folder, f)) and os.path.join(masks_folder, f).endswith(".png")])
 
     pred_list = sorted([os.path.join(pred_folder, f) for f in os.listdir(pred_folder) if
                         os.path.isfile(os.path.join(pred_folder, f))])

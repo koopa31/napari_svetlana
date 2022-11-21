@@ -13,18 +13,18 @@ Création de la mosaïque des labels du canal DAPI en couleurs, plus enregistrem
 
 def generate_mosa_edu(folder):
     images_folder = os.path.join(folder, "Images")
-    pred_folder = os.path.join(folder, "Predictions")
+    pred_folder = os.path.join(folder, "Predictions_noyaux_edu")
     labels_folder = os.path.join(folder, "Color_labels")
 
     # Création du dossier de labels
     if os.path.isdir(labels_folder) is False:
         os.mkdir(labels_folder)
 
-
     images_path = sorted([os.path.join(images_folder, f) for f in os.listdir(images_folder) if
-                           os.path.isfile(os.path.join(images_folder, f)) and os.path.join(images_folder, f).endswith(".TIF")])
+                           os.path.isfile(os.path.join(images_folder, f)) and os.path.join(images_folder, f).endswith(".tif")
+                          and "d1" in os.path.join(images_folder, f)])
     pred_path = sorted([os.path.join(pred_folder, f) for f in os.listdir(pred_folder) if
-                           os.path.isfile(os.path.join(pred_folder, f)) and os.path.join(pred_folder, f).endswith(".TIF")])
+                           os.path.isfile(os.path.join(pred_folder, f)) and os.path.join(pred_folder, f).endswith(".tif")])
 
 
     fields_list = []
@@ -108,7 +108,7 @@ def generate_mosa_edu(folder):
     final_mosaic = Image.fromarray(final_mosaic)
 
     mosaic_folder = os.path.split(images_folder)[0]
-    mosaic_name = os.path.join(mosaic_folder, mosaic_folder.split("/")[-1] + "_mosaique_labels.tif")
+    mosaic_name = os.path.join(mosaic_folder, mosaic_folder.split("/")[-1] + "_mosaique_edu.tif")
 
     final_mosaic.save(mosaic_name, quality=25)
     print('mosaique calculée')

@@ -9,10 +9,6 @@ from skimage.io import imread, imsave
 Résultats de quantification noyaux morts vivants et marqués KI-67/EDU.
 """
 
-masks1 = "/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/CX7-2D/Classification/HCD-2d-30k-Ki67-DAPI/Masks1"
-masks2 = "/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/CX7-2D/Classification/HCD-2d-30k-Ki67-DAPI/Masks2"
-noyaux_positifs = "/mnt/86e98852-2345-4dcb-ae92-58406694998c/Documents/CX7-2D/Classification_canal2/" \
-                  "HCD-2d-30k-Ki67-DAPI/Predictions"
 
 def generate_results_table(masks1, masks2, noyaux_positifs):
 
@@ -23,7 +19,7 @@ def generate_results_table(masks1, masks2, noyaux_positifs):
                            os.path.isfile(os.path.join(masks2, f)) and os.path.join(masks2, f).endswith(".png")])
 
     edu_dapi_path = sorted([os.path.join(noyaux_positifs, f) for f in os.listdir(noyaux_positifs) if
-                           os.path.isfile(os.path.join(noyaux_positifs, f)) and os.path.join(noyaux_positifs, f).endswith(".TIF")])
+                           os.path.isfile(os.path.join(noyaux_positifs, f)) and os.path.join(noyaux_positifs, f).endswith(".tif")])
 
     image_names_list = []
     wells_list = []

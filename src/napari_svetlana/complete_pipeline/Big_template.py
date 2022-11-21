@@ -112,11 +112,11 @@ def run_pipeline(plate_folder, model):
     df = pd.DataFrame(zip(*results_list))
     df.to_excel(os.path.join(masks_folder, "comptage_tous_noyaux.xlsx"), engine="xlsxwriter")
     end = time()
-    print("temps de segmentation : ", end-start)"""
+    print("temps de segmentation : ", end-start)
 
     # CLASSIFICATION DES NOYAUX MORTS
 
-    b = torch.load(os.path.join(os.getcwd(), "complete_pipeline", "training_vivant_mort.pth"))
+    b = torch.load(os.path.join(os.getcwd(), "training_vivant_mort.pth"))
     model_vivant_mort = b["model"].to("cuda")
     model_vivant_mort.eval()
     patch_size = b["patch_size"]
@@ -133,7 +133,8 @@ def run_pipeline(plate_folder, model):
                              os.path.join(masks_folder, f).endswith(".png")])
     batch_size = 128
 
-    predict_batch(model_vivant_mort, image_path_list, mask_path_list, patch_size, batch_size, res_folder)
+    predict_batch(model_vivant_mort, image_path_list, mask_path_list, patch_size, batch_size, res_folder,
+                  "Config_vivant_mort.json")
 
     # CALCULS DES MASQUES 1 ET 2 (NOYAUX VIVANTS ET MORTS)
 
@@ -141,8 +142,9 @@ def run_pipeline(plate_folder, model):
 
     # CLASSIFICATION DU CANAL EDU
 
-    b = torch.load(os.path.join(os.getcwd(), "complete_pipeline", "training_edu+.pth"))
-    model_edu = b["model"].eval()
+    b = torch.load(os.path.join(os.getcwd(), "training_edu+.pth"))
+    model_edu = b["model"].to("cuda")
+    model_edu.eval()
     patch_size = b["patch_size"]
     res_folder = os.path.join(plate_folder, "Predictions_noyaux_edu")
     if os.path.isdir(res_folder) is False:
@@ -156,10 +158,10 @@ def run_pipeline(plate_folder, model):
     masks1_folder = os.path.join(plate_folder, "Masks1")
     mask_path_list = sorted([os.path.join(masks1_folder, f) for f in os.listdir(masks1_folder) if
                              os.path.isfile(os.path.join(masks1_folder, f)) and
-                             os.path.join(masks1_folder, f).endswith(".tif")])
-    batch_size = 128
+                             os.path.join(masks1_folder, f).endswith(".png")])
+    batch_size = 200
 
-    predict_batch(model_edu, image_path_list, mask_path_list, patch_size, batch_size, res_folder)
+    predict_batch(model_edu, image_path_list, mask_path_list, patch_size, batch_size, res_folder, "Config_edu.json")"""
 
     # GÉNÉRATION MOSAIQUE IMAGES BRUTES
     generate_mosa_raw_images(plate_folder)
@@ -176,5 +178,7 @@ def run_pipeline(plate_folder, model):
 
 import time
 start = time.time()
-Parallel(n_jobs=-1, require="sharedmem")(delayed(run_pipeline)(plate_folder, model) for plate_folder in onlyfiles)
+for plate_folder in onlyfiles:
+    run_pipeline(plate_folder, model)
+#Parallel(n_jobs=-1, require="sharedmem")(delayed(run_pipeline)(plate_folder, model) for plate_folder in onlyfiles)
 print("ca a pris :", time.time() - start)

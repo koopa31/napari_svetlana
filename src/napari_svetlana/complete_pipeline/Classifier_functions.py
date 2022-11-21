@@ -28,16 +28,17 @@ def draw_predicted_contour(compteur, prop, imagette_contours, i, list_pred):
     return compteur
 
 
-def predict_batch(model, image_path_list, mask_path_list, patch_size, batch_size, res_folder):
+def predict_batch(model, image_path_list, mask_path_list, patch_size, batch_size, res_folder,config_file_name):
     """
     Prediction of the class of each patch extracted from the great mask
     @param image: raw image
     @param labels: segmentation mask
     @param patch_size: size of the patches to be classified (int)
     @param batch_size: batch size for the NN (int)
+    @param res_folder: path to the folder where to save the result images (str)
     @return:
     """
-    with open(os.path.join(os.getcwd(), 'Config.json'), 'r') as f:
+    with open(os.path.join(os.getcwd(), config_file_name), 'r') as f:
         config_dict = json.load(f)
 
     for ind in range(0, len(image_path_list)):
@@ -61,7 +62,7 @@ def predict_batch(model, image_path_list, mask_path_list, patch_size, batch_size
         pad_labels = np.pad(labels, ((patch_size // 2 + 1, patch_size // 2 + 1),
                                      (patch_size // 2 + 1, patch_size // 2 + 1)), mode="constant")
 
-        data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, "min max normalization", "cuda", config_dict,
+        data = PredictionDataset(pad_image, pad_labels, props, patch_size // 2, "no normalization", "cuda", config_dict,
                                  "2D")
 
         prediction_loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=False)
