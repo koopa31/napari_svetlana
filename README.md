@@ -13,22 +13,29 @@ The inputs are :
   <li>A folder of raw image</li>
   <li>Their segmentation masks where each ROI has its own label.</li>
 </ul>
+
 Svetlana can process 2D, 3D and multichannel image. If you want to use it to work on cell images, we strongly
-recommend the use of [Cellpose](https://www.cellpose.org/) for the segmentation part, as it provides excellent quality results and an output format
-accepted by Svetlana. 
+recommend the use of [Cellpose](https://www.cellpose.org) for the segmentation part, as it provides excellent quality results and a standard output format
+accepted by Svetlana (labels maks). 
+
+The method was developped by [Clément Cazorla](https://koopa31.github.io/), [Renaud Morin](https://www.linkedin.com/in/renaud-morin-6a42665b/?originalSubdomain=fr) and [Pierre Weiss](https://www.math.univ-toulouse.fr/~weiss/). And the plugin was written by
+Clément Cazorla. The project is co-funded by [Imactiv-3D](https://www.imactiv-3d.com/) and [CNRS](https://www.cnrs.fr/fr). For support, please open an issue.
 
 If you use this plugin please cite the paper: 
 
 ```bibtex
-@article{cazorla2022Svetlana,<br/>
-title={Svetlana blabla},<br/>
-author={Cazorla, Morin, Weiss},<br/>
-journal={Nature Communication},<br/>
-volume={18},<br/>
-number={1},<br/>
-pages={100--106},<br/>
-year={2022},<br/>
-publisher={Nature Publishing Group}
+@InProceedings{2022_cazorla801,
+	author = "Clément Cazorla and Pierre Weiss and Renaud Morin",
+	title = "SVETLANA: UN CLASSIFIEUR DE SEGMENTATION POUR NAPARI",
+	booktitle = "28° Colloque sur le traitement du signal et des images",
+	year = "2022",
+	publisher = "GRETSI - Groupe de Recherche en Traitement du Signal et des Images",
+	number = "001-0194",
+	pages = "p. 777-780",
+	month = "Sep # 6--9",
+	address = "Nancy",
+	doi = "",
+	pdf = "2022_cazorla801.pdf",
 }
 ```
 
