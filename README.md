@@ -117,7 +117,7 @@ Clément Cazorla. The project is co-funded by [Imactiv-3D](https://www.imactiv-3
 
 ## Issues
 
-If you encounter any problems, please [file an issue] along with a detailed description.
+If you encounter any problems, please [file an issue](https://bitbucket.org/koopa31/napari_svetlana/issues?status=new&status=open) along with a detailed description.
 
 [napari]: https://github.com/napari/napari
 [Cookiecutter]: https://github.com/audreyr/cookiecutter
