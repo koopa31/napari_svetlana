@@ -18,9 +18,6 @@ Svetlana can process 2D, 3D and multichannel image. If you want to use it to wor
 recommend the use of [Cellpose](https://www.cellpose.org) for the segmentation part, as it provides excellent quality results and a standard output format
 accepted by Svetlana (labels maks). 
 
-The method was developped by [Clément Cazorla](https://koopa31.github.io/), [Renaud Morin](https://www.linkedin.com/in/renaud-morin-6a42665b/?originalSubdomain=fr) and [Pierre Weiss](https://www.math.univ-toulouse.fr/~weiss/). And the plugin was written by
-Clément Cazorla. The project is co-funded by [Imactiv-3D](https://www.imactiv-3d.com/) and [CNRS](https://www.cnrs.fr/fr). For support, please open an issue.
-
 If you use this plugin please cite the paper: 
 
 ```bibtex
@@ -111,6 +108,11 @@ Contributions are very welcome.
 
 Distributed under the terms of the [BSD-3] license,
 "napari_svetlana" is free and open source software
+
+## Acknowledgements
+
+The method was developped by [Clément Cazorla](https://koopa31.github.io/), [Renaud Morin](https://www.linkedin.com/in/renaud-morin-6a42665b/?originalSubdomain=fr) and [Pierre Weiss](https://www.math.univ-toulouse.fr/~weiss/). And the plugin was written by
+Clément Cazorla. The project is co-funded by [Imactiv-3D](https://www.imactiv-3d.com/) and [CNRS](https://www.cnrs.fr/fr).
 
 ## Issues
 
