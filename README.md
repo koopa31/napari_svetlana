@@ -37,6 +37,10 @@ If you use this plugin please cite the paper:
 }
 ```
 
+
+![](https://bitbucket.org/koopa31/napari_svetlana/raw/bb1010b99e03cdbd94d1cd70cc63f93deb63a58e/images/svetlagif.gif)
+
+
 ----------------------------------
 
 This [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.
