@@ -11,13 +11,13 @@
 The aim of this plugin is to classify the output of a segmentation algorithm.
 The inputs are :
 <ul>
-  <li>A folder of raw image</li>
+  <li>A folder of raw images</li>
   <li>Their segmentation masks where each ROI has its own label.</li>
 </ul>
 
 Svetlana can process 2D, 3D and multichannel image. If you want to use it to work on cell images, we strongly
 recommend the use of [Cellpose](https://www.cellpose.org) for the segmentation part, as it provides excellent quality results and a standard output format
-accepted by Svetlana (labels maks). 
+accepted by Svetlana (labels masks). 
 
 If you use this plugin please cite the paper: 
 
