@@ -1,6 +1,7 @@
 """
 Svetlana dock widget module
 """
+import platform
 import subprocess
 
 # We call a bash function to install torch for windows as we cannot install the Cuda version from the setup.cfg file
@@ -77,7 +78,9 @@ if torch.cuda.is_available() is True:
     except ImportError:
         from skimage.morphology import ball, dilation, disk
         cuda = False
-        show_info("Could not make cupy work, please do: conda install cudatoolkit=10.2")
+        # Not necessary for other OS as Cucim is only compatible with Linux
+        if platform.system() == 'Linux':
+            show_info("Could not make cupy work, please do: conda install cudatoolkit=10.2")
 else:
     from skimage.morphology import ball, dilation, disk
     cuda = False
