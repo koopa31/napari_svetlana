@@ -64,12 +64,14 @@ pip install napari_svetlana
 ```
 WARNING:
 
-If you have a Cuda compatible GPU on your computer, some computations may be fastened
-using Cupy. Unfortunately, Cupy needs Cudatoolkit to be installed. This library can only be installed via 
+If you have a Cuda compatible GPU on your computer, some computations may be accelerated
+using [Cupy](https://pypi.org/project/cupy/). Unfortunately, Cupy needs Cudatoolkit to be installed. This library can only be installed via 
 Conda while the plugin is a pip plugin, so it must be installed manually for the moment:
 ```bash
 conda install cudatoolkit=10.2 
 ```
+Also note that the library ([Cucim](https://pypi.org/project/cucim/)) that we use to improve these performances, computing morphological operations on GPU
+is unfortunately only available for Linux systems. Hence, if you are a Windows user, this installation is not necessary.
 
 ## Tutorial
 
