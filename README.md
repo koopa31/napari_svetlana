@@ -118,7 +118,7 @@ Distributed under the terms of the [BSD-3] license,
 
 ## Acknowledgements
 
-The method was developped by [Clément Cazorla](https://koopa31.github.io/), [Renaud Morin](https://www.linkedin.com/in/renaud-morin-6a42665b/?originalSubdomain=fr) and [Pierre Weiss](https://www.math.univ-toulouse.fr/~weiss/). And the plugin was written by
+The method was developed by [Clément Cazorla](https://koopa31.github.io/), [Renaud Morin](https://www.linkedin.com/in/renaud-morin-6a42665b/?originalSubdomain=fr) and [Pierre Weiss](https://www.math.univ-toulouse.fr/~weiss/). And the plugin was written by
 Clément Cazorla. The project is co-funded by [Imactiv-3D](https://www.imactiv-3d.com/) and [CNRS](https://www.cnrs.fr/fr).
 
 ## Issues
