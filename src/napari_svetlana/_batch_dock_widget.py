@@ -535,11 +535,11 @@ def Annotation():
                     enable_labeling = False
 
     from qtpy.QtGui import QIcon
-    icon = QIcon("/home/clement/Téléchargements/webinar.png")
+    icon = QIcon("../webinar.png")
     annotation_widget.youtube_button.native.setIcon(icon)
     annotation_widget.youtube_button.native.setStyleSheet("QPushButton { border: none; }")
     annotation_widget.youtube_button.native.setText("YOUTUBE TUTORIAL")
-    icon = QIcon("/home/clement/Téléchargements/doc.png")
+    icon = QIcon("../doc.png")
     annotation_widget.doc_button.native.setIcon(icon)
     annotation_widget.doc_button.native.setStyleSheet("QPushButton { border: none; }")
     annotation_widget.doc_button.native.setText("DOCUMENTATION")
