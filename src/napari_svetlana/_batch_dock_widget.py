@@ -397,8 +397,11 @@ def Annotation():
         for prop in props_to_be_saved:
             # Check if they are identical, converting the two props into pandas frames and checking if True is the only
             # value inside the comparison table
-            if len(np.unique(pd.DataFrame(prop["props"]) == pd.DataFrame(props))) == 1:
-                present.append(True)
+            if len(props) == len(prop["props"]):
+                if len(np.unique(pd.DataFrame(prop["props"]) == pd.DataFrame(props))) == 1:
+                    present.append(True)
+                else:
+                    present.append(False)
             else:
                 present.append(False)
 
@@ -454,6 +457,8 @@ def Annotation():
                                      'per attributed label', enabled=False),
         show_labs=dict(widget_type='CheckBox', text='Show labeled objects', tooltip='Show labeled objects', enabled=False),
         click_annotate=dict(widget_type='CheckBox', text='Click to annotate', tooltip='Click to annotate', enabled=False),
+        youtube_button=dict(widget_type='PushButton', text="", tooltip="Youtube tutorial"),
+        doc_button=dict(widget_type='PushButton', text="", tooltip="Documentation"),
     )
     def annotation_widget(  # label_logo,
             viewer: Viewer,
@@ -477,7 +482,9 @@ def Annotation():
             save_regionprops_button,
             generate_im_labs_button,
             show_labs,
-            click_annotate
+            click_annotate,
+            youtube_button,
+            doc_button
 
     ) -> None:
         # Create a black image just so layer variable exists
@@ -526,6 +533,28 @@ def Annotation():
                 except ValueError:
                     show_info("please click on a valid object")
                     enable_labeling = False
+
+    from qtpy.QtGui import QIcon
+    icon = QIcon("/home/clement/Téléchargements/webinar.png")
+    annotation_widget.youtube_button.native.setIcon(icon)
+    annotation_widget.youtube_button.native.setStyleSheet("QPushButton { border: none; }")
+    annotation_widget.youtube_button.native.setText("YOUTUBE TUTORIAL")
+    icon = QIcon("/home/clement/Téléchargements/doc.png")
+    annotation_widget.doc_button.native.setIcon(icon)
+    annotation_widget.doc_button.native.setStyleSheet("QPushButton { border: none; }")
+    annotation_widget.doc_button.native.setText("DOCUMENTATION")
+
+    annotation_widget.show()
+
+    @annotation_widget.youtube_button.changed.connect
+    def launch_tutorial(e: Any):
+        import webbrowser
+        webbrowser.open("www.youtube.com")
+
+    @annotation_widget.doc_button.changed.connect
+    def launch_doc(e: Any):
+        import webbrowser
+        webbrowser.open("https://svetlana-documentation.readthedocs.io/en/latest/")
 
     @annotation_widget.load_images_button.changed.connect
     def load_images(e: Any):
@@ -714,7 +743,7 @@ def Annotation():
         Function to set the index of the image to visualize in the batch instead of using previous/next buttons
         """
 
-        global counter, image_counter
+        global counter, image_counter, mask
 
         if int(e) > len(global_im_path_list):
             show_info("Too high index")
@@ -768,7 +797,7 @@ def Annotation():
         @param e:
         @return:
         """
-        global image_counter, counter, labels_list, mini_props_list
+        global image_counter, counter, labels_list, mini_props_list, mask
 
         if image_counter < len(global_im_path_list) - 1:
 
@@ -821,7 +850,7 @@ def Annotation():
         @param e:
         @return:
         """
-        global image_counter, counter, labels_list, mini_props_list
+        global image_counter, counter, labels_list, mini_props_list, mask
         if image_counter > 0:
 
             # Make sure buttons are greyed so we cannot click them before launching annotation
