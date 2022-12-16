@@ -534,12 +534,22 @@ def Annotation():
                     show_info("please click on a valid object")
                     enable_labeling = False
 
-    from qtpy.QtGui import QIcon
-    icon = QIcon("../webinar.png")
+    from qtpy.QtGui import QIcon, QPixmap
+    import requests
+    url = "https://bitbucket.org/koopa31/napari_svetlana/raw/c7438ec591fa5e23f03cfb17f4984e9f52571649/src/webinar.png"
+    response = requests.get(url)
+    pixmap = QPixmap()
+    pixmap.loadFromData(response.content)
+    icon = QIcon(pixmap)
     annotation_widget.youtube_button.native.setIcon(icon)
     annotation_widget.youtube_button.native.setStyleSheet("QPushButton { border: none; }")
     annotation_widget.youtube_button.native.setText("YOUTUBE TUTORIAL")
-    icon = QIcon("../doc.png")
+
+    url = "https://bitbucket.org/koopa31/napari_svetlana/raw/c7438ec591fa5e23f03cfb17f4984e9f52571649/src/doc.png"
+    response = requests.get(url)
+    pixmap = QPixmap()
+    pixmap.loadFromData(response.content)
+    icon = QIcon(pixmap)
     annotation_widget.doc_button.native.setIcon(icon)
     annotation_widget.doc_button.native.setStyleSheet("QPushButton { border: none; }")
     annotation_widget.doc_button.native.setText("DOCUMENTATION")
