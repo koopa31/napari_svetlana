@@ -81,32 +81,6 @@ our [documentation](https://svetlana-documentation.readthedocs.io/en/latest/).
 A folder in this repository called "[Demo images](https://bitbucket.org/koopa31/napari_svetlana/src/main/Demo%20images/)", contains two demo images, similar to the ones
 of the Youtube tutorial. Feel free to use them to test all the features of Sevtlana.
 
-## The data augmentation 
-
-It is possible to perform all the complex data augmentations proposed in the Albumentations
-library. To do so, please refer to the [documentation](https://albumentations.ai/docs/getting_started/transforms_and_targets/),
-and add all the needed parameters to the JSON configuration file.
-
-**Example:**
-
-Gaussian blurring in documentation :
-
-```python
-GaussianBlur(blur_limit=(3, 7), sigma_limit=0, always_apply=False, p=0.5)
-```
-
-Equivalent in JSON configuration file:
-```json
-"GaussianBlur": {
-      "apply": "False",
-      "blur_limit": "(3, 7)",
-      "sigma_limit": "0", 
-      "p": "0.5"
-  }
-```
-
-where _apply_ means you want this data augmentation to be applied or not.
-
 ## Contributing
 
 Contributions are very welcome.
