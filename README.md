@@ -38,7 +38,7 @@ If you use this plugin please cite the paper:
 ```
 
 
-![](https://bitbucket.org/koopa31/napari_svetlana/raw/bb1010b99e03cdbd94d1cd70cc63f93deb63a58e/images/svetlagif.gif)
+![](https://bitbucket.org/koopa31/napari_svetlana/raw/a1bd087d251d1eec6d3d9aa28aa51e02562f6d8b/images/Videogif.gif)
 
 
 ----------------------------------
