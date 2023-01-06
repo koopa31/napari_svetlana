@@ -559,7 +559,7 @@ def Annotation():
     @annotation_widget.youtube_button.changed.connect
     def launch_tutorial(e: Any):
         import webbrowser
-        webbrowser.open("www.youtube.com")
+        webbrowser.open("https://www.youtube.com/watch?v=u_FKuHta-RE")
 
     @annotation_widget.doc_button.changed.connect
     def launch_doc(e: Any):
