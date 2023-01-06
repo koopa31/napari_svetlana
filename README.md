@@ -76,7 +76,7 @@ is unfortunately only available for Linux systems. Hence, if you are a Windows u
 ## Tutorial
 
 To learn more about the features of
-Svetlana and how to use it, please check our [Youtube tutorial](https://youtube.com) and
+Svetlana and how to use it, please check our [Youtube tutorial](https://www.youtube.com/watch?v=u_FKuHta-RE) and
 our [documentation](https://svetlana-documentation.readthedocs.io/en/latest/).
 A folder in this repository called "[Demo images](https://bitbucket.org/koopa31/napari_svetlana/src/main/Demo%20images/)", contains two demo images, similar to the ones
 of the Youtube tutorial. Feel free to use them to test all the features of Sevtlana.
