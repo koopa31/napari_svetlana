@@ -22,19 +22,18 @@ accepted by Svetlana (labels masks).
 If you use this plugin please cite the paper: 
 
 ```bibtex
-@InProceedings{2022_cazorla801,
-	author = "Clément Cazorla and Pierre Weiss and Renaud Morin",
-	title = "SVETLANA: UN CLASSIFIEUR DE SEGMENTATION POUR NAPARI",
-	booktitle = "28° Colloque sur le traitement du signal et des images",
-	year = "2022",
-	publisher = "GRETSI - Groupe de Recherche en Traitement du Signal et des Images",
-	number = "001-0194",
-	pages = "p. 777-780",
-	month = "Sep # 6--9",
-	address = "Nancy",
-	doi = "",
-	pdf = "2022_cazorla801.pdf",
+@unpublished{weiss:hal-03927879,
+  TITLE = {{Svetlana: a Supervised Segmentation Classifier for Napari}},
+  AUTHOR = {Weiss, Pierre and Cazorla, Cl{\'e}ment and Morin, Renaud},
+  URL = {https://hal.inria.fr/hal-03927879},
+  NOTE = {working paper or preprint},
+  YEAR = {2023},
+  MONTH = Jan,
+  PDF = {https://hal.inria.fr/hal-03927879/file/main_nature.pdf},
+  HAL_ID = {hal-03927879},
+  HAL_VERSION = {v1},
 }
+
 ```
 
 
