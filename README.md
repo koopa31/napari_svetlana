@@ -19,7 +19,7 @@ Svetlana can process 2D, 3D and multichannel image. If you want to use it to wor
 recommend the use of [Cellpose](https://www.cellpose.org) for the segmentation part, as it provides excellent quality results and a standard output format
 accepted by Svetlana (labels masks). 
 
-If you use this plugin please cite the paper: 
+If you use this plugin please cite the [paper](https://hal.inria.fr/hal-03927879): 
 
 ```bibtex
 @unpublished{weiss:hal-03927879,
@@ -63,7 +63,7 @@ conda install pip
 python -m pip install "napari[all]" --upgrade
 ```
 
-Then, you can install `napari_svetlana` via [pip], or directly from the Napari plugin manager (see Napari documentation):
+Then, you can install `napari_svetlana` via [pip](https://pypi.org/project/napari-svetlana/), or directly from the Napari plugin manager (see Napari documentation):
 ```bash
 pip install napari_svetlana
 ```
@@ -80,11 +80,12 @@ is unfortunately only available for Linux systems. Hence, if you are a Windows u
 
 ## Tutorial
 
-To learn more about the features of
-Svetlana and how to use it, please check our [Youtube tutorial](https://www.youtube.com/watch?v=u_FKuHta-RE) and
+Many advanced features are available in Svetlana, such as data augmentation or contextual information reduction, to optimize the performance of your classifier. Thus, we strongly encourage you to
+check our [Youtube tutorial](https://www.youtube.com/watch?v=u_FKuHta-RE) and
 our [documentation](https://svetlana-documentation.readthedocs.io/en/latest/).
-A folder in this repository called "[Demo images](https://bitbucket.org/koopa31/napari_svetlana/src/main/Demo%20images/)", contains two demo images, similar to the ones
-of the Youtube tutorial. Feel free to use them to test all the features of Sevtlana.
+A folder in the repository called "[Demo images](https://bitbucket.org/koopa31/napari_svetlana/src/main/Demo%20images/)",
+contains two demo images, identical to the ones of the Youtube tutorial. Feel free to use them to test all the features
+that Sevtlana offers.
 
 ## Contributing
 
