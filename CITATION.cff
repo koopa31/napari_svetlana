@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the related paper as below:"
+authors:
+- family-names: "Cazorla"
+  given-names: "Clément"
+- family-names: "Morin"
+  given-names: "Renaud"
+- family-names: "Weiss"
+  given-names: "Pierre"
+title: "Svetlana: a Supervised Segmentation Classifier for Napari"
+url: "https://hal.science/hal-03927879/file/main_nature.pdf"
