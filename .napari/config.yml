@@ -3,7 +3,7 @@ labels:
   terms:
   - 3D Image # Data Shape
   - 2D Image
-  - Multichannel Image
+  - Multi-channel Image
   - Object classification # Processing step
   - Deep-learning-based classification # Processing step
   - Outliers Removal
