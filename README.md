@@ -87,7 +87,12 @@ check our [Youtube tutorial](https://www.youtube.com/watch?v=u_FKuHta-RE) and
 our [documentation](https://svetlana-documentation.readthedocs.io/en/latest/).
 A folder in the repository called "[Demo images](https://bitbucket.org/koopa31/napari_svetlana/src/main/Demo%20images/)",
 contains two demo images, identical to the ones of the Youtube tutorial. Feel free to use them to test all the features
-that Sevtlana offers.
+that Svetlana offers.
+
+## Similar Napari plugins
+
+Joel Luethi developed a similar method for objects classification called [napari feature classifier](https://www.napari-hub.org/plugins/napari-feature-classifier).
+Also, [apoc](https://www.napari-hub.org/plugins/napari-accelerated-pixel-and-object-classification) by Robert Haase is available in Napari for pixels and objects classification.
 
 ## Contributing
 
