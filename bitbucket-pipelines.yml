@@ -5,7 +5,10 @@ pipelines:
         image: alpine/git:latest
         clone:
           enabled: false
+        runs-on:
+          - self.hosted
+          - linux
         script:
           - git clone --bare git@github.com:koopa31/napari_svetlana.git
-          - cd RepoName.git
+          - cd napari_svetlana.git
           - git push --mirror git@github.com:koopa31/napari_svetlana.git
