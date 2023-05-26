@@ -1,7 +1,11 @@
-clone:
-  depth: full
 pipelines:
   default:
     - step:
+        name: Sync GitHub Mirror
+        image: alpine/git:latest
+        clone:
+          enabled: false
         script:
+          - git clone --bare git@github.com:koopa31/napari_svetlana.git
+          - cd RepoName.git
           - git push --mirror git@github.com:koopa31/napari_svetlana.git
