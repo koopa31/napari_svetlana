@@ -2,12 +2,6 @@ pipelines:
   default:
     - step:
         name: Sync GitHub Mirror
-        image: alpine/git:latest
-        clone:
-          enabled: false
-        runs-on:
-          - self.hosted
-          - linux
         script:
           - git clone --bare git@github.com:koopa31/napari_svetlana.git
           - cd napari_svetlana.git
