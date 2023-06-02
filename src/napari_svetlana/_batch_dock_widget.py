@@ -60,6 +60,8 @@ from .CNN2D import CNN2D
 from .PredictionDataset import PredictionDataset, max_to_1, min_max_norm
 from .Prediction3DDataset import Prediction3DDataset
 from .PredictionMulti3DDataset import PredictionMulti3DDataset
+from .DemoDialog import DemoDialog
+from pooch import retrieve, Unzip
 
 # import gradcam
 from .Grad_Cam.grad_cam import GradCAM
@@ -424,6 +426,8 @@ def Annotation():
         auto_call=False,
         call_button=False,
         layout='vertical',
+        demo_button=dict(widget_type='PushButton', text='TRY ON DEMO IMAGE',
+                                tooltip='Load a demo image to test the plugin'),
         load_images_button=dict(widget_type='PushButton', text='LOAD IMAGES',
                                 tooltip='Load images'),
         OR=dict(widget_type='Label'),
@@ -462,6 +466,7 @@ def Annotation():
     )
     def annotation_widget(  # label_logo,
             viewer: Viewer,
+            demo_button,
             load_images_button,
             OR,
             restart_labelling_button,
@@ -565,6 +570,111 @@ def Annotation():
     def launch_doc(e: Any):
         import webbrowser
         webbrowser.open("https://svetlana-documentation.readthedocs.io/en/latest/")
+
+    @annotation_widget.demo_button.changed.connect
+    def load_demo_images(e: Any):
+        """
+        Loads the folder containing the demo images to annotate and display the first one
+        @param e:
+        @return:
+        """
+
+        # Make sure buttons are greyed so we cannot click them before launching annotation
+        annotation_widget.save_button.enabled = False
+        annotation_widget.save_regionprops_button.enabled = False
+        annotation_widget.generate_im_labs_button.enabled = False
+        annotation_widget.show_labs.enabled = False
+        annotation_widget.click_annotate.enabled = False
+
+        # Gets the folder url and the two subfolder containing the images and the masks
+        global images_folder, masks_folder, parent_path, counter, total_counter, case, props_to_be_saved
+        props_to_be_saved = []
+        case = None
+
+        # As autocall is set to False, it is necessary to call the function when loading the data
+        annotation_widget.viewer.value.layers.clear()
+
+        # Make sure they are reset to True in case another batch has been processed before, so you can reset the batch
+        # size too
+        annotation_widget.estimate_size_button.enabled = True
+        annotation_widget.patch_size.enabled = True
+
+        diag = DemoDialog()
+        diag.exec()
+        demo_type = diag.get_case()
+
+        # Choose which folder to create as a function of the dimension
+        if demo_type == "2D":
+            # Choice of the batch folder
+            parent_path = os.path.join(os.path.expanduser("~"), "2D_image")
+            url = "https://zenodo.org/record/7998087/files/2D_image.zip"
+            file_hash = "md5:9c51f7175eee78bb2a79684ed60252a4"
+        else:
+            parent_path = os.path.join(os.path.expanduser("~"), "Neural_tube_3D")
+            url = "https://zenodo.org/record/7999871/files/Neural_tube_3D.zip"
+            file_hash = "md5:8b459f9224c8f533c97a60b768d4da0a"
+
+
+        if os.path.isdir(parent_path) is False:
+            show_info("Wait while data is being downloaded")
+            # Retrieve the file using pooch
+            target_path = retrieve(url, known_hash=file_hash, progressbar=True)
+
+            # Extract the contents of the zip file
+            Unzip(None, parent_path)._extract_file(target_path, os.path.expanduser("~"))
+
+            # Remove the downloaded zip file
+            os.remove(target_path)
+
+        images_folder = os.path.join(parent_path, "Images")
+        masks_folder = os.path.join(parent_path, "Masks")
+
+        # Check if the selected folder is correct
+        if os.path.isdir(images_folder) is True and os.path.isdir(masks_folder) is True:
+
+            # Gets the list of images and masks
+            global image_path_list, mask_path_list, global_im_path_list, global_lab_path_list, global_labels_list, \
+                global_mini_props_list, mini_props_list, Image, mask
+
+            image_path_list = sorted([os.path.join(images_folder, f) for f in os.listdir(images_folder)])
+            mask_path_list = sorted([os.path.join(masks_folder, f) for f in os.listdir(masks_folder)])
+            global_im_path_list = image_path_list.copy()
+            global_lab_path_list = mask_path_list.copy()
+
+            # reset of these lists when loading new dataset
+            global_labels_list = []
+            global_mini_props_list = []
+
+            # labels counters reset
+            counter = 0
+            total_counter = 0
+
+            for i in range(0, len(image_path_list)):
+                global_labels_list.append([])
+                global_mini_props_list.append([])
+
+            # Deletion of remaining image and displaying of the first uimage of the list
+            annotation_widget.viewer.value.layers.clear()
+            # If image is 3D multichannel, it is splitted into several 3D images
+            Image = imread(image_path_list[image_counter])
+            mask = imread(mask_path_list[image_counter])
+            if len(Image.shape) == 4:
+                annotation_widget.viewer.value.add_image(Image, channel_axis=1, name="Image")
+            else:
+                annotation_widget.viewer.value.add_image(imread(image_path_list[image_counter]))
+            annotation_widget.viewer.value.add_labels(mask)
+            annotation_widget.viewer.value.layers[-1].name = "mask"
+
+            # original zoom factor to correct when annotating
+            global old_zoom
+            old_zoom = annotation_widget.viewer.value.camera.zoom
+
+            # Must be called at the end of loading data so the layer for labeling bay double clicking can be defined as
+            # the layer named Image
+            annotation_widget()
+        else:
+            show_info("ERROR: The folder should contain two folders called Images and Masks")
+        show_info("Data stored in: %s" %parent_path)
 
     @annotation_widget.load_images_button.changed.connect
     def load_images(e: Any):
