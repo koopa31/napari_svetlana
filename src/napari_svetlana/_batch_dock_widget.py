@@ -3060,8 +3060,3 @@ def Prediction():
     # Svetlana's instance
     load_data_after_training()
     return prediction_widget
-
-
-@napari_hook_implementation
-def napari_experimental_provide_dock_widget():
-    return [Annotation, Training, Prediction]

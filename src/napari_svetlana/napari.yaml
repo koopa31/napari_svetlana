@@ -1,0 +1,37 @@
+name: napari-svetlana
+schema_version: 0.2.0
+contributions:
+  commands:
+  - id: napari-svetlana.Annotation
+    title: Create Annotation
+    python_name: napari_svetlana._batch_dock_widget:Annotation
+  - id: napari-svetlana.Training
+    title: Create Training
+    python_name: napari_svetlana._batch_dock_widget:Training
+  - id: napari-svetlana.Prediction
+    title: Create Prediction
+    python_name: napari_svetlana._batch_dock_widget:Prediction
+  - id: napari-svetlana.get_reader
+    title: Get Reader
+    python_name: napari_svetlana._reader:napari_get_reader
+  - id: napari-svetlana.write_image
+    title: Write Image
+    python_name: napari_svetlana._writer:napari_write_image
+  readers:
+  - command: napari-svetlana.get_reader
+    filename_patterns:
+    - '*.npy'
+    accepts_directories: true
+  writers:
+  - command: napari-svetlana.write_image
+    layer_types:
+    - image
+    filename_extensions: []
+    display_name: image
+  widgets:
+  - command: napari-svetlana.Annotation
+    display_name: Annotation
+  - command: napari-svetlana.Training
+    display_name: Training
+  - command: napari-svetlana.Prediction
+    display_name: Prediction
