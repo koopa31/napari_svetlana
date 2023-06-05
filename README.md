@@ -85,8 +85,8 @@ is unfortunately only available for Linux systems. Hence, if you are a Windows u
 Many advanced features are available in Svetlana, such as data augmentation or contextual information reduction, to optimize the performance of your classifier. Thus, we strongly encourage you to
 check our [Youtube tutorial](https://www.youtube.com/watch?v=u_FKuHta-RE) and
 our [documentation](https://svetlana-documentation.readthedocs.io/en/latest/).
-A folder in the repository called "[Demo images](https://bitbucket.org/koopa31/napari_svetlana/src/main/Demo%20images/)",
-contains two demo images, identical to the ones of the Youtube tutorial. Feel free to use them to test all the features
+A button called **TRY ON DEMO IMAGE** is available in the annotation plugin and enables you to apply the YouTube
+tutorial to the same test images to learn how to use the plugin. Feel free to try it to test all the features
 that Svetlana offers.
 
 ## Similar Napari plugins
