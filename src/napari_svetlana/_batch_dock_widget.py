@@ -1653,7 +1653,7 @@ def Training():
 
         losses_dict = {
             "CrossEntropy": "CrossEntropyLoss",
-            "L1Smooth": "L1SmoothLoss",
+            "L1Smooth": "SmoothL1Loss",
             "BCE": "BceLoss",
             "Distance": "DistanceLoss",
             "L1": "L1_Loss",
