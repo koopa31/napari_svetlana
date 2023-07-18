@@ -56,7 +56,7 @@ https://napari.org/plugins/stable/index.html
 
 ## Installation
 
-First install Napari in a Python 3.9 Conda environment following these instructions :
+First install Napari in a Python 3.9 Conda environment following these instructions:
 
 ```bash
 conda create -n svetlana_env python=3.9
